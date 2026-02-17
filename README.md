@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mission Control
 
-## Getting Started
+Mission Control is a self-hosted dashboard for running and supervising AI-assisted workflows.
 
-First, run the development server:
+Current implementation includes:
+
+- Google-authenticated dashboard shell
+- Gateway status view
+- Kanban board with PostgreSQL persistence
+- Task CRUD APIs + SSE updates
+- Workspace markdown file explorer/editor
+
+The app is built with Next.js (App Router), TypeScript, Tailwind, shadcn/ui, Drizzle ORM, and PostgreSQL.
+
+## Quick Start
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Set required environment variables in `.env.local`:
+
+```bash
+DATABASE_URL=postgresql://mc_user:mc_pass@localhost:5432/mission_control?sslmode=disable
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+NEXTAUTH_SECRET=generate_a_strong_secret
+GATEWAY_URL=http://127.0.0.1:18789
+WORKSPACE_PATH=/absolute/path/to/workspace
+```
+
+3. Run DB migrations:
+
+```bash
+npm run migrate
+```
+
+4. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+- `npm run dev` - start local Next.js dev server
+- `npm run build` - build production assets
+- `npm run start` - run production server
+- `npm run lint` - run ESLint
+- `npm run migrate` - generate + push Drizzle schema
+- `npm run dev:https` - run custom HTTPS dev server (`server.ts`)
+- `npm run start:https` - run built HTTPS server
 
-To learn more about Next.js, take a look at the following resources:
+## Repository Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app/` - app entrypoints and API routes
+- `src/components/` - UI components (kanban, status, file editor)
+- `src/db/` - Drizzle schema + seed script
+- `src/lib/` - shared utilities and DB client
+- `Prompt - Build Mission Control.md` - build prompt/context
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Documentation
 
-## Deploy on Vercel
+- `docs/SETUP.md` - full local setup and environment
+- `docs/API.md` - route-by-route API reference
+- `docs/ARCHITECTURE.md` - system design and data flow
+- `docs/OPERATIONS.md` - runbook, troubleshooting, and maintenance
+- `docs/SECURITY.md` - security notes and hardening checklist
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Current Scope Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Sessions/log feed pages are not fully implemented yet.
+- SSE stream is polling-backed (`/api/tasks/stream`, 5s interval).
+- Persistence currently covers tasks in PostgreSQL; cache/queue infrastructure is not present.
+
+## License
+
+No license file is currently defined in this repository.
