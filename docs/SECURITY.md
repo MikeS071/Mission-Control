@@ -1,6 +1,6 @@
 # Security Notes
 
-This project is functional for local/self-hosted usage, but there are important hardening tasks before wider deployment.
+OpenClaw Mission Control is functional for local/self-hosted usage in multi-agent workloads, but there are important hardening tasks before wider deployment.
 
 ## Immediate Items
 

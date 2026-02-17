@@ -1,5 +1,7 @@
 # Operations Runbook
 
+This runbook applies to OpenClaw Mission Control for multi-agent workloads.
+
 ## Day-to-Day Commands
 
 Install:

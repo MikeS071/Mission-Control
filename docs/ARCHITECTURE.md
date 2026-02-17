@@ -2,7 +2,7 @@
 
 ## Overview
 
-Mission Control is a Next.js app with server-side API routes and a Postgres-backed task model.
+OpenClaw Mission Control is a Next.js app with server-side API routes and a Postgres-backed task model, built for multi-agent workloads.
 
 Major runtime pieces:
 

@@ -1,6 +1,6 @@
-# Mission Control
+# OpenClaw Mission Control
 
-Mission Control is a self-hosted dashboard for running and supervising AI-assisted workflows.
+OpenClaw Mission Control is a self-hosted dashboard for running and supervising multi-agent workloads.
 
 Current implementation includes:
 
@@ -63,7 +63,7 @@ npm run dev
 - `src/components/` - UI components (kanban, status, file editor)
 - `src/db/` - Drizzle schema + seed script
 - `src/lib/` - shared utilities and DB client
-- `Prompt - Build Mission Control.md` - build prompt/context
+- `Prompt - Build Mission Control.md` - build prompt/context for OpenClaw Mission Control
 
 ## Documentation
 

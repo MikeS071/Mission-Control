@@ -1,6 +1,6 @@
 # Setup Guide
 
-This guide gets Mission Control running locally in a reproducible way.
+This guide gets OpenClaw Mission Control running locally in a reproducible way for multi-agent workloads.
 
 ## Prerequisites
 
