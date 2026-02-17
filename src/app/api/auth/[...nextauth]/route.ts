@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 
 export const { handlers: { GET, POST } } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -10,7 +11,6 @@ export const { handlers: { GET, POST } } = NextAuth({
   ],
   callbacks: {
     async signIn() {
-      // allow any google account — tighten later if needed
       return true;
     },
   },
