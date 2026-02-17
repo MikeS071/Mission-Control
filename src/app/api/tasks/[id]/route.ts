@@ -28,18 +28,6 @@ const normalizePriority = (priority?: string) => {
   return 'Medium';
 };
 
-function mapInput(body: TaskInput) {
-  return {
-    title: body.title?.trim() || 'Untitled Task',
-    description: body.description || '',
-    goal: body.goal || 'Goal 1',
-    priority: normalizePriority(body.priority),
-    status: normalizeStatus(body.status),
-    assignedAgent: body.assignedAgent ?? body.assigned_agent ?? null,
-    updatedAt: new Date(),
-  };
-}
-
 function mapPatch(body: TaskInput) {
   const updates: Record<string, string | Date | null> = { updatedAt: new Date() };
   if (body.title !== undefined) updates.title = body.title.trim() || 'Untitled Task';
@@ -53,26 +41,21 @@ function mapPatch(body: TaskInput) {
   return updates;
 }
 
-export async function GET() {
-  const all = await db.select().from(tasks).orderBy(tasks.createdAt);
-  return NextResponse.json(all);
-}
-
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = await req.json();
-  const [task] = await db.insert(tasks).values(mapInput(body)).returning();
+  const [task] = await db
+    .update(tasks)
+    .set(mapPatch(body))
+    .where(eq(tasks.id, Number(id)))
+    .returning();
+
+  if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
   return NextResponse.json(task);
 }
 
-export async function PATCH(req: NextRequest) {
-  const body = await req.json();
-  const { id, ...data } = body;
-  const [task] = await db.update(tasks).set(mapPatch(data)).where(eq(tasks.id, id)).returning();
-  return NextResponse.json(task);
-}
-
-export async function DELETE(req: NextRequest) {
-  const { id } = await req.json();
-  await db.delete(tasks).where(eq(tasks.id, id));
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  await db.delete(tasks).where(eq(tasks.id, Number(id)));
   return NextResponse.json({ ok: true });
 }

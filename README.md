@@ -5,9 +5,12 @@ OpenClaw Mission Control is a self-hosted dashboard for running and supervising 
 Current implementation includes:
 
 - Google-authenticated dashboard shell
-- Gateway status view
-- Kanban board with PostgreSQL persistence
-- Task CRUD APIs + SSE updates
+- Kanban board with drag/drop, inline priority editing, and PostgreSQL persistence
+- Add/Edit/Delete task modal workflows (title, description, goal, priority, status, assigned agent)
+- Agent assignment support (`assigned_agent`) with badges on cards
+- Stats info panel on Kanban (tokens, cost, active agents, total/completed tasks) with 30s refresh
+- Status dashboard tab with gateway health/model/uptime/sessions, raw JSON panels, and token usage chart
+- Task CRUD APIs (`/api/tasks`, `/api/tasks/[id]`) + SSE updates
 - Workspace markdown file explorer/editor
 
 The app is built with Next.js (App Router), TypeScript, Tailwind, shadcn/ui, Drizzle ORM, and PostgreSQL.
