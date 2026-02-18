@@ -91,7 +91,7 @@ export default function SignInPage() {
 
         <button
           type="button"
-          onClick={() => signIn('google')}
+          onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
           className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-gray-200 bg-white px-4 text-sm font-medium text-[#1f1f1f] shadow-sm transition hover:bg-gray-100"
         >
           <GoogleLogo />
