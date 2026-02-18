@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { sendTelegramMessage } from '@/lib/telegram';
+import { getTenantId } from '@/lib/tenant';
 
 type TaskInput = {
   id?: number;
@@ -31,8 +32,9 @@ const normalizePriority = (priority?: string) => {
   return 'Medium';
 };
 
-function mapInput(body: TaskInput) {
+function mapInput(body: TaskInput, tenantId: number) {
   return {
+    tenantId,
     title: body.title?.trim() || 'Untitled Task',
     description: body.description || '',
     goal: body.goal || 'Goal 1',
@@ -58,17 +60,28 @@ function mapPatch(body: TaskInput) {
   return updates;
 }
 
-export async function GET() {
-  const all = await db.select().from(tasks).orderBy(tasks.createdAt);
+export async function GET(req: NextRequest) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const all = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.tenantId, tenantId))
+    .orderBy(tasks.createdAt);
   return NextResponse.json(all);
 }
 
 export async function POST(req: NextRequest) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const body = (await req.json()) as TaskInput;
-  const [task] = await db.insert(tasks).values(mapInput(body)).returning();
+  const [task] = await db.insert(tasks).values(mapInput(body, tenantId)).returning();
 
   if (task) {
     await db.insert(events).values({
+      tenantId,
       taskId: task.id,
       agentName: 'system',
       eventType: 'created',
@@ -81,20 +94,27 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const body = (await req.json()) as TaskInput;
   const { id, ...data } = body;
 
-  if (!id) {
-    return NextResponse.json({ error: 'id is required' }, { status: 400 });
-  }
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
-  const [before] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
-  if (!before) {
-    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-  }
+  const [before] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, id), eq(tasks.tenantId, tenantId)))
+    .limit(1);
+  if (!before) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   const updates = mapPatch(data);
-  const [task] = await db.update(tasks).set(updates).where(eq(tasks.id, id)).returning();
+  const [task] = await db
+    .update(tasks)
+    .set(updates)
+    .where(and(eq(tasks.id, id), eq(tasks.tenantId, tenantId)))
+    .returning();
 
   if (task) {
     const changedFields: Record<string, string | null> = {};
@@ -107,6 +127,7 @@ export async function PATCH(req: NextRequest) {
 
     if (data.status !== undefined && task.status !== before.status) {
       await db.insert(events).values({
+        tenantId,
         taskId: task.id,
         agentName: 'system',
         eventType: 'status_change',
@@ -117,6 +138,7 @@ export async function PATCH(req: NextRequest) {
 
     if (Object.keys(changedFields).length > 0) {
       await db.insert(events).values({
+        tenantId,
         taskId: task.id,
         agentName: 'system',
         eventType: 'updated',
@@ -129,25 +151,28 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const body = (await req.json()) as { id?: number };
   const id = body.id;
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
-  if (!id) {
-    return NextResponse.json({ error: 'id is required' }, { status: 400 });
-  }
-
-  const [existing] = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
-  if (!existing) {
-    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
-  }
+  const [existing] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, id), eq(tasks.tenantId, tenantId)))
+    .limit(1);
+  if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   await db.insert(events).values({
+    tenantId,
     taskId: null,
     agentName: 'system',
     eventType: 'deleted',
     payload: `Task deleted: ${existing.title}`,
   });
-  await db.delete(tasks).where(eq(tasks.id, id));
+  await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.tenantId, tenantId)));
   void sendTelegramMessage(`🗑️ Task deleted: <b>${existing.title}</b>`);
 
   return NextResponse.json({ ok: true });

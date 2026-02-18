@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { sendTelegramMessage } from '@/lib/telegram';
+import { getTenantId } from '@/lib/tenant';
 
 type TaskInput = {
   title?: string;
@@ -44,18 +45,41 @@ function mapPatch(body: TaskInput) {
   return updates;
 }
 
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id } = await context.params;
+  const taskId = Number(id);
+  const [task] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId)))
+    .limit(1);
+
+  if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+  return NextResponse.json(task);
+}
+
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { id } = await context.params;
   const taskId = Number(id);
   const body = (await req.json()) as TaskInput;
-  const [before] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
+  const [before] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId)))
+    .limit(1);
   if (!before) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   const [task] = await db
     .update(tasks)
     .set(mapPatch(body))
-    .where(eq(tasks.id, taskId))
+    .where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId)))
     .returning();
 
   if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -70,6 +94,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
   if (body.status !== undefined && task.status !== before.status) {
     await db.insert(events).values({
+      tenantId,
       taskId: task.id,
       agentName: 'system',
       eventType: 'status_change',
@@ -80,6 +105,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
   if (Object.keys(changedFields).length > 0) {
     await db.insert(events).values({
+      tenantId,
       taskId: task.id,
       agentName: 'system',
       eventType: 'updated',
@@ -90,20 +116,28 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   return NextResponse.json(task);
 }
 
-export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { id } = await context.params;
   const taskId = Number(id);
-  const [existing] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
+  const [existing] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId)))
+    .limit(1);
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   await db.insert(events).values({
+    tenantId,
     taskId: null,
     agentName: 'system',
     eventType: 'deleted',
     payload: `Task deleted: ${existing.title}`,
   });
-  await db.delete(tasks).where(eq(tasks.id, taskId));
+  await db.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId)));
   void sendTelegramMessage(`🗑️ Task deleted: <b>${existing.title}</b>`);
 
   return NextResponse.json({ ok: true });

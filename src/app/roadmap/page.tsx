@@ -15,9 +15,12 @@ const delivered = [
   'Docker Compose support',
   'OpenAPI docs (Swagger UI)',
   'Heartbeat sync',
+  'Early access waitlist',
+  'Landing page (archonhq.ai)',
+  'Public roadmap',
 ];
 
-const inProgress = ['Early access waitlist', 'Improved landing page', 'Public roadmap'];
+const inProgress = ['Phase 4: Multi-tenancy & org model', 'OpenClaw connection wizard'];
 
 const planned = [
   'AiPipe intelligent LLM router',
