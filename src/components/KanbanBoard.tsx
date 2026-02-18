@@ -20,7 +20,6 @@ type Task = {
 };
 
 type ApiTask = Task & { assigned_agent?: string | null };
-type GatewayPayload = Record<string, unknown>;
 
 type TaskForm = {
   title: string;
@@ -124,18 +123,14 @@ export function KanbanBoard() {
     let cost = '--';
     let agents = '--';
     try {
-      const [rootRes, statusRes, agentStatsRes] = await Promise.all([
+      const [gatewayRes, agentStatsRes] = await Promise.all([
         fetch('/api/gateway', { cache: 'no-store' }),
-        fetch('/api/gateway/status', { cache: 'no-store' }),
         fetch('/api/agent-stats', { cache: 'no-store' }),
       ]);
-      const rootData = (rootRes.ok ? await rootRes.json() : {}) as GatewayPayload;
-      const statusData = (statusRes.ok ? await statusRes.json() : {}) as GatewayPayload;
-      const merged = { ...rootData, ...statusData };
-      const tokenVal = Number(merged.totalTokens ?? merged.tokensConsumed ?? merged.tokens ?? 0);
-      const costVal = Number(merged.estimatedCost ?? merged.cost ?? 0);
-      if (tokenVal) tokens = tokenVal.toLocaleString();
-      if (costVal) cost = `$${costVal.toFixed(4)}`;
+      const gatewayData = (gatewayRes.ok ? await gatewayRes.json() : []) as Array<{ status: string }>;
+      const connected = gatewayData.filter((item) => item.status === 'ok').length;
+      tokens = String(connected);
+      cost = `/${gatewayData.length}`;
       // Active agents: count unique agents with tasks, fallback to agent-stats count
       const agentStatsData = (agentStatsRes?.ok ? await agentStatsRes.json() : []) as { agentName: string }[];
       const activeFromTasks = new Set(tasks.map((t) => t.assignedAgent).filter(Boolean)).size;

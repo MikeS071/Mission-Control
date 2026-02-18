@@ -96,12 +96,28 @@ export const featureRequests = pgTable('feature_requests', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const subscriptions = pgTable('subscriptions', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .unique()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  plan: text('plan').notNull().default('free'),
+  seats: integer('seats').default(1),
+  status: text('status').notNull().default('active'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 export const xpLedger = pgTable('xp_ledger', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id')
     .notNull()
     .references(() => tenants.id, { onDelete: 'cascade' }),
-  userEmail: text('user_email').notNull(),
+  userEmail: text('user_email').notNull().default('system'),
   points: integer('points').notNull(),
   reason: text('reason').notNull(),
   refId: text('ref_id'),
@@ -113,7 +129,7 @@ export const streaks = pgTable('streaks', {
   tenantId: integer('tenant_id')
     .notNull()
     .references(() => tenants.id, { onDelete: 'cascade' }),
-  userEmail: text('user_email').notNull(),
+  userEmail: text('user_email').notNull().default('system'),
   currentStreak: integer('current_streak').notNull().default(0),
   longestStreak: integer('longest_streak').notNull().default(0),
   lastActivityDate: text('last_activity_date'),
