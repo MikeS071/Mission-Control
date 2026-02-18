@@ -124,22 +124,30 @@ export function KanbanBoard() {
     let cost = '--';
     let agents = '--';
     try {
-      const [rootRes, statusRes] = await Promise.all([fetch('/api/gateway', { cache: 'no-store' }), fetch('/api/gateway/status', { cache: 'no-store' })]);
+      const [rootRes, statusRes, agentStatsRes] = await Promise.all([
+        fetch('/api/gateway', { cache: 'no-store' }),
+        fetch('/api/gateway/status', { cache: 'no-store' }),
+        fetch('/api/agent-stats', { cache: 'no-store' }),
+      ]);
       const rootData = (rootRes.ok ? await rootRes.json() : {}) as GatewayPayload;
       const statusData = (statusRes.ok ? await statusRes.json() : {}) as GatewayPayload;
       const merged = { ...rootData, ...statusData };
       const tokenVal = Number(merged.totalTokens ?? merged.tokensConsumed ?? merged.tokens ?? 0);
       const costVal = Number(merged.estimatedCost ?? merged.cost ?? 0);
-      const activeVal = merged.activeAgents ?? merged.active_agents ?? merged.sessionsActive;
       if (tokenVal) tokens = tokenVal.toLocaleString();
       if (costVal) cost = `$${costVal.toFixed(4)}`;
-      if (activeVal !== undefined && activeVal !== null) agents = String(activeVal);
+      // Active agents: count unique agents with tasks, fallback to agent-stats count
+      const agentStatsData = (agentStatsRes?.ok ? await agentStatsRes.json() : []) as { agentName: string }[];
+      const activeFromTasks = new Set(tasks.map((t) => t.assignedAgent).filter(Boolean)).size;
+      const activeFromStats = agentStatsData.length;
+      agents = String(activeFromTasks || activeFromStats || 0);
     } catch {
       // graceful fallback
     }
     const total = tasks.length;
     const completed = tasks.filter((t) => t.status === 'done').length;
-    setStats({ tokens, cost, agents, taskSummary: `${total} / ${completed}` });
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    setStats({ tokens, cost, agents, taskSummary: `${pct}%` });
   }, [tasks]);
 
   useEffect(() => {
@@ -321,7 +329,7 @@ export function KanbanBoard() {
           <StatsTile label="Session Tokens" value={stats.tokens} color="border-blue-700" />
           <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
           <StatsTile label="Active Agents" value={stats.agents} color="border-purple-700" />
-          <StatsTile label="Tasks (Total / Done)" value={stats.taskSummary} color="border-orange-700" />
+          <StatsTile label="% Complete" value={stats.taskSummary} color="border-orange-700" />
         </div>
         <Button onClick={() => setIsAddOpen(true)}>Add Task</Button>
       </div>
