@@ -8,24 +8,42 @@ import { GatewayStatus } from '@/components/GatewayStatus';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { AgentCostChart } from '@/components/AgentCostChart';
 import { ProgressPanel } from '@/components/ProgressPanel';
+import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
+import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { auth } from '@/lib/auth';
 import { getTenantPlan } from '@/lib/billing';
 import { db } from '@/lib/db';
-import { gatewayConnections, tenants } from '@/db/schema';
+import { gatewayConnections, tenantSettings, tenants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect('/signin');
 
-  const gatewayCount = session.tenantId
-    ? (await db.select({ id: gatewayConnections.id }).from(gatewayConnections).where(eq(gatewayConnections.tenantId, session.tenantId))).length
+  const tenantId = session.tenantId;
+  const gatewayCount = tenantId
+    ? (await db.select({ id: gatewayConnections.id }).from(gatewayConnections).where(eq(gatewayConnections.tenantId, tenantId))).length
     : 0;
 
-  const tenantId = session.tenantId;
   const [tenant] = tenantId
     ? await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1)
     : [null];
+  const [settingsRow] = tenantId
+    ? await db
+        .select({ settings: tenantSettings.settings })
+        .from(tenantSettings)
+        .where(eq(tenantSettings.tenantId, tenantId))
+        .limit(1)
+    : [null];
+  const settings = (settingsRow?.settings ?? {}) as {
+    anthropicKey?: string;
+    openaiKey?: string;
+    xaiKey?: string;
+    gateway?: { connected?: boolean };
+  };
+  const hasAnyApiKey = Boolean(settings.anthropicKey || settings.openaiKey || settings.xaiKey);
+  const setupComplete = (gatewayCount > 0 || settings.gateway?.connected) && hasAnyApiKey;
+
   const plan = tenantId ? await getTenantPlan(tenantId) : 'free';
 
   return (
@@ -42,8 +60,18 @@ export default async function DashboardPage() {
           </div>
           <Link href="https://archonhq.ai" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-indigo-300 hover:text-indigo-200">🌐 View public site</Link>
         </div>
-        <span className="text-sm text-gray-400">{session.user?.email}</span>
+        <div className="flex items-center gap-3">
+          <GatewayHeartbeatIndicator />
+          <UserAvatarMenu email={session.user?.email} image={session.user?.image} />
+        </div>
       </div>
+
+      {!setupComplete && (
+        <div className="mb-4 rounded-md border border-amber-700/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
+          Complete setup to unlock your AI team.{' '}
+          <Link href="/dashboard/connect" className="font-semibold text-amber-300 hover:text-amber-200">Open Setup Wizard</Link>
+        </div>
+      )}
 
       {gatewayCount === 0 && (
         <div className="mb-4 rounded-md border border-indigo-700/50 bg-indigo-950/30 px-4 py-3 text-sm text-indigo-100">
