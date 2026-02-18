@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { FileExplorer } from '@/components/FileExplorer';
@@ -16,8 +17,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-4 text-white">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">🧭 Mission Control</h1>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold">🧭 Mission Control</h1>
+          <Link
+            href="https://archonhq.ai"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-block text-xs text-indigo-300 hover:text-indigo-200"
+          >
+            🌐 View public site
+          </Link>
+        </div>
         <span className="text-sm text-gray-400">{session.user?.email}</span>
       </div>
       <Tabs defaultValue="kanban">

@@ -37,3 +37,18 @@ export const agentStats = pgTable('agent_stats', {
   costUsd: text('cost_usd').default('0.00'),
   recordedAt: timestamp('recorded_at').defaultNow(),
 });
+
+export const waitlist = pgTable('waitlist', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  source: text('source').default('landing'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const featureRequests = pgTable('feature_requests', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull(),
+  description: text('description').notNull(),
+  status: text('status').default('pending'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
