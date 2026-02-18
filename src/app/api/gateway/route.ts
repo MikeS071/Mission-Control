@@ -1,15 +1,70 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { gatewayConnections } from '@/db/schema';
+import { desc, eq } from 'drizzle-orm';
+import { getTenantId } from '@/lib/tenant';
+import { checkGatewayHealth, hashToken } from '@/lib/gateway';
 
-export async function GET() {
-  const url = `${process.env.GATEWAY_URL}`;
-  try {
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
-    const data = await res.text();
-    return new NextResponse(data, {
-      status: res.status,
-      headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
+type CreateGatewayBody = {
+  label?: string;
+  url?: string;
+  token?: string;
+};
+
+export async function GET(req: NextRequest) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const rows = await db
+    .select({
+      id: gatewayConnections.id,
+      tenantId: gatewayConnections.tenantId,
+      label: gatewayConnections.label,
+      url: gatewayConnections.url,
+      status: gatewayConnections.status,
+      lastCheckedAt: gatewayConnections.lastCheckedAt,
+      createdAt: gatewayConnections.createdAt,
+    })
+    .from(gatewayConnections)
+    .where(eq(gatewayConnections.tenantId, tenantId))
+    .orderBy(desc(gatewayConnections.createdAt));
+
+  return NextResponse.json(rows);
+}
+
+export async function POST(req: NextRequest) {
+  const tenantId = getTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = (await req.json()) as CreateGatewayBody;
+  const url = body.url?.trim();
+  if (!url) return NextResponse.json({ error: 'url is required' }, { status: 400 });
+
+  const label = body.label?.trim() || 'My Gateway';
+  const token = body.token?.trim();
+  const tokenHash = hashToken(token ?? undefined);
+
+  const check = await checkGatewayHealth(url, token);
+
+  const [row] = await db
+    .insert(gatewayConnections)
+    .values({
+      tenantId,
+      label,
+      url,
+      tokenHash,
+      status: check.status,
+      lastCheckedAt: new Date(),
+    })
+    .returning({
+      id: gatewayConnections.id,
+      tenantId: gatewayConnections.tenantId,
+      label: gatewayConnections.label,
+      url: gatewayConnections.url,
+      status: gatewayConnections.status,
+      lastCheckedAt: gatewayConnections.lastCheckedAt,
+      createdAt: gatewayConnections.createdAt,
     });
-  } catch {
-    return NextResponse.json({ error: 'Gateway unreachable' }, { status: 502 });
-  }
+
+  return NextResponse.json({ ...row, check: { status: check.status, info: check.info } });
 }

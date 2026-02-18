@@ -68,6 +68,19 @@ export const agentStats = pgTable('agent_stats', {
   recordedAt: timestamp('recorded_at').defaultNow(),
 });
 
+export const gatewayConnections = pgTable('gateway_connections', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  label: text('label').notNull().default('My Gateway'),
+  url: text('url').notNull(),
+  tokenHash: text('token_hash'),
+  status: text('status').notNull().default('unknown'),
+  lastCheckedAt: timestamp('last_checked_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 export const waitlist = pgTable('waitlist', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
@@ -80,5 +93,43 @@ export const featureRequests = pgTable('feature_requests', {
   email: text('email').notNull(),
   description: text('description').notNull(),
   status: text('status').default('pending'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const xpLedger = pgTable('xp_ledger', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  userEmail: text('user_email').notNull(),
+  points: integer('points').notNull(),
+  reason: text('reason').notNull(),
+  refId: text('ref_id'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const streaks = pgTable('streaks', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  userEmail: text('user_email').notNull(),
+  currentStreak: integer('current_streak').notNull().default(0),
+  longestStreak: integer('longest_streak').notNull().default(0),
+  lastActivityDate: text('last_activity_date'),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const challenges = pgTable('challenges', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description').default(''),
+  xpReward: integer('xp_reward').notNull().default(50),
+  status: text('status').notNull().default('active'),
+  dueDate: text('due_date'),
+  completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow(),
 });
