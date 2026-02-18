@@ -2,9 +2,11 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { Clock3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { EventItem, EventTimeline } from '@/components/EventTimeline';
 
 type Task = {
   id: number;
@@ -13,6 +15,7 @@ type Task = {
   status: string;
   priority: string;
   goal: string;
+  tags: string;
   assignedAgent: string | null;
 };
 
@@ -25,7 +28,16 @@ type TaskForm = {
   goal: string;
   priority: string;
   status: string;
+  tags: string;
   assignedAgent: string;
+};
+
+type Filters = {
+  search: string;
+  priority: string;
+  goal: string;
+  agent: string;
+  tags: string;
 };
 
 const STATUS_COLUMNS = ['todo', 'in_progress', 'done'];
@@ -33,7 +45,9 @@ const STATUS_LABELS: Record<string, string> = { todo: 'Todo', in_progress: 'In P
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const AGENTS = ['Unassigned', 'Navi (main)', 'Sub-agent 1', 'Sub-agent 2'];
 const GOALS = ['Goal 1', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5'];
-const emptyForm: TaskForm = { title: '', description: '', goal: 'Goal 1', priority: 'Medium', status: 'todo', assignedAgent: 'Unassigned' };
+const FILTER_GOALS = ['All', 'Goal 1', 'Goal 2', 'Goal 3', 'Goal 4'];
+const emptyForm: TaskForm = { title: '', description: '', goal: 'Goal 1', priority: 'Medium', status: 'todo', tags: '', assignedAgent: 'Unassigned' };
+const emptyFilters: Filters = { search: '', priority: 'All', goal: 'All', agent: 'All', tags: '' };
 
 function normalizeStatus(status: string) {
   const value = (status || '').toLowerCase();
@@ -49,14 +63,15 @@ function mapTask(t: ApiTask): Task {
     assignedAgent: t.assignedAgent ?? t.assigned_agent ?? null,
     priority: t.priority || 'Medium',
     goal: t.goal || 'Goal 1',
+    tags: t.tags || '',
   };
 }
 
 function StatsTile({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className={`w-44 h-32 rounded-lg border-2 ${color} bg-gray-900 flex flex-col items-center justify-center p-3`}>
+    <div className={`h-32 w-44 rounded-lg border-2 ${color} bg-gray-900 p-3 flex flex-col items-center justify-center`}>
       <div className="text-2xl font-bold text-white text-center">{value}</div>
-      <div className="text-xs text-gray-400 mt-2 text-center">{label}</div>
+      <div className="mt-2 text-xs text-center text-gray-400">{label}</div>
     </div>
   );
 }
@@ -66,6 +81,7 @@ function TaskFormFields({ value, onChange }: { value: TaskForm; onChange: (next:
     <div className="space-y-3">
       <input className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" placeholder="Title" value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} />
       <textarea className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" rows={3} placeholder="Description" value={value.description} onChange={(e) => onChange({ ...value, description: e.target.value })} />
+      <input className="w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" placeholder="Tags (comma separated)" value={value.tags} onChange={(e) => onChange({ ...value, tags: e.target.value })} />
       <div className="grid grid-cols-2 gap-2">
         <select className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" value={value.goal} onChange={(e) => onChange({ ...value, goal: e.target.value })}>{GOALS.map((goal) => <option key={goal} value={goal}>{goal}</option>)}</select>
         <select className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" value={value.priority} onChange={(e) => onChange({ ...value, priority: e.target.value })}>{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
@@ -84,6 +100,9 @@ export function KanbanBoard() {
   const [editTask, setEditTask] = useState<TaskForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--' });
+  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
+  const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
 
   const load = useCallback(async () => {
     const data = (await fetch('/api/tasks').then((r) => r.json())) as ApiTask[];
@@ -141,7 +160,28 @@ export function KanbanBoard() {
     };
   }, [loadStats]);
 
-  const grouped = useMemo(() => STATUS_COLUMNS.map((col) => ({ col, items: tasks.filter((t) => t.status === col) })), [tasks]);
+  const agentOptions = useMemo(() => {
+    const dynamicAgents = Array.from(new Set(tasks.map((t) => t.assignedAgent).filter((value): value is string => Boolean(value))));
+    return ['All', ...dynamicAgents];
+  }, [tasks]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const search = filters.search.trim().toLowerCase();
+      const tagSearch = filters.tags.trim().toLowerCase();
+      const textMatch = search.length === 0 || task.title.toLowerCase().includes(search) || (task.description || '').toLowerCase().includes(search);
+      const priorityMatch = filters.priority === 'All' || task.priority === filters.priority;
+      const goalMatch = filters.goal === 'All' || task.goal === filters.goal;
+      const agentMatch = filters.agent === 'All' || task.assignedAgent === filters.agent;
+      const tagsMatch = tagSearch.length === 0 || (task.tags || '').toLowerCase().includes(tagSearch);
+      return textMatch && priorityMatch && goalMatch && agentMatch && tagsMatch;
+    });
+  }, [tasks, filters]);
+
+  const grouped = useMemo(() => STATUS_COLUMNS.map((col) => ({ col, items: filteredTasks.filter((t) => t.status === col) })), [filteredTasks]);
+
+  const hasActiveFilters = filters.search !== '' || filters.priority !== 'All' || filters.goal !== 'All' || filters.agent !== 'All' || filters.tags !== '';
+  const hiddenCount = tasks.length - filteredTasks.length;
 
   const onDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
@@ -183,8 +223,23 @@ export function KanbanBoard() {
 
   const openEdit = (task: Task) => {
     setEditingId(task.id);
-    setEditTask({ title: task.title, description: task.description, goal: task.goal, priority: task.priority, status: task.status, assignedAgent: task.assignedAgent || 'Unassigned' });
+    setEditTask({ title: task.title, description: task.description, goal: task.goal, priority: task.priority, status: task.status, tags: task.tags || '', assignedAgent: task.assignedAgent || 'Unassigned' });
     setIsEditOpen(true);
+  };
+
+  const loadHistory = useCallback(async (taskId: number) => {
+    const response = await fetch(`/api/events?taskId=${taskId}`, { cache: 'no-store' });
+    if (!response.ok) return;
+    const data = (await response.json()) as EventItem[];
+    setHistoryByTask((prev) => ({ ...prev, [taskId]: data }));
+  }, []);
+
+  const toggleHistory = async (taskId: number) => {
+    const next = openHistoryTaskId === taskId ? null : taskId;
+    setOpenHistoryTaskId(next);
+    if (next !== null && !historyByTask[taskId]) {
+      await loadHistory(taskId);
+    }
   };
 
   return (
@@ -199,27 +254,58 @@ export function KanbanBoard() {
         <Button onClick={() => setIsAddOpen(true)}>Add Task</Button>
       </div>
 
+      <div className="rounded-lg border border-gray-800 bg-gray-900 p-3">
+        <div className="grid gap-2 md:grid-cols-6">
+          <input className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" placeholder="Search title/description" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
+          <select className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" value={filters.priority} onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}>
+            <option value="All">All priorities</option>
+            {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+          </select>
+          <select className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" value={filters.goal} onChange={(e) => setFilters((prev) => ({ ...prev, goal: e.target.value }))}>
+            {FILTER_GOALS.map((goal) => <option key={goal} value={goal}>{goal === 'All' ? 'All goals' : goal}</option>)}
+          </select>
+          <select className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" value={filters.agent} onChange={(e) => setFilters((prev) => ({ ...prev, agent: e.target.value }))}>
+            {agentOptions.map((agent) => <option key={agent} value={agent}>{agent === 'All' ? 'All agents' : agent}</option>)}
+          </select>
+          <input className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" placeholder="Filter by tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
+          <Button variant="outline" onClick={() => setFilters(emptyFilters)}>Clear filters</Button>
+        </div>
+        {hasActiveFilters && hiddenCount > 0 && <Badge variant="outline" className="mt-2">({hiddenCount} tasks hidden)</Badge>}
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-4">
           {grouped.map(({ col, items }) => (
-            <div key={col} className="flex-shrink-0 w-72">
-              <h3 className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">{STATUS_LABELS[col]}</h3>
+            <div key={col} className="w-80 flex-shrink-0">
+              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">{STATUS_LABELS[col]}</h3>
               <Droppable droppableId={col}>
                 {(provided, snapshot) => (
                   <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-40 rounded-lg p-2 space-y-2 transition-colors ${snapshot.isDraggingOver ? 'bg-gray-800' : 'bg-gray-900'}`}>
                     {items.map((task, i) => (
                       <Draggable key={task.id} draggableId={String(task.id)} index={i}>
                         {(p, s) => (
-                          <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} onClick={() => openEdit(task)} className={`cursor-pointer bg-gray-800 rounded p-3 border border-gray-700 ${s.isDragging ? 'shadow-lg border-blue-500' : ''}`}>
-                            <p className="text-sm font-medium text-white">{task.title}</p>
-                            {task.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{task.description}</p>}
-                            <div className="flex gap-1 mt-2 flex-wrap items-center">
-                              <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="text-xs rounded px-2 py-1 border border-gray-600 bg-gray-950">
+                          <div ref={p.innerRef} {...p.draggableProps} className={`rounded border border-gray-700 bg-gray-800 p-3 ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
+                            <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
+                              <p className="text-sm font-medium text-white">{task.title}</p>
+                              {task.description && <p className="mt-1 line-clamp-2 text-xs text-gray-400">{task.description}</p>}
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-1">
+                              <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-600 bg-gray-950 px-2 py-1 text-xs">
                                 {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
                               </select>
                               <Badge variant="outline" className="text-xs">{task.goal}</Badge>
                               {task.assignedAgent && <Badge className="text-xs">{task.assignedAgent}</Badge>}
+                              {task.tags && <Badge variant="outline" className="text-xs">{task.tags}</Badge>}
                             </div>
+                            <Button variant="outline" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => void toggleHistory(task.id)}>
+                              <Clock3 className="mr-1 h-3.5 w-3.5" />
+                              History
+                            </Button>
+                            {openHistoryTaskId === task.id && (
+                              <div className="mt-2 rounded border border-gray-700 bg-gray-900 p-2">
+                                <EventTimeline events={historyByTask[task.id] || []} />
+                              </div>
+                            )}
                           </div>
                         )}
                       </Draggable>

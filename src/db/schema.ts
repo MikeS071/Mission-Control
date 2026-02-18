@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const tasks = pgTable('tasks', {
   id: serial('id').primaryKey(),
@@ -8,6 +8,16 @@ export const tasks = pgTable('tasks', {
   priority: text('priority').default('Medium'), // Low|Medium|High|Critical
   goal: text('goal').default('Goal 1'),
   assignedAgent: text('assigned_agent'),
+  tags: text('tags').default(''),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const events = pgTable('events', {
+  id: serial('id').primaryKey(),
+  taskId: integer('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
+  agentName: text('agent_name'),
+  eventType: text('event_type').notNull(),
+  payload: text('payload').default(''),
+  createdAt: timestamp('created_at').defaultNow(),
 });

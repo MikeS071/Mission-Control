@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { FileExplorer } from '@/components/FileExplorer';
 import { GatewayStatus } from '@/components/GatewayStatus';
+import { ActivityFeed } from '@/components/ActivityFeed';
 import { auth } from '@/lib/auth';
 
 export default async function DashboardPage() {
@@ -22,10 +23,12 @@ export default async function DashboardPage() {
         <TabsList className="mb-4">
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="files">Workspace Files</TabsTrigger>
         </TabsList>
         <TabsContent value="status"><GatewayStatus /></TabsContent>
         <TabsContent value="kanban"><KanbanBoard /></TabsContent>
+        <TabsContent value="activity"><ActivityFeed /></TabsContent>
         <TabsContent value="files"><FileExplorer /></TabsContent>
       </Tabs>
     </div>
