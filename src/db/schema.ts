@@ -21,3 +21,11 @@ export const events = pgTable('events', {
   payload: text('payload').default(''),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const heartbeats = pgTable('heartbeats', {
+  id: serial('id').primaryKey(),
+  source: text('source').notNull(), // 'gateway' | 'agent:<name>'
+  status: text('status').notNull(), // 'ok' | 'error' | 'unknown'
+  payload: text('payload').default(''), // JSON string
+  checkedAt: timestamp('checked_at').defaultNow(),
+});

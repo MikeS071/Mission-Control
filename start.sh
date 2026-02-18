@@ -13,7 +13,9 @@ if [ -f "$MC_PID_FILE" ]; then
 fi
 
 cd /home/openclaw/projects/openclaw-mission-control
+set -a
 source .env.local 2>/dev/null || true
+set +a
 export NODE_ENV=production
 
 nohup ./node_modules/.bin/tsx server.ts >> /tmp/mc.log 2>&1 &

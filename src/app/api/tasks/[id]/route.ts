@@ -95,13 +95,13 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
 
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
-  await db.delete(tasks).where(eq(tasks.id, taskId));
   await db.insert(events).values({
-    taskId,
+    taskId: null,
     agentName: 'system',
     eventType: 'deleted',
     payload: `Task deleted: ${existing.title}`,
   });
+  await db.delete(tasks).where(eq(tasks.id, taskId));
 
   return NextResponse.json({ ok: true });
 }
