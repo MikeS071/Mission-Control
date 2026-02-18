@@ -4,6 +4,7 @@ import { events, tasks } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { getTenantId } from '@/lib/tenant';
+import { awardXp, XP_RULES } from '@/lib/xp';
 
 type TaskInput = {
   title?: string;
@@ -100,6 +101,11 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       eventType: 'status_change',
       payload: `Status: ${before.status} → ${task.status}`,
     });
+
+    if (task.status === 'done') {
+      void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
+    }
+
     void sendTelegramMessage(`🔄 <b>${task.title}</b>: ${before.status} → ${task.status}`);
   }
 

@@ -4,6 +4,7 @@ import { events, tasks } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { getTenantId } from '@/lib/tenant';
+import { awardXp, XP_RULES } from '@/lib/xp';
 
 type TaskInput = {
   id?: number;
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest) {
       eventType: 'created',
       payload: `Task created: ${task.title}`,
     });
+
+    void awardXp(tenantId, XP_RULES.TASK_CREATED, 'task_created', String(task.id));
+
     void sendTelegramMessage(`🆕 Task created: <b>${task.title}</b> [${task.priority}] → ${task.goal}`);
   }
 
@@ -133,6 +137,11 @@ export async function PATCH(req: NextRequest) {
         eventType: 'status_change',
         payload: `Status: ${before.status} → ${task.status}`,
       });
+
+      if (task.status === 'done') {
+        void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
+      }
+
       void sendTelegramMessage(`🔄 <b>${task.title}</b>: ${before.status} → ${task.status}`);
     }
 
