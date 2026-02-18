@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { sendTelegramMessage } from '@/lib/telegram';
 
 type TaskInput = {
   title?: string;
@@ -74,6 +75,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       eventType: 'status_change',
       payload: `Status: ${before.status} → ${task.status}`,
     });
+    void sendTelegramMessage(`🔄 <b>${task.title}</b>: ${before.status} → ${task.status}`);
   }
 
   if (Object.keys(changedFields).length > 0) {
@@ -102,6 +104,7 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
     payload: `Task deleted: ${existing.title}`,
   });
   await db.delete(tasks).where(eq(tasks.id, taskId));
+  void sendTelegramMessage(`🗑️ Task deleted: <b>${existing.title}</b>`);
 
   return NextResponse.json({ ok: true });
 }
