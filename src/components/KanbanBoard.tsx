@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { Clock3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock3, Pencil, Settings2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -42,6 +42,9 @@ type Filters = {
 
 const STATUS_COLUMNS = ['todo', 'in_progress', 'done'];
 const STATUS_LABELS: Record<string, string> = { todo: 'Todo', in_progress: 'In Progress', done: 'Done' };
+const COLUMN_LABELS_KEY = 'mc-column-labels';
+const COLUMN_COLLAPSED_KEY = 'mc-column-collapsed';
+const WIP_LIMITS_KEY = 'mc-wip-limits';
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const AGENTS = ['Unassigned', 'Navi (main)', 'Sub-agent 1', 'Sub-agent 2'];
 const GOALS = ['Goal 1', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5'];
@@ -103,6 +106,13 @@ export function KanbanBoard() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
+  const [columnLabels, setColumnLabels] = useState<Record<string, string>>(STATUS_LABELS);
+  const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  const [editingLabelValue, setEditingLabelValue] = useState('');
+  const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
+  const [wipLimits, setWipLimits] = useState<Record<string, number | null>>({});
+  const [editingWipColumn, setEditingWipColumn] = useState<string | null>(null);
+  const [editingWipValue, setEditingWipValue] = useState('');
 
   const load = useCallback(async () => {
     const data = (await fetch('/api/tasks').then((r) => r.json())) as ApiTask[];
@@ -159,6 +169,41 @@ export function KanbanBoard() {
       clearInterval(interval);
     };
   }, [loadStats]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedLabels = window.localStorage.getItem(COLUMN_LABELS_KEY);
+      if (savedLabels) {
+        setColumnLabels({ ...STATUS_LABELS, ...(JSON.parse(savedLabels) as Record<string, string>) });
+      }
+      const savedCollapsed = window.localStorage.getItem(COLUMN_COLLAPSED_KEY);
+      if (savedCollapsed) {
+        setCollapsedColumns(JSON.parse(savedCollapsed) as Record<string, boolean>);
+      }
+      const savedWip = window.localStorage.getItem(WIP_LIMITS_KEY);
+      if (savedWip) {
+        setWipLimits(JSON.parse(savedWip) as Record<string, number | null>);
+      }
+    } catch {
+      // ignore invalid local storage values
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(COLUMN_LABELS_KEY, JSON.stringify(columnLabels));
+  }, [columnLabels]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(COLUMN_COLLAPSED_KEY, JSON.stringify(collapsedColumns));
+  }, [collapsedColumns]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(WIP_LIMITS_KEY, JSON.stringify(wipLimits));
+  }, [wipLimits]);
 
   const agentOptions = useMemo(() => {
     const dynamicAgents = Array.from(new Set(tasks.map((t) => t.assignedAgent).filter((value): value is string => Boolean(value))));
@@ -242,6 +287,33 @@ export function KanbanBoard() {
     }
   };
 
+  const startEditingLabel = (column: string) => {
+    setEditingColumn(column);
+    setEditingLabelValue(columnLabels[column] || STATUS_LABELS[column] || column);
+  };
+
+  const saveColumnLabel = (column: string) => {
+    const next = editingLabelValue.trim() || STATUS_LABELS[column] || column;
+    setColumnLabels((prev) => ({ ...prev, [column]: next }));
+    setEditingColumn(null);
+  };
+
+  const toggleColumnCollapsed = (column: string) => {
+    setCollapsedColumns((prev) => ({ ...prev, [column]: !prev[column] }));
+  };
+
+  const startWipEdit = (column: string) => {
+    setEditingWipColumn(column);
+    const current = wipLimits[column];
+    setEditingWipValue(current && current > 0 ? String(current) : '');
+  };
+
+  const saveWipLimit = (column: string) => {
+    const parsed = Number(editingWipValue);
+    setWipLimits((prev) => ({ ...prev, [column]: Number.isFinite(parsed) && parsed > 0 ? parsed : null }));
+    setEditingWipColumn(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -275,47 +347,108 @@ export function KanbanBoard() {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-4">
-          {grouped.map(({ col, items }) => (
-            <div key={col} className="w-80 flex-shrink-0">
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">{STATUS_LABELS[col]}</h3>
-              <Droppable droppableId={col}>
-                {(provided, snapshot) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-40 rounded-lg p-2 space-y-2 transition-colors ${snapshot.isDraggingOver ? 'bg-gray-800' : 'bg-gray-900'}`}>
-                    {items.map((task, i) => (
-                      <Draggable key={task.id} draggableId={String(task.id)} index={i}>
-                        {(p, s) => (
-                          <div ref={p.innerRef} {...p.draggableProps} className={`rounded border border-gray-700 bg-gray-800 p-3 ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
-                            <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
-                              <p className="text-sm font-medium text-white">{task.title}</p>
-                              {task.description && <p className="mt-1 line-clamp-2 text-xs text-gray-400">{task.description}</p>}
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-1">
-                              <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-600 bg-gray-950 px-2 py-1 text-xs">
-                                {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
-                              </select>
-                              <Badge variant="outline" className="text-xs">{task.goal}</Badge>
-                              {task.assignedAgent && <Badge className="text-xs">{task.assignedAgent}</Badge>}
-                              {task.tags && <Badge variant="outline" className="text-xs">{task.tags}</Badge>}
-                            </div>
-                            <Button variant="outline" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => void toggleHistory(task.id)}>
-                              <Clock3 className="mr-1 h-3.5 w-3.5" />
-                              History
-                            </Button>
-                            {openHistoryTaskId === task.id && (
-                              <div className="mt-2 rounded border border-gray-700 bg-gray-900 p-2">
-                                <EventTimeline events={historyByTask[task.id] || []} />
+          {grouped.map(({ col, items }) => {
+            const isCollapsed = Boolean(collapsedColumns[col]);
+            const limit = wipLimits[col];
+            const isOverWip = typeof limit === 'number' && limit > 0 && items.length > limit;
+            const titleColor = isOverWip ? 'text-amber-300' : 'text-gray-400';
+
+            return (
+              <div key={col} className="w-80 flex-shrink-0">
+                <div className={`mb-2 rounded-md border px-2 py-1 ${isOverWip ? 'border-amber-600 bg-amber-950/30' : 'border-transparent bg-transparent'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wide ${titleColor}`}>
+                      <button type="button" onClick={() => toggleColumnCollapsed(col)} className="rounded p-0.5 hover:bg-gray-800" aria-label={isCollapsed ? 'Expand column' : 'Collapse column'}>
+                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                      {editingColumn === col ? (
+                        <input
+                          autoFocus
+                          value={editingLabelValue}
+                          onChange={(e) => setEditingLabelValue(e.target.value)}
+                          onBlur={() => saveColumnLabel(col)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveColumnLabel(col);
+                            if (e.key === 'Escape') setEditingColumn(null);
+                          }}
+                          className="w-32 rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs normal-case text-white"
+                        />
+                      ) : (
+                        <span className="normal-case">{columnLabels[col] || STATUS_LABELS[col]}</span>
+                      )}
+                      <Badge variant="outline" className="text-[10px]">({items.length})</Badge>
+                      {typeof limit === 'number' && limit > 0 && <Badge variant="outline" className="text-[10px]">WIP {limit}</Badge>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => startEditingLabel(col)} className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-gray-200" aria-label="Edit column label">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" onClick={() => startWipEdit(col)} className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-gray-200" aria-label="Set WIP limit">
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  {editingWipColumn === col && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        placeholder="No limit"
+                        value={editingWipValue}
+                        onChange={(e) => setEditingWipValue(e.target.value)}
+                        onBlur={() => saveWipLimit(col)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveWipLimit(col);
+                          if (e.key === 'Escape') setEditingWipColumn(null);
+                        }}
+                        className="w-24 rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-white"
+                      />
+                      <span className="text-[11px] text-gray-400">Set empty/0 to clear</span>
+                    </div>
+                  )}
+                </div>
+
+                {!isCollapsed && (
+                  <Droppable droppableId={col}>
+                    {(provided, snapshot) => (
+                      <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-40 rounded-lg p-2 space-y-2 transition-colors ${snapshot.isDraggingOver ? 'bg-gray-800' : 'bg-gray-900'}`}>
+                        {items.map((task, i) => (
+                          <Draggable key={task.id} draggableId={String(task.id)} index={i}>
+                            {(p, s) => (
+                              <div ref={p.innerRef} {...p.draggableProps} className={`rounded border border-gray-700 bg-gray-800 p-3 ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
+                                <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
+                                  <p className="text-sm font-medium text-white">{task.title}</p>
+                                  {task.description && <p className="mt-1 line-clamp-2 text-xs text-gray-400">{task.description}</p>}
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-1">
+                                  <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-600 bg-gray-950 px-2 py-1 text-xs">
+                                    {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+                                  </select>
+                                  <Badge variant="outline" className="text-xs">{task.goal}</Badge>
+                                  {task.assignedAgent && <Badge className="text-xs">{task.assignedAgent}</Badge>}
+                                  {task.tags && <Badge variant="outline" className="text-xs">{task.tags}</Badge>}
+                                </div>
+                                <Button variant="outline" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => void toggleHistory(task.id)}>
+                                  <Clock3 className="mr-1 h-3.5 w-3.5" />
+                                  History
+                                </Button>
+                                {openHistoryTaskId === task.id && (
+                                  <div className="mt-2 rounded border border-gray-700 bg-gray-900 p-2">
+                                    <EventTimeline events={historyByTask[task.id] || []} />
+                                  </div>
+                                )}
                               </div>
                             )}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
                 )}
-              </Droppable>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </DragDropContext>
 

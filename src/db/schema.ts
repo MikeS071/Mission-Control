@@ -29,3 +29,11 @@ export const heartbeats = pgTable('heartbeats', {
   payload: text('payload').default(''), // JSON string
   checkedAt: timestamp('checked_at').defaultNow(),
 });
+
+export const agentStats = pgTable('agent_stats', {
+  id: serial('id').primaryKey(),
+  agentName: text('agent_name').notNull(),
+  tokens: integer('tokens').default(0),
+  costUsd: text('cost_usd').default('0.00'),
+  recordedAt: timestamp('recorded_at').defaultNow(),
+});
