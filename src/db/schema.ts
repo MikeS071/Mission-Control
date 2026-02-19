@@ -28,8 +28,10 @@ export const tasks = pgTable('tasks', {
   status: text('status').notNull().default('todo'), // todo|in_progress|done
   priority: text('priority').default('Medium'), // Low|Medium|High|Critical
   goal: text('goal').default('Goal 1'),
+  goalId: text('goal_id'),
   assignedAgent: text('assigned_agent'),
   tags: text('tags').default(''),
+  checklist: text('checklist').default('[]'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
