@@ -58,30 +58,33 @@ const features = [
 
 const pricing = [
   {
-    name: 'Free',
+    name: 'Initiate',
+    label: 'Free forever · Self-hosted',
     price: '$0',
     period: '/mo',
-    items: ['1 user', '3 agents', 'Basic gamification', '7-day logs', 'Community support'],
+    items: ['1 user', '1 agent', 'Gamification + XP', 'Leaderboard', '7-day logs', 'Community support'],
     missing: ['AiPipe router'],
     cta: 'Self-host on GitHub',
     href: 'https://github.com/MikeS071/Mission-Control',
     external: true,
   },
   {
-    name: 'Pro',
+    name: 'Strategos',
+    label: 'For serious operators · Self-hosted',
     price: '$29',
     period: '/mo',
-    items: ['1 user', 'Unlimited agents', 'Full gamification + XP', '30-day logs', 'Priority support', 'AiPipe router'],
+    items: ['1 user', 'Unlimited agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router'],
     missing: [],
     cta: 'Lock in founding price →',
     href: '#waitlist',
     featured: true,
   },
   {
-    name: 'Team',
-    price: '$19',
-    period: '/seat/mo',
-    items: ['Min 10 seats', 'Unlimited seats', 'Team leaderboard', '90-day logs', 'Priority support', 'AiPipe + team analytics'],
+    name: 'Archon',
+    label: 'Cloud-hosted agent team',
+    price: '$99',
+    period: '/mo',
+    items: ['1 user', 'Unlimited agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', '☁️ We host your agent team'],
     missing: [],
     cta: 'Join Waitlist',
     href: '#waitlist',
@@ -389,8 +392,9 @@ export default function LandingPage() {
                     <span className="absolute right-5 top-5 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white" style={{ background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)' }}>Most Popular</span>
                   </>
                 )}
-                <h3 className="text-sm font-medium" style={{ color: '#a3b8a8' }}>{tier.name}</h3>
-                <div className="mt-2 flex items-end gap-1">
+                <h3 className="text-xl font-bold text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.name}</h3>
+                <p className="mt-0.5 text-[11px]" style={{ color: '#6a7f6f', fontFamily: 'var(--font-jetbrains, monospace)' }}>{tier.label}</p>
+                <div className="mt-4 flex items-end gap-1">
                   <span className="text-4xl font-extrabold tracking-tight text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.price}</span>
                   <span className="mb-1 text-sm" style={{ color: '#6a7f6f' }}>{tier.period}</span>
                 </div>
