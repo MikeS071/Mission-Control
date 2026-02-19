@@ -51,8 +51,24 @@ const features = [
   {
     icon: '🔒',
     iconBg: 'border-[rgba(255,59,111,0.25)] bg-[rgba(255,59,111,0.07)]',
-    title: 'Self-Hosted & Secure',
-    desc: 'Your data stays on your infrastructure. Google OAuth, HTTPS, Cloudflare Tunnel, bearer token API.',
+    title: 'Security & Privacy First',
+    desc: 'End-to-end encryption, private data isolation, zero data sharing. Google OAuth, HTTPS, Cloudflare Tunnel, bearer-token API, and full audit logs.',
+  },
+  {
+    icon: '✍️',
+    iconBg: 'border-[rgba(255,59,111,0.25)] bg-[rgba(255,59,111,0.07)]',
+    title: 'BlogAI',
+    desc: 'Research-to-publish pipeline — scan sources, generate outlines, draft full posts, and queue for human approval. Archon-exclusive.',
+    soon: true,
+    exclusive: 'Archon',
+  },
+  {
+    icon: '👨‍💻',
+    iconBg: 'border-[rgba(45,212,122,0.25)] bg-[rgba(45,212,122,0.07)]',
+    title: 'CoderAI',
+    desc: 'Autonomous coding agent — plan, write, test, and ship code with full agent-level oversight and review gates. Archon-exclusive.',
+    soon: true,
+    exclusive: 'Archon',
   },
 ];
 
@@ -63,28 +79,28 @@ const pricing = [
     price: '$0',
     period: '/mo',
     items: ['1 user', '1 agent', 'Gamification + XP', 'Leaderboard', '7-day logs', 'Community support'],
-    missing: ['AiPipe router'],
+    missing: ['AiPipe router', 'BlogAI', 'CoderAI'],
     cta: 'Self-host on GitHub',
     href: 'https://github.com/MikeS071/Mission-Control',
     external: true,
   },
   {
     name: 'Strategos',
-    label: '☁️ Cloud-hosted · 2GB droplet · 3 agents',
+    label: '☁️ Our Cloud · Fully managed · 3 agents',
     price: '$59',
     period: '/mo',
-    items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router', 'Managed infra on DigitalOcean'],
-    missing: [],
+    items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router', 'Managed secure cloud infra', 'End-to-end encryption', 'Private data isolation'],
+    missing: ['BlogAI', 'CoderAI'],
     cta: 'Lock in founding price →',
     href: '#waitlist',
     featured: true,
   },
   {
     name: 'Archon',
-    label: '☁️ Cloud-hosted · 4GB droplet · 8 agents',
+    label: '☁️ Our Cloud · Dedicated infra · 8 agents',
     price: '$149',
     period: '/mo',
-    items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Dedicated infra on DigitalOcean'],
+    items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Dedicated secure cloud infra', '🔒 Advanced privacy controls', '📋 Audit logs + compliance exports', '✍️ BlogAI — research-to-publish pipeline', '👨‍💻 CoderAI — autonomous coder agent'],
     missing: [],
     cta: 'Join Waitlist',
     href: '#waitlist',
@@ -349,11 +365,18 @@ export default function LandingPage() {
                 onMouseLeave={(e) => { (e.currentTarget.querySelector('.top-line') as HTMLElement | null)?.style.setProperty('opacity', '0'); }}
               >
                 <div className="top-line absolute inset-x-0 top-0 h-[2px] rounded-t-2xl transition-opacity duration-300" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)', opacity: 0 }} />
-                {f.soon && (
-                  <span className="absolute right-4 top-4 rounded-full px-2.5 py-1 text-[10px] font-semibold text-[#ff6b8a]" style={{ border: '1px solid rgba(255,59,111,0.25)', background: 'rgba(255,59,111,0.07)' }}>
-                    Coming soon
-                  </span>
-                )}
+                <div className="absolute right-4 top-4 flex flex-col items-end gap-1.5">
+                  {'exclusive' in f && f.exclusive && (
+                    <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ border: '1px solid rgba(255,59,111,0.4)', background: 'rgba(255,59,111,0.12)', color: '#ff6b8a' }}>
+                      {f.exclusive} only
+                    </span>
+                  )}
+                  {f.soon && (
+                    <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-[#ff6b8a]" style={{ border: '1px solid rgba(255,59,111,0.25)', background: 'rgba(255,59,111,0.07)' }}>
+                      Coming soon
+                    </span>
+                  )}
+                </div>
                 <div className={`mb-5 flex h-11 w-11 items-center justify-center rounded-[13px] border text-xl ${f.iconBg}`}>
                   {f.icon}
                 </div>
