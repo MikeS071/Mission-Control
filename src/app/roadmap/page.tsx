@@ -25,9 +25,13 @@ const delivered = [
   'Blocked / Needs-you quick-label toggles',
   'Configurable tenant settings (agent name, token budget, savings rate)',
   'Fun sub-agent names (deterministic, collision-free)',
+  'Full watermelon redesign + Initiate / Strategos / Archon tiers',
+  'Coolify Docker deployment (auto-deploy on push)',
 ];
 
-const inProgress = ['Goal 6: Commercialise archonhq.ai (landing · billing · onboarding)'];
+const inProgress = [
+  'Goal 6: Commercialise archonhq.ai — Stripe billing & onboarding flow',
+];
 
 const planned = [
   'AiPipe intelligent LLM router',
@@ -36,10 +40,13 @@ const planned = [
   'Subscription billing (Stripe)',
   'Per-tenant API key vault',
   'Connect your OpenClaw instance',
+  'BlogAI — research-to-publish pipeline (Archon)',
+  'CoderAI — autonomous coder agent (Archon)',
   'Public blog',
   'Email newsletter',
   'Visual onboarding flow',
   'Mobile-responsive dashboard',
+  'Audit logs + compliance exports (Archon)',
 ];
 
 export default function RoadmapPage() {
@@ -93,43 +100,93 @@ export default function RoadmapPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 px-6 py-12 text-white md:px-10">
-      <div className="mx-auto max-w-5xl">
+    <main className="relative min-h-screen px-6 py-16 text-[#f1f5f0] md:px-10" style={{ background: '#0a1a12' }}>
+
+      {/* Background orbs */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-48 -top-48 h-[500px] w-[500px] rounded-full blur-[120px]" style={{ background: 'rgba(255,59,111,0.05)' }} />
+        <div className="absolute -bottom-48 -right-24 h-[400px] w-[400px] rounded-full blur-[100px]" style={{ background: 'rgba(45,212,122,0.05)' }} />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl">
+
+        {/* Header */}
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-extrabold">Product Roadmap</h1>
-          <Link href="/" className="text-sm text-indigo-300 hover:text-indigo-200">
+          <div>
+            <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: '#ff3b6f' }}>
+              — archonhq.ai
+            </p>
+            <h1 className="text-3xl font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+              Product Roadmap
+            </h1>
+          </div>
+          <Link
+            href="/"
+            className="text-sm transition hover:text-[#ff6b8a]"
+            style={{ color: '#6a7f6f', fontFamily: 'var(--font-jetbrains, monospace)' }}
+          >
             ← Back to home
           </Link>
         </div>
 
-        <p className="mt-4 text-gray-300">
+        <p className="mt-4 text-sm leading-relaxed" style={{ color: '#a3b8a8' }}>
           Track what&apos;s shipped, what&apos;s actively underway, and what&apos;s planned next.
         </p>
 
-        <section className="mt-10 grid gap-6 md:grid-cols-3">
+        {/* Tier pills */}
+        <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold">
+          {[
+            { name: 'Initiate', label: 'Free · self-hosted', color: 'rgba(45,212,122,0.15)', border: 'rgba(45,212,122,0.3)', text: '#2dd47a' },
+            { name: 'Strategos', label: '$59/mo · Our Cloud', color: 'rgba(255,59,111,0.1)', border: 'rgba(255,59,111,0.3)', text: '#ff6b8a' },
+            { name: 'Archon', label: '$149/mo · dedicated + BlogAI + CoderAI', color: 'rgba(255,191,36,0.1)', border: 'rgba(255,191,36,0.3)', text: '#ffc837' },
+          ].map((tier) => (
+            <span
+              key={tier.name}
+              className="rounded-full px-3 py-1"
+              style={{ background: tier.color, border: `1px solid ${tier.border}`, color: tier.text }}
+            >
+              {tier.name} — {tier.label}
+            </span>
+          ))}
+        </div>
+
+        {/* Columns */}
+        <section className="mt-10 grid gap-5 md:grid-cols-3">
           <RoadmapColumn
             title="Delivered"
-            dotClass="bg-emerald-400"
+            accentColor="#2dd47a"
             items={delivered}
-            cardClass="border-emerald-500/30 bg-emerald-500/5"
+            bg="rgba(45,212,122,0.04)"
+            border="rgba(45,212,122,0.2)"
           />
           <RoadmapColumn
             title="In Progress"
-            dotClass="bg-yellow-400"
+            accentColor="#ffc837"
             items={inProgress}
-            cardClass="border-yellow-500/30 bg-yellow-500/5"
+            bg="rgba(255,200,55,0.04)"
+            border="rgba(255,200,55,0.2)"
           />
           <RoadmapColumn
             title="Planned"
-            dotClass="bg-gray-700"
+            accentColor="#6a7f6f"
             items={planned}
-            cardClass="border-gray-700 bg-gray-900/60"
+            bg="rgba(255,255,255,0.02)"
+            border="rgba(255,255,255,0.08)"
           />
         </section>
 
-        <section className="mt-12 rounded-xl border border-white/10 bg-gray-900/70 p-6">
-          <h2 className="text-2xl font-bold">Missing something?</h2>
-          <p className="mt-2 text-sm text-gray-300">
+        {/* Feature request form */}
+        <section
+          className="mt-12 rounded-2xl p-7"
+          style={{ border: '1px solid rgba(45,212,122,0.15)', background: '#0f2418' }}
+        >
+          <p className="mb-1 font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: '#2dd47a' }}>
+            — shape the roadmap
+          </p>
+          <h2 className="text-xl font-bold" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+            Missing something?
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: '#a3b8a8' }}>
             Submit a feature request and we&apos;ll review it for the roadmap.
           </p>
 
@@ -139,28 +196,39 @@ export default function RoadmapPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@company.com"
-              className="h-11 w-full rounded-md border border-white/15 bg-gray-950 px-4 text-sm text-white placeholder:text-gray-500 focus:border-indigo-400 focus:outline-none"
+              className="h-11 w-full rounded-lg px-4 text-sm placeholder:text-[#4a5e4f] focus:outline-none"
+              style={{
+                border: '1px solid rgba(45,212,122,0.2)',
+                background: 'rgba(0,0,0,0.3)',
+                color: '#f1f5f0',
+              }}
               required
             />
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Describe the feature you want..."
-              rows={5}
-              className="w-full rounded-md border border-white/15 bg-gray-950 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:border-indigo-400 focus:outline-none"
+              rows={4}
+              className="w-full rounded-lg px-4 py-3 text-sm placeholder:text-[#4a5e4f] focus:outline-none"
+              style={{
+                border: '1px solid rgba(45,212,122,0.2)',
+                background: 'rgba(0,0,0,0.3)',
+                color: '#f1f5f0',
+              }}
               required
             />
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 rounded-md bg-indigo-500 px-5 text-sm font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70"
+              className="h-10 rounded-lg px-6 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ background: '#ff3b6f', color: '#fff' }}
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Request'}
+              {isSubmitting ? 'Submitting…' : 'Submit Request'}
             </button>
           </form>
 
-          {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
-          {success ? <p className="mt-3 text-sm text-emerald-300">{success}</p> : null}
+          {error ? <p className="mt-3 text-sm" style={{ color: '#ff6b8a' }}>{error}</p> : null}
+          {success ? <p className="mt-3 text-sm" style={{ color: '#2dd47a' }}>{success}</p> : null}
         </section>
       </div>
     </main>
@@ -170,21 +238,34 @@ export default function RoadmapPage() {
 function RoadmapColumn({
   title,
   items,
-  dotClass,
-  cardClass,
+  accentColor,
+  bg,
+  border,
 }: {
   title: string;
   items: string[];
-  dotClass: string;
-  cardClass: string;
+  accentColor: string;
+  bg: string;
+  border: string;
 }) {
   return (
-    <article className={`rounded-xl border p-5 ${cardClass}`}>
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <ul className="mt-4 space-y-2 text-sm text-gray-200">
+    <article
+      className="rounded-2xl p-5"
+      style={{ border: `1px solid ${border}`, background: bg }}
+    >
+      <h2
+        className="text-base font-semibold"
+        style={{ color: accentColor, fontFamily: 'var(--font-bricolage, sans-serif)' }}
+      >
+        {title}
+      </h2>
+      <ul className="mt-4 space-y-2 text-sm" style={{ color: '#c4d4c8' }}>
         {items.map((item) => (
           <li key={item} className="flex items-start gap-2">
-            <span className={`mt-1 inline-block h-2.5 w-2.5 rounded-full ${dotClass}`} />
+            <span
+              className="mt-[5px] inline-block h-2 w-2 flex-shrink-0 rounded-full"
+              style={{ background: accentColor }}
+            />
             <span>{item}</span>
           </li>
         ))}
