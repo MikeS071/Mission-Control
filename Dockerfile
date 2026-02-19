@@ -23,6 +23,7 @@ COPY --from=builder /app/package.json   ./package.json
 
 # Custom server + source needed at runtime (tsx compiles on-the-fly)
 COPY --from=builder /app/server-docker.ts ./server-docker.ts
+COPY --from=builder /app/tsconfig.json   ./tsconfig.json
 COPY --from=builder /app/src             ./src
 
 # tsx for TypeScript server execution
