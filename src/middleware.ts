@@ -23,11 +23,13 @@ export default auth((req: NextAuthRequest) => {
     return NextResponse.next();
   }
 
-  // Session-authenticated — inject tenantId header for API routes
+  // Session-authenticated — inject tenantId + email headers for API routes
   const tenantId = req.auth?.tenantId;
-  if (tenantId) {
+  const userEmail = req.auth?.user?.email;
+  if (req.auth) {
     const headers = new Headers(req.headers);
-    headers.set('x-tenant-id', String(tenantId));
+    if (tenantId) headers.set('x-tenant-id', String(tenantId));
+    if (userEmail) headers.set('x-user-email', userEmail);
     return NextResponse.next({ request: { headers } });
   }
 

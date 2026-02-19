@@ -51,10 +51,15 @@ type StatsSummary = {
   pctComplete: number;
   activeAgents: number;
   totalCostUsd: string;
+  savedUsd: string;
+  savingsRatePct: number;
   tasksDoneToday: number;
   totalTasks: number;
   doneTasks: number;
   totalTokens: number;
+  tokenLimitMonthly: number;
+  tokenPctOfLimit: number | null;
+  primaryAgentName: string | null;
 };
 
 const STATUS_COLUMNS = ['todo', 'in_progress', 'done'];
@@ -239,7 +244,16 @@ function AgentTile({ name, status, lastSeen, isNavi }: { name: string; status: A
   );
 }
 
-function AgentTeamPanel({ gatewayOk }: { gatewayOk: boolean }) {
+// Fun short names for sub-agents — deterministic from agent name hash
+const FUN_NAMES = ['Spark', 'Pixel', 'Drift', 'Blaze', 'Scout', 'Echo', 'Nova', 'Flux', 'Cleo', 'Zed', 'Rook', 'Mox', 'Sage', 'Fern', 'Byte', 'Koda', 'Vex', 'Luma'];
+
+function funNameFor(rawName: string): string {
+  let hash = 0;
+  for (let i = 0; i < rawName.length; i++) hash = (hash * 31 + rawName.charCodeAt(i)) >>> 0;
+  return FUN_NAMES[hash % FUN_NAMES.length] ?? rawName;
+}
+
+function AgentTeamPanel({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; primaryAgentName: string | null }) {
   const [agents, setAgents] = useState<ActiveAgent[]>([]);
 
   useEffect(() => {
@@ -255,17 +269,18 @@ function AgentTeamPanel({ gatewayOk }: { gatewayOk: boolean }) {
     return () => clearInterval(interval);
   }, []);
 
+  const displayName = primaryAgentName || 'Navi';
   const naviStatus: AgentStatus = gatewayOk ? 'working' : 'inactive';
-  const subAgents = agents.filter((a) => a.agentName.toLowerCase() !== 'navi');
+  const subAgents = agents.filter((a) => !['navi', displayName.toLowerCase()].includes(a.agentName.toLowerCase()));
 
   return (
     <div className="w-44 flex-shrink-0 space-y-2">
       <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 px-1">Team</div>
-      <AgentTile name="Navi" status={naviStatus} isNavi />
+      <AgentTile name={displayName} status={naviStatus} isNavi />
       {subAgents.map((agent) => (
         <AgentTile
           key={agent.agentName}
-          name={agent.agentName}
+          name={funNameFor(agent.agentName)}
           status={agent.status}
           lastSeen={agent.lastSeenAt}
         />
@@ -286,7 +301,8 @@ export function KanbanBoard() {
   const [newTask, setNewTask] = useState<TaskForm>(emptyForm);
   const [editTask, setEditTask] = useState<TaskForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--' });
+  const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--', saved: '--', tokenPct: '--' });
+  const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
@@ -323,14 +339,19 @@ export function KanbanBoard() {
 
       const totalTokens = summary.totalTokens ?? 0;
       const totalCost = parseFloat(summary.totalCostUsd ?? '0');
+      const savedCost = parseFloat(summary.savedUsd ?? '0');
       const activeAgents = summary.activeAgents ?? 0;
       const pct = summary.pctComplete ?? 0;
+      const tokenPct = summary.tokenPctOfLimit;
 
+      setPrimaryAgentName(summary.primaryAgentName ?? null);
       setStats({
         tokens: formatTokens(totalTokens),
         cost: `$${totalCost.toFixed(2)}`,
+        saved: `$${savedCost.toFixed(2)}`,
         agents: String(activeAgents),
         taskSummary: `${pct}%`,
+        tokenPct: tokenPct !== null ? `${tokenPct}%` : '--',
       });
     } catch {
       // noop
@@ -564,8 +585,9 @@ export function KanbanBoard() {
       {/* Stats tiles */}
       <div className="flex items-center justify-between">
         <div className="flex gap-3 overflow-x-auto pb-1">
-          <StatsTile label="Session Tokens" value={stats.tokens} color="border-blue-700" />
+          <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
           <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
+          <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
           <StatsTile label="Active Agents" value={stats.agents} color="border-purple-700" />
           <StatsTile label="% Complete" value={stats.taskSummary} color="border-orange-700" />
         </div>
@@ -589,7 +611,7 @@ export function KanbanBoard() {
       {/* Main area: Agent panel + Kanban columns */}
       <div className="flex gap-4">
         {/* Agent Team Panel */}
-        <AgentTeamPanel gatewayOk={gatewayOk} />
+        <AgentTeamPanel gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
 
         {/* Kanban columns */}
         <div className="flex-1 min-w-0">
