@@ -31,7 +31,8 @@ app.prepare().then(() => {
   });
 
   // HTTP for Cloudflare Tunnel or local dev
-  createHttpServer(handler).listen(httpPort, '127.0.0.1', () => {
-    console.log(`> Mission Control HTTP on http://127.0.0.1:${httpPort}`);
+  const httpHost = process.env.HTTP_BIND || '127.0.0.1';
+  createHttpServer(handler).listen(httpPort, httpHost, () => {
+    console.log(`> Mission Control HTTP on http://${httpHost}:${httpPort}`);
   });
 });
