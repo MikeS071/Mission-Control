@@ -36,13 +36,25 @@ const features = [
     icon: '🗂️',
     title: 'Kanban Board',
     description:
-      'Drag-drop task management with real-time SSE updates, priorities, filters, and WIP limits.',
+      'Drag-drop task management with real-time SSE updates, priorities, WIP limits, and collapsible columns.',
+  },
+  {
+    icon: '🪟',
+    title: '3-Pane Dashboard',
+    description:
+      'Resizable Agent Team panel, Kanban board, and Chat — side by side. Drag the dividers to own your layout.',
+  },
+  {
+    icon: '💬',
+    title: 'Agent Chat',
+    description:
+      'Threaded conversations with your primary agent. Switch topics with the thread sidebar — input always in view.',
   },
   {
     icon: '📊',
     title: 'Live Cost Dashboard',
     description:
-      'Per-agent token usage, estimated spend, and cost trends — auto-refreshing every 60s.',
+      'Token usage, estimated spend, and savings vs direct API — all auto-refreshing. Set a monthly token budget and track % consumed.',
   },
   {
     icon: '🔀',
@@ -331,7 +343,7 @@ export default function LandingPage() {
                 shipped, in progress, and planned. Vote for what matters to you.
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">
-                {['✅ Kanban + Activity Feed', '🔜 AiPipe Router', '🔜 XP & Streaks', '🔜 Stripe Billing'].map(
+                {['✅ Kanban + Agent Chat', '✅ Cost Savings Tracking', '🔜 AiPipe Router', '🔜 Stripe Billing'].map(
                   (item) => (
                     <li
                       key={item}

@@ -18,9 +18,16 @@ const delivered = [
   'Early access waitlist',
   'Landing page (archonhq.ai)',
   'Public roadmap',
+  'OpenClaw connection wizard',
+  '3-pane resizable dashboard (Agent Team · Kanban · Chat)',
+  'Multi-thread agent chat (per-topic threads)',
+  'Cost savings tile (Saved via Routing)',
+  'Blocked / Needs-you quick-label toggles',
+  'Configurable tenant settings (agent name, token budget, savings rate)',
+  'Fun sub-agent names (deterministic, collision-free)',
 ];
 
-const inProgress = ['Phase 4: Multi-tenancy & org model', 'OpenClaw connection wizard'];
+const inProgress = ['Goal 6: Commercialise archonhq.ai (landing · billing · onboarding)'];
 
 const planned = [
   'AiPipe intelligent LLM router',
