@@ -146,6 +146,26 @@ if [ "$WARN" -gt 0 ]; then warn "Warnings: $WARN"; fi
 if [ "$FAIL" -gt 0 ]; then red "Failed: $FAIL"; fi
 echo ""
 
+# Confidence score: start at 100, deduct per failure/warning
+TOTAL_CHECKS=$((PASS + FAIL + WARN))
+CONFIDENCE_SCORE=100
+if [ "$TOTAL_CHECKS" -gt 0 ]; then
+  DEDUCT_FAIL=$(( FAIL * 20 ))
+  DEDUCT_WARN=$(( WARN * 5 ))
+  CONFIDENCE_SCORE=$(( 100 - DEDUCT_FAIL - DEDUCT_WARN ))
+  [ "$CONFIDENCE_SCORE" -lt 0 ] && CONFIDENCE_SCORE=0
+fi
+
+if [ "$CONFIDENCE_SCORE" -ge 90 ]; then
+  AUTO_MERGE="yes"
+else
+  AUTO_MERGE="no"
+fi
+
+echo "CONFIDENCE_SCORE=$CONFIDENCE_SCORE"
+echo "AUTO_MERGE=$AUTO_MERGE"
+echo ""
+
 if [ "$FAIL" -gt 0 ]; then
   echo "🔴 NOT READY — fix failures before merge"
   exit 1
