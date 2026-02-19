@@ -107,12 +107,12 @@ const pricing = [
     details: [
       '1 user',
       'Unlimited agents',
-      'Full gamification',
+      'Full gamification + XP levels',
       '30-day logs',
       'Priority support',
       'AiPipe router',
     ],
-    ctaLabel: 'Join Waitlist',
+    ctaLabel: 'Lock in founding price →',
     ctaHref: '#waitlist',
     popular: true,
   },
@@ -204,6 +204,12 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
+      {/* Announcement bar */}
+      <div className="bg-indigo-600 text-white text-center text-xs py-2 px-4">
+        🎉 <strong>Founding member pricing</strong> — first 100 sign-ups lock in launch pricing forever.{' '}
+        <a href="#waitlist" className="underline font-semibold hover:text-indigo-200">Grab your spot →</a>
+      </div>
+
       <header className="sticky top-0 z-50 border-b border-white/10 bg-gray-950/70 backdrop-blur-md">
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 md:px-10">
           <span className="text-lg font-extrabold tracking-tight">🧭 archonhq</span>
@@ -233,35 +239,58 @@ export default function LandingPage() {
       <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-14 md:px-10 md:pt-20">
         <section className="text-center">
           <div className="mx-auto inline-flex items-center rounded-full border border-indigo-400/40 bg-indigo-500/10 px-4 py-1 text-xs font-medium text-indigo-200">
-            Now in Early Access · Join the waitlist
+            🚀 Early Access · {count > 0 ? `${count} builders already in` : 'Join the waitlist'}
           </div>
           <h1 className="mt-6 whitespace-pre-line bg-gradient-to-r from-indigo-300 via-indigo-100 to-purple-400 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-6xl">
             {`Command Your AI Squad.\nCut Your LLM Bill in Half.`}
           </h1>
-          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-gray-300 sm:text-lg">
-            Mission Control is the operating system for your OpenClaw agents — real-time oversight,
-            intelligent LLM routing, and a gamified challenge system that keeps your agents
-            performing at their best.
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-gray-300 sm:text-lg">
+            The operating system for your OpenClaw agents — real-time oversight, intelligent LLM routing, and a gamified challenge system. All in one resizable dashboard.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <a
               href="#waitlist"
-              className="inline-flex h-11 items-center justify-center rounded-md bg-indigo-500 px-6 text-sm font-semibold text-white transition hover:bg-indigo-400"
+              className="inline-flex h-12 items-center justify-center rounded-md bg-indigo-500 px-8 text-sm font-semibold text-white transition hover:bg-indigo-400 shadow-lg shadow-indigo-900/40"
             >
-              Join the Waitlist
+              Get early access — it&apos;s free
             </a>
             <Link
               href="https://github.com/MikeS071/Mission-Control"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-gray-700 bg-gray-900 px-6 text-sm font-semibold text-gray-100 transition hover:border-gray-500 hover:bg-gray-800"
+              className="inline-flex h-12 items-center justify-center rounded-md border border-gray-700 bg-gray-900 px-6 text-sm font-semibold text-gray-100 transition hover:border-gray-500 hover:bg-gray-800"
             >
               Self-host free →
             </Link>
           </div>
-          <p className="mt-4 text-sm text-gray-400">
-            🔒 No credit card · Self-host always free · {count} builders on the waitlist
-          </p>
+          {/* Trust strip */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-gray-500">
+            <span>✅ No credit card</span>
+            <span>✅ Self-host always free</span>
+            <span>✅ MIT Licensed</span>
+            <span>✅ Google OAuth</span>
+            <span>⚡ Founding pricing locked at sign-up</span>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="mt-20">
+          <h2 className="text-center text-3xl font-bold">Up and running in minutes</h2>
+          <p className="mt-3 text-center text-sm text-gray-400 max-w-xl mx-auto">No complex setup. Connect your gateway, see everything, start saving.</p>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {[
+              { step: '01', icon: '🔌', title: 'Connect', desc: 'Link your OpenClaw gateway in 60 seconds. One token, instant visibility into every agent session.' },
+              { step: '02', icon: '🪟', title: 'See everything', desc: 'All your agents, tasks, costs, and chat in one resizable workspace. No tab-switching, no context loss.' },
+              { step: '03', icon: '📉', title: 'Spend less', desc: 'AiPipe routes every LLM call to the cheapest capable model. Track savings vs direct API in real time.' },
+            ].map(({ step, icon, title, desc }) => (
+              <div key={step} className="relative rounded-xl border border-white/10 bg-gray-900/60 p-6">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-3">{step}</div>
+                <div className="text-2xl mb-3">{icon}</div>
+                <h3 className="text-base font-semibold text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-400">{desc}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Product preview */}
@@ -335,33 +364,30 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="mt-20 grid gap-4 md:grid-cols-3">
-          {valueProps.map((item) => (
-            <article key={item.title} className="rounded-xl border border-white/10 bg-gray-900/70 p-6">
-              <div className="text-2xl">{item.icon}</div>
-              <h2 className="mt-3 text-lg font-semibold">{item.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-gray-300">{item.description}</p>
-            </article>
-          ))}
-          {features.map((feature) => (
-            <article
-              key={feature.title}
-              className="relative rounded-xl border border-white/10 bg-gray-900/70 p-5"
-            >
-              {feature.comingSoon ? (
-                <span className="absolute right-3 top-3 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300">
-                  Coming soon
-                </span>
-              ) : null}
-              <div className="text-2xl">{feature.icon}</div>
-              <h3 className="mt-3 pr-20 text-base font-semibold">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-gray-300">{feature.description}</p>
-            </article>
-          ))}
+        <section className="mt-20">
+          <h2 className="text-center text-3xl font-bold mb-8">Everything you need to run AI at scale</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {features.map((feature) => (
+              <article
+                key={feature.title}
+                className="relative rounded-xl border border-white/10 bg-gray-900/70 p-5"
+              >
+                {feature.comingSoon ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300">
+                    Coming soon
+                  </span>
+                ) : null}
+                <div className="text-2xl">{feature.icon}</div>
+                <h3 className="mt-3 pr-20 text-base font-semibold">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-300">{feature.description}</p>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="mt-20">
           <h2 className="text-center text-3xl font-bold">Simple pricing for every stage</h2>
+          <p className="mt-3 text-center text-sm text-gray-400">Sign up now to lock in founding member pricing — guaranteed for life.</p>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {pricing.map((tier) => (
               <article
@@ -409,10 +435,9 @@ export default function LandingPage() {
         <section className="mt-20 rounded-2xl border border-white/10 bg-gray-900/50 px-8 py-10 md:px-10">
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div>
-              <h2 className="text-2xl font-bold">What&apos;s coming next?</h2>
+              <h2 className="text-2xl font-bold">Shape what we build next</h2>
               <p className="mt-2 max-w-xl text-sm text-gray-300">
-                AiPipe router, gamification, multi-tenancy, Stripe billing — see what&apos;s
-                shipped, in progress, and planned. Vote for what matters to you.
+                Early members get a direct line to the roadmap. Vote on features, submit requests, and watch your ideas ship. AiPipe router, Stripe billing, and full gamification are all up next.
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">
                 {['✅ Kanban + Agent Chat', '✅ Cost Savings Tracking', '🔜 AiPipe Router', '🔜 Stripe Billing'].map(
@@ -440,16 +465,16 @@ export default function LandingPage() {
           id="waitlist"
           className="mt-20 rounded-2xl border border-indigo-400/40 bg-gradient-to-br from-indigo-900/40 to-gray-900 p-8 md:p-10"
         >
-          <h2 className="text-3xl font-extrabold">Be First. Shape the Product.</h2>
-          <p className="mt-3 max-w-3xl text-gray-200">
-            Join the early access waitlist. Get notified when Pro launches, lock in founding member
-            pricing, and help us prioritise what we build next.
+          <h2 className="text-3xl font-extrabold">Join free. Ship smarter.</h2>
+          <p className="mt-3 max-w-2xl text-gray-200">
+            Get early access to Mission Control, lock in founding member pricing, and help shape what we build. Takes 10 seconds.
           </p>
 
           <ul className="mt-6 space-y-2 text-sm text-gray-100 md:text-base">
-            <li>✅ Founding member pricing — locked in at launch</li>
-            <li>✅ Early access before public launch</li>
-            <li>✅ Monthly product updates &amp; roadmap previews</li>
+            <li>⚡ Founding member pricing — locked in forever at sign-up</li>
+            <li>🚀 Early access before public launch</li>
+            <li>🗳️ Direct vote on roadmap features</li>
+            <li>🔒 No credit card, no commitment</li>
           </ul>
 
           <form onSubmit={handleJoinWaitlist} className="mt-7 flex flex-col gap-3 md:flex-row">
@@ -464,9 +489,9 @@ export default function LandingPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-md bg-indigo-500 px-6 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70"
+              className="h-11 rounded-md bg-indigo-500 px-6 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70 whitespace-nowrap"
             >
-              {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+              {isSubmitting ? 'Securing your spot...' : 'Get early access →'}
             </button>
           </form>
 
