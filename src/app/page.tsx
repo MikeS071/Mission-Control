@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
 import { ProductPreview } from '@/components/ProductPreview';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type WaitlistResponse = {
   ok?: boolean;
   position?: number;
@@ -11,126 +13,112 @@ type WaitlistResponse = {
   error?: string;
 };
 
-const valueProps = [
-  {
-    icon: '🎯',
-    title: 'Intelligent Routing',
-    description:
-      'AiPipe automatically routes every LLM call to the cheapest capable model. Simple prompts hit gpt-4o-mini. Complex reasoning escalates to Sonnet or Opus. Same quality, fraction of the cost.',
-  },
-  {
-    icon: '🏆',
-    title: 'Gamified Agent Management',
-    description:
-      'Earn XP, maintain streaks, and compete on leaderboards — Duolingo for your AI agents. Daily challenges turn agent maintenance from a chore into a habit.',
-  },
-  {
-    icon: '🔌',
-    title: 'OpenClaw-Native',
-    description:
-      'Built specifically for OpenClaw. Connect your gateway in 60 seconds, see all your agents in one place, and get Telegram alerts the moment something goes wrong.',
-  },
-];
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const features = [
   {
     icon: '🗂️',
+    iconBg: 'border-[rgba(255,59,111,0.25)] bg-[rgba(255,59,111,0.07)]',
     title: 'Kanban Board',
-    description:
-      'Drag-drop task management with real-time SSE updates, priorities, WIP limits, and collapsible columns.',
-  },
-  {
-    icon: '🪟',
-    title: '3-Pane Dashboard',
-    description:
-      'Resizable Agent Team panel, Kanban board, and Chat — side by side. Drag the dividers to own your layout.',
-  },
-  {
-    icon: '💬',
-    title: 'Agent Chat',
-    description:
-      'Threaded conversations with your primary agent. Switch topics with the thread sidebar — input always in view.',
+    desc: 'Drag-drop task management with real-time updates, priorities, WIP limits, and collapsible columns.',
   },
   {
     icon: '📊',
+    iconBg: 'border-[rgba(45,212,122,0.25)] bg-[rgba(45,212,122,0.07)]',
     title: 'Live Cost Dashboard',
-    description:
-      'Token usage, estimated spend, and savings vs direct API — all auto-refreshing. Set a monthly token budget and track % consumed.',
+    desc: 'Token usage, estimated spend, and savings vs direct API — all auto-refreshing. Set a monthly budget and track % consumed.',
   },
   {
     icon: '🔀',
+    iconBg: 'border-[rgba(255,59,111,0.25)] bg-[rgba(255,59,111,0.07)]',
     title: 'Smart LLM Router',
-    description:
-      'AiPipe routes to the cheapest model for each task. Cache hit = zero cost. Track savings in real-time.',
-    comingSoon: true,
+    desc: 'AiPipe routes to the cheapest capable model for each task. Same quality, fraction of the cost.',
+    soon: true,
   },
   {
     icon: '🏆',
+    iconBg: 'border-[rgba(255,191,36,0.25)] bg-[rgba(255,191,36,0.07)]',
     title: 'Agent Challenges',
-    description:
-      'Weekly missions, XP, streaks, and leaderboards. Keep your agents — and yourself — on track.',
-    comingSoon: true,
+    desc: 'Weekly missions, XP, streaks, and leaderboards to keep your agents — and yourself — on track.',
+    soon: true,
   },
   {
     icon: '📡',
+    iconBg: 'border-[rgba(45,212,122,0.25)] bg-[rgba(45,212,122,0.07)]',
     title: 'Activity Feed',
-    description:
-      'Every task change, agent update, and system event in a live timeline. Full audit trail per card.',
+    desc: 'Every task change, agent update, and system event in a live timeline. Full audit trail per card.',
   },
   {
     icon: '🔒',
-    title: 'Self-Hosted & Secure',
-    description:
-      'Your data stays on your infrastructure. Google OAuth, HTTPS, Cloudflare Tunnel, bearer token API.',
+    iconBg: 'border-[rgba(255,59,111,0.25)] bg-[rgba(255,59,111,0.07)]',
+    title: 'Security & Privacy First',
+    desc: 'End-to-end encryption, private data isolation, zero data sharing. Google OAuth, HTTPS, Cloudflare Tunnel, bearer-token API, and full audit logs.',
+  },
+  {
+    icon: '✍️',
+    iconBg: 'border-[rgba(255,59,111,0.25)] bg-[rgba(255,59,111,0.07)]',
+    title: 'BlogAI',
+    desc: 'Research-to-publish pipeline — scan sources, generate outlines, draft full posts, and queue for human approval. Archon-exclusive.',
+    soon: true,
+    exclusive: 'Archon',
+  },
+  {
+    icon: '👨‍💻',
+    iconBg: 'border-[rgba(45,212,122,0.25)] bg-[rgba(45,212,122,0.07)]',
+    title: 'CoderAI',
+    desc: 'Autonomous coding agent — plan, write, test, and ship code with full agent-level oversight and review gates. Archon-exclusive.',
+    soon: true,
+    exclusive: 'Archon',
   },
 ];
 
 const pricing = [
   {
-    name: 'Free',
-    price: '$0/mo',
-    details: [
-      '1 user',
-      '3 agents',
-      'Basic gamification',
-      '7-day logs',
-      'Community support',
-      '—',
-    ],
-    ctaLabel: 'Self-host on GitHub',
-    ctaHref: 'https://github.com/MikeS071/Mission-Control',
+    name: 'Initiate',
+    label: 'Self-hosted · Run on your own machine',
+    price: '$0',
+    period: '/mo',
+    items: ['1 user', '1 agent', 'Gamification + XP', 'Leaderboard', '7-day logs', 'Community support'],
+    missing: ['AiPipe router', 'BlogAI', 'CoderAI'],
+    cta: 'Self-host on GitHub',
+    href: 'https://github.com/MikeS071/Mission-Control',
     external: true,
   },
   {
-    name: 'Pro',
-    price: '$29/mo',
-    details: [
-      '1 user',
-      'Unlimited agents',
-      'Full gamification + XP levels',
-      '30-day logs',
-      'Priority support',
-      'AiPipe router',
-    ],
-    ctaLabel: 'Lock in founding price →',
-    ctaHref: '#waitlist',
-    popular: true,
+    name: 'Strategos',
+    label: '☁️ Our Cloud · Fully managed · 3 agents',
+    price: '$59',
+    period: '/mo',
+    items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router', 'Managed secure cloud infra', 'End-to-end encryption', 'Private data isolation'],
+    missing: ['BlogAI', 'CoderAI'],
+    cta: 'Lock in founding price →',
+    href: '#waitlist',
+    featured: true,
   },
   {
-    name: 'Team',
-    price: '$19/seat/mo',
-    details: [
-      'Min 10 seats ($190/mo)',
-      'Unlimited seats',
-      'Team leaderboard',
-      '90-day logs',
-      'Priority support',
-      'AiPipe router + team analytics',
-    ],
-    ctaLabel: 'Join Waitlist',
-    ctaHref: '#waitlist',
+    name: 'Archon',
+    label: '☁️ Our Cloud · Dedicated infra · 8 agents',
+    price: '$149',
+    period: '/mo',
+    items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Dedicated secure cloud infra', '🔒 Advanced privacy controls', '📋 Audit logs + compliance exports', '✍️ BlogAI — research-to-publish pipeline', '👨‍💻 CoderAI — autonomous coder agent'],
+    missing: [],
+    cta: 'Join Waitlist',
+    href: '#waitlist',
   },
 ];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-3 flex items-center gap-2.5" style={{ fontFamily: 'var(--font-jetbrains, monospace)' }}>
+      <span className="h-[2px] w-6 rounded-full" style={{ background: 'linear-gradient(90deg, #ff3b6f, #2dd47a)' }} />
+      <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#ff6b8a]">{children}</span>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const [count, setCount] = useState(0);
@@ -140,95 +128,52 @@ export default function LandingPage() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    const loadCount = async () => {
-      try {
-        const res = await fetch('/api/waitlist');
-        if (!res.ok) return;
-        const data = (await res.json()) as { count?: number };
-        setCount(data.count ?? 0);
-      } catch {
-        // noop
-      }
-    };
-
-    void loadCount();
+    fetch('/api/waitlist')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d: { count?: number } | null) => { if (d?.count) setCount(d.count); })
+      .catch(() => {});
   }, []);
 
-  const handleJoinWaitlist = async (event: FormEvent) => {
-    event.preventDefault();
-    setError('');
-    setSuccess('');
-
-    const trimmedEmail = email.trim().toLowerCase();
-    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
-
-    if (!validEmail) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(''); setSuccess('');
+    const trimmed = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { setError('Please enter a valid email.'); return; }
     setIsSubmitting(true);
-
     try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, source: 'landing' }),
-      });
-
+      const res = await fetch('/api/waitlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: trimmed, source: 'landing' }) });
       const data = (await res.json()) as WaitlistResponse;
-
-      if (res.status === 409 || data.alreadyJoined) {
-        setSuccess("You're already on the list! 👋");
-        setEmail('');
-        return;
-      }
-
-      if (!res.ok || !data.ok) {
-        setError(data.error || 'Something went wrong. Please try again.');
-        return;
-      }
-
-      const positionText = data.position ? ` You're #${data.position} on the waitlist.` : '';
-      setSuccess(`🎉 You're on the list! We'll be in touch.${positionText}`);
-      if (data.position) {
-        setCount((current) => Math.max(current, data.position ?? current));
-      }
+      if (res.status === 409 || data.alreadyJoined) { setSuccess("You're already on the list! 👋"); setEmail(''); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? 'Something went wrong.'); return; }
+      const pos = data.position ? ` You're #${data.position}.` : '';
+      setSuccess(`🎉 You're in!${pos}`);
+      if (data.position) setCount((c) => Math.max(c, data.position ?? c));
       setEmail('');
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    } catch { setError('Something went wrong. Please try again.'); }
+    finally { setIsSubmitting(false); }
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
-      {/* Announcement bar */}
-      <div className="bg-indigo-600 text-white text-center text-xs py-2 px-4">
-        🎉 <strong>Founding member pricing</strong> — first 100 sign-ups lock in launch pricing forever.{' '}
-        <a href="#waitlist" className="underline font-semibold hover:text-indigo-200">Grab your spot →</a>
+    <main className="relative min-h-screen overflow-x-hidden text-[#f1f5f0]" style={{ background: '#0a1a12' }}>
+
+      {/* ── Background orbs ── */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -left-64 -top-64 h-[700px] w-[700px] rounded-full blur-[140px]" style={{ background: 'rgba(255,59,111,0.07)', animation: 'pulse 9s ease-in-out infinite' }} />
+        <div className="absolute -bottom-64 -right-32 h-[600px] w-[600px] rounded-full blur-[120px]" style={{ background: 'rgba(45,212,122,0.07)', animation: 'pulse 12s ease-in-out infinite', animationDelay: '-5s' }} />
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[140px]" style={{ background: 'rgba(255,59,111,0.04)' }} />
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-gray-950/70 backdrop-blur-md">
+      {/* ── Nav ── */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl" style={{ background: 'rgba(10,26,18,0.85)', borderBottom: '1px solid rgba(45,212,122,0.1)' }}>
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 md:px-10">
-          <span className="text-lg font-extrabold tracking-tight">🧭 archonhq</span>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/roadmap"
-              className="hidden items-center rounded-md px-4 text-sm font-medium text-gray-300 transition hover:bg-white/10 sm:inline-flex sm:h-10"
-            >
-              Roadmap
-            </Link>
-            <Link
-              href="/signin"
-              className="inline-flex h-10 items-center rounded-md px-4 text-sm font-medium text-gray-200 transition hover:bg-white/10"
-            >
-              Sign In
-            </Link>
+          <span className="text-lg font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>🧭 archonhq</span>
+          <div className="flex items-center gap-2">
+            <Link href="/roadmap" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Roadmap</Link>
+            <Link href="/signin" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Sign In</Link>
             <a
               href="#waitlist"
-              className="inline-flex h-10 items-center rounded-md bg-indigo-500 px-4 text-sm font-semibold text-white transition hover:bg-indigo-400"
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-px"
+              style={{ background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)', boxShadow: '0 4px 20px rgba(255,59,111,0.2)' }}
             >
               Get Early Access
             </a>
@@ -236,21 +181,42 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-14 md:px-10 md:pt-20">
-        <section className="text-center">
-          <div className="mx-auto inline-flex items-center rounded-full border border-indigo-400/40 bg-indigo-500/10 px-4 py-1 text-xs font-medium text-indigo-200">
-            🚀 Early Access · {count > 0 ? `${count} builders already in` : 'Join the waitlist'}
+      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10">
+
+        {/* ══ HERO ══ */}
+        <section className="flex min-h-[88vh] flex-col items-center justify-center py-24 text-center">
+          {/* Badge */}
+          <div
+            className="mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5"
+            style={{ fontFamily: 'var(--font-jetbrains, monospace)', border: '1px solid rgba(255,59,111,0.25)', background: 'rgba(255,59,111,0.06)' }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2dd47a]" style={{ boxShadow: '0 0 8px rgba(45,212,122,0.6)', animation: 'pulse 2s ease-in-out infinite' }} />
+            <span className="text-xs text-[#ff6b8a]">
+              {count > 0 ? `Early Access · ${count} builders already in` : 'Now in Early Access'}
+            </span>
           </div>
-          <h1 className="mt-6 whitespace-pre-line bg-gradient-to-r from-indigo-300 via-indigo-100 to-purple-400 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-6xl">
-            {`Command Your AI Squad.\nCut Your LLM Bill in Half.`}
+
+          {/* Heading */}
+          <h1
+            className="max-w-3xl text-5xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl"
+            style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}
+          >
+            Command Your AI Squad.{' '}
+            <span style={{ background: 'linear-gradient(135deg, #ff3b6f, #ff6b8a, #2dd47a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              Cut Your LLM Bill in Half.
+            </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-gray-300 sm:text-lg">
-            The operating system for your OpenClaw agents — real-time oversight, intelligent LLM routing, and a gamified challenge system. All in one resizable dashboard.
+
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed" style={{ color: '#a3b8a8' }}>
+            The operating system for your OpenClaw agents — real-time oversight, intelligent LLM routing,
+            and a gamified challenge system. All in one resizable dashboard.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <a
               href="#waitlist"
-              className="inline-flex h-12 items-center justify-center rounded-md bg-indigo-500 px-8 text-sm font-semibold text-white transition hover:bg-indigo-400 shadow-lg shadow-indigo-900/40"
+              className="rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)', boxShadow: '0 4px 24px rgba(255,59,111,0.2)' }}
             >
               Get early access — it&apos;s free
             </a>
@@ -258,173 +224,239 @@ export default function LandingPage() {
               href="https://github.com/MikeS071/Mission-Control"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-12 items-center justify-center rounded-md border border-gray-700 bg-gray-900 px-6 text-sm font-semibold text-gray-100 transition hover:border-gray-500 hover:bg-gray-800"
+              className="rounded-xl px-8 py-3.5 text-sm font-semibold transition hover:-translate-y-0.5"
+              style={{ color: '#a3b8a8', border: '1px solid rgba(45,212,122,0.2)', background: 'rgba(45,212,122,0.04)' }}
             >
               Self-host free →
             </Link>
           </div>
+
           {/* Trust strip */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-gray-500">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" style={{ fontFamily: 'var(--font-jetbrains, monospace)', color: '#6a7f6f' }}>
             <span>✅ No credit card</span>
-            <span>✅ Self-host always free</span>
             <span>✅ MIT Licensed</span>
-            <span>✅ Google OAuth</span>
+            <span>✅ Self-host always free</span>
             <span>⚡ Founding pricing locked at sign-up</span>
           </div>
         </section>
 
-        {/* How it works */}
-        <section className="mt-20">
-          <h2 className="text-center text-3xl font-bold">Up and running in minutes</h2>
-          <p className="mt-3 text-center text-sm text-gray-400 max-w-xl mx-auto">No complex setup. Connect your gateway, see everything, start saving.</p>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+        {/* ══ HOW IT WORKS ══ */}
+        <section className="py-24">
+          <SectionLabel>Getting Started</SectionLabel>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+            Up and running in minutes
+          </h2>
+          <p className="mt-4 max-w-lg" style={{ color: '#a3b8a8' }}>No complex setup. Connect your gateway, see everything, start saving.</p>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
             {[
-              { step: '01', icon: '🔌', title: 'Connect', desc: 'Link your OpenClaw gateway in 60 seconds. One token, instant visibility into every agent session.' },
-              { step: '02', icon: '🪟', title: 'See everything', desc: 'All your agents, tasks, costs, and chat in one resizable workspace. No tab-switching, no context loss.' },
-              { step: '03', icon: '📉', title: 'Spend less', desc: 'AiPipe routes every LLM call to the cheapest capable model. Track savings vs direct API in real time.' },
-            ].map(({ step, icon, title, desc }) => (
-              <div key={step} className="relative rounded-xl border border-white/10 bg-gray-900/60 p-6">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-3">{step}</div>
-                <div className="text-2xl mb-3">{icon}</div>
-                <h3 className="text-base font-semibold text-white">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-400">{desc}</p>
+              { n: '01', icon: '🔌', title: 'Connect', desc: 'Link your OpenClaw gateway in 60 seconds. One token, instant visibility into every agent session.' },
+              { n: '02', icon: '🪟', title: 'See everything', desc: 'All your agents, tasks, costs, and chat in one resizable workspace. No tab-switching, no context loss.' },
+              { n: '03', icon: '📉', title: 'Spend less', desc: 'AiPipe routes every LLM call to the cheapest capable model. Track your savings vs direct API in real time.' },
+            ].map(({ n, icon, title, desc }) => (
+              <div
+                key={n}
+                className="group relative overflow-hidden rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1.5"
+                style={{ border: '1px solid rgba(45,212,122,0.12)', background: '#0f2418' }}
+                onMouseEnter={(e) => { (e.currentTarget.querySelector('.top-line') as HTMLElement | null)?.style.setProperty('opacity', '1'); }}
+                onMouseLeave={(e) => { (e.currentTarget.querySelector('.top-line') as HTMLElement | null)?.style.setProperty('opacity', '0'); }}
+              >
+                <div className="top-line absolute inset-x-0 top-0 h-[2px] rounded-t-2xl transition-opacity duration-300" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)', opacity: 0 }} />
+                <div className="mb-5 text-[11px] font-bold tracking-[0.15em] text-[#ff6b8a]" style={{ fontFamily: 'var(--font-jetbrains, monospace)' }}>{n}</div>
+                <div className="mb-4 text-3xl">{icon}</div>
+                <h3 className="text-base font-semibold text-[#f1f5f0]">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: '#a3b8a8' }}>{desc}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Product preview */}
-        <section className="mt-20">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold">See it in action</h2>
-            <p className="mt-3 text-gray-400 max-w-2xl mx-auto text-sm leading-6">
-              A real-time command centre for your AI agents — overview, task management, and chat in one resizable workspace.
+        {/* ══ PRODUCT PREVIEW ══ */}
+        <section className="py-24">
+          <div className="mb-12 max-w-xl">
+            <SectionLabel>The Dashboard</SectionLabel>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+              See it in action
+            </h2>
+            <p className="mt-4" style={{ color: '#a3b8a8' }}>
+              A real-time command centre for your AI agents — task management, cost tracking, and chat in one workspace.
             </p>
           </div>
           <ProductPreview />
         </section>
 
-        {/* Gamification teaser */}
-        <section className="mt-20 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-950/30 via-gray-900 to-gray-950 px-8 py-10 md:px-12">
-          <div className="flex flex-col gap-8 md:flex-row md:items-center">
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300 mb-4">
-                🏆 Coming Soon · Gamification
-              </div>
-              <h2 className="text-2xl font-bold text-white sm:text-3xl">Level up your AI operation</h2>
-              <p className="mt-3 max-w-xl text-sm leading-7 text-gray-300">
-                Every task completed, challenge solved, and agent milestone hit earns you XP. As you level up,
-                you unlock real benefits — not just bragging rights.
-              </p>
-              <div className="mt-6 space-y-3">
-                {[
-                  { level: 'Level 5', perk: 'Extended log history (90 days)', color: 'text-amber-400' },
-                  { level: 'Level 10', perk: 'Custom agent personas & names', color: 'text-orange-400' },
-                  { level: 'Level 20', perk: 'Priority model routing + reduced latency', color: 'text-red-400' },
-                  { level: 'Level 50', perk: 'Founding Legend status — permanent perks & badge', color: 'text-purple-400' },
-                ].map(({ level, perk, color }) => (
-                  <div key={level} className="flex items-center gap-3">
-                    <span className={`text-xs font-bold w-16 flex-shrink-0 ${color}`}>{level}</span>
-                    <div className="flex-1 h-px bg-gray-800" />
-                    <span className="text-sm text-gray-300">{perk}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-shrink-0 w-full md:w-64 space-y-3">
-              <div className="rounded-xl border border-amber-500/20 bg-gray-900/70 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-amber-300">🌟 Daily Challenge</span>
-                  <span className="text-xs text-gray-500">+150 XP</span>
-                </div>
-                <p className="text-sm text-white font-medium">Close 3 In Progress tasks</p>
-                <div className="mt-3 rounded-full bg-gray-800 h-2 overflow-hidden">
-                  <div className="h-full bg-amber-400 rounded-full" style={{ width: '66%' }} />
-                </div>
-                <p className="mt-1 text-[10px] text-gray-500">2 of 3 complete</p>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-gray-900/70 p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-white">Level 7 · Operator</span>
-                  <span className="text-xs text-indigo-400">2,340 XP</span>
-                </div>
-                <div className="mt-2 rounded-full bg-gray-800 h-2 overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: '47%' }} />
-                </div>
-                <p className="mt-1 text-[10px] text-gray-500">47% to Level 8</p>
-                <div className="mt-3 flex gap-1.5 flex-wrap">
-                  {['7-day streak 🔥', 'Early Backer ⚡', '10 tasks done ✅'].map((badge) => (
-                    <span key={badge} className="rounded-full bg-gray-800 border border-gray-700 px-2 py-0.5 text-[9px] text-gray-300">{badge}</span>
+        {/* ══ GAMIFICATION ══ */}
+        <section className="py-24">
+          <div className="overflow-hidden rounded-3xl px-8 py-14 md:px-14" style={{ border: '1px solid rgba(255,59,111,0.15)', background: 'linear-gradient(135deg, rgba(255,59,111,0.05), #0f2418 50%, #0a1a12)' }}>
+            <div className="flex flex-col gap-12 md:flex-row md:items-center">
+              <div className="flex-1">
+                <SectionLabel>Coming Soon</SectionLabel>
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+                  Level up your AI operation
+                </h2>
+                <p className="mt-4 max-w-md leading-relaxed" style={{ color: '#a3b8a8' }}>
+                  Every task completed, challenge solved, and milestone hit earns you XP.
+                  Level up to unlock real benefits — not just bragging rights.
+                </p>
+                <div className="mt-8 space-y-4">
+                  {[
+                    { level: 'Level 5',  perk: 'Extended log history (90 days)',            color: '#2dd47a' },
+                    { level: 'Level 10', perk: 'Custom agent personas & names',              color: '#5eeaa0' },
+                    { level: 'Level 20', perk: 'Priority model routing + reduced latency',   color: '#ff6b8a' },
+                    { level: 'Level 50', perk: 'Founding Legend — permanent badge & perks',  color: '#ff3b6f' },
+                  ].map(({ level, perk, color }) => (
+                    <div key={level} className="flex items-center gap-4">
+                      <span className="w-16 flex-shrink-0 text-xs font-bold" style={{ fontFamily: 'var(--font-jetbrains, monospace)', color }}>{level}</span>
+                      <div className="flex-1 h-px" style={{ background: 'rgba(45,212,122,0.12)' }} />
+                      <span className="text-sm text-[#a3b8a8]">{perk}</span>
+                    </div>
                   ))}
+                </div>
+              </div>
+
+              <div className="w-full flex-shrink-0 space-y-4 md:w-60">
+                <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(255,59,111,0.2)', background: 'rgba(15,36,24,0.9)' }}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-[#ff6b8a]">🌟 Daily Challenge</span>
+                    <span className="text-xs" style={{ color: '#6a7f6f' }}>+150 XP</span>
+                  </div>
+                  <p className="text-sm font-medium text-[#f1f5f0]">Close 3 In Progress tasks</p>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(45,212,122,0.12)' }}>
+                    <div className="h-full rounded-full" style={{ width: '66%', background: 'linear-gradient(90deg, #ff3b6f, #2dd47a)' }} />
+                  </div>
+                  <p className="mt-1.5 text-[10px]" style={{ color: '#6a7f6f' }}>2 of 3 complete</p>
+                </div>
+
+                <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(45,212,122,0.12)', background: 'rgba(15,36,24,0.9)' }}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-[#f1f5f0]">Level 7 · Operator</span>
+                    <span className="text-xs text-[#ff6b8a]">2,340 XP</span>
+                  </div>
+                  <div className="mt-2.5 h-1.5 overflow-hidden rounded-full" style={{ background: 'rgba(45,212,122,0.12)' }}>
+                    <div className="h-full rounded-full" style={{ width: '47%', background: 'linear-gradient(90deg, #ff3b6f, #2dd47a)' }} />
+                  </div>
+                  <p className="mt-1.5 text-[10px]" style={{ color: '#6a7f6f' }}>47% to Level 8</p>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {['7-day streak 🔥', 'Early Backer ⚡', '10 tasks ✅'].map((b) => (
+                      <span key={b} className="rounded-full px-2 py-0.5 text-[9px]" style={{ border: '1px solid rgba(45,212,122,0.2)', background: 'rgba(45,212,122,0.05)', color: '#a3b8a8' }}>{b}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-20">
-          <h2 className="text-center text-3xl font-bold mb-8">Everything you need to run AI at scale</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {features.map((feature) => (
+        {/* ══ FEATURES ══ */}
+        <section className="py-24">
+          <SectionLabel>Capabilities</SectionLabel>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+            Everything you need to run AI at scale
+          </h2>
+          <p className="mt-4 max-w-lg" style={{ color: '#a3b8a8' }}>Built for OpenClaw operators who want visibility, control, and lower costs.</p>
+
+          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f) => (
               <article
-                key={feature.title}
-                className="relative rounded-xl border border-white/10 bg-gray-900/70 p-5"
+                key={f.title}
+                className="group relative overflow-hidden rounded-2xl p-7 transition-all duration-300 hover:-translate-y-1.5"
+                style={{ border: '1px solid rgba(45,212,122,0.12)', background: '#0f2418' }}
+                onMouseEnter={(e) => { (e.currentTarget.querySelector('.top-line') as HTMLElement | null)?.style.setProperty('opacity', '1'); }}
+                onMouseLeave={(e) => { (e.currentTarget.querySelector('.top-line') as HTMLElement | null)?.style.setProperty('opacity', '0'); }}
               >
-                {feature.comingSoon ? (
-                  <span className="absolute right-3 top-3 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300">
-                    Coming soon
-                  </span>
-                ) : null}
-                <div className="text-2xl">{feature.icon}</div>
-                <h3 className="mt-3 pr-20 text-base font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-300">{feature.description}</p>
+                <div className="top-line absolute inset-x-0 top-0 h-[2px] rounded-t-2xl transition-opacity duration-300" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)', opacity: 0 }} />
+                <div className="absolute right-4 top-4 flex flex-col items-end gap-1.5">
+                  {'exclusive' in f && f.exclusive && (
+                    <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold" style={{ border: '1px solid rgba(255,59,111,0.4)', background: 'rgba(255,59,111,0.12)', color: '#ff6b8a' }}>
+                      {f.exclusive} only
+                    </span>
+                  )}
+                  {f.soon && (
+                    <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-[#ff6b8a]" style={{ border: '1px solid rgba(255,59,111,0.25)', background: 'rgba(255,59,111,0.07)' }}>
+                      Coming soon
+                    </span>
+                  )}
+                </div>
+                <div className={`mb-5 flex h-11 w-11 items-center justify-center rounded-[13px] border text-xl ${f.iconBg}`}>
+                  {f.icon}
+                </div>
+                <h3 className="text-base font-semibold text-[#f1f5f0]">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: '#a3b8a8' }}>{f.desc}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mt-20">
-          <h2 className="text-center text-3xl font-bold">Simple pricing for every stage</h2>
-          <p className="mt-3 text-center text-sm text-gray-400">Sign up now to lock in founding member pricing — guaranteed for life.</p>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
+        {/* ══ PRICING ══ */}
+        <section className="py-24">
+          <SectionLabel>Access Levels</SectionLabel>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+            Simple pricing for every stage
+          </h2>
+          <p className="mt-4 max-w-lg" style={{ color: '#a3b8a8' }}>Sign up now to lock in founding member pricing — guaranteed for life.</p>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
             {pricing.map((tier) => (
               <article
                 key={tier.name}
-                className={`relative rounded-2xl border p-6 ${
-                  tier.popular
-                    ? 'border-indigo-400 bg-indigo-500/10 shadow-lg shadow-indigo-900/40'
-                    : 'border-white/10 bg-gray-900/70'
-                }`}
+                className="relative overflow-hidden rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5"
+                style={tier.featured ? {
+                  border: '1px solid rgba(255,59,111,0.35)',
+                  background: 'linear-gradient(180deg, rgba(255,59,111,0.05), #0f2418)',
+                  boxShadow: '0 0 40px rgba(255,59,111,0.06)',
+                } : {
+                  border: '1px solid rgba(45,212,122,0.12)',
+                  background: '#0f2418',
+                }}
               >
-                {tier.popular ? (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white">
-                    Most Popular
-                  </span>
-                ) : null}
-                <h3 className="text-lg font-semibold">{tier.name}</h3>
-                <p className="mt-2 text-3xl font-extrabold">{tier.price}</p>
-                <ul className="mt-5 space-y-2 text-sm text-gray-300">
-                  {tier.details.map((detail) => (
-                    <li key={detail}>• {detail}</li>
+                {tier.featured && (
+                  <>
+                    <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)' }} />
+                    <span className="absolute right-5 top-5 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white" style={{ background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)' }}>Most Popular</span>
+                  </>
+                )}
+                <h3 className="text-xl font-bold text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.name}</h3>
+                <p className="mt-0.5 text-[11px]" style={{ color: '#6a7f6f', fontFamily: 'var(--font-jetbrains, monospace)' }}>{tier.label}</p>
+                <div className="mt-4 flex items-end gap-1">
+                  <span className="text-4xl font-extrabold tracking-tight text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.price}</span>
+                  <span className="mb-1 text-sm" style={{ color: '#6a7f6f' }}>{tier.period}</span>
+                </div>
+                <ul className="mt-6 space-y-2.5">
+                  {tier.items.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: '#a3b8a8' }}>
+                      <span className="text-xs text-[#2dd47a]">✓</span> {item}
+                    </li>
+                  ))}
+                  {tier.missing.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: '#6a7f6f' }}>
+                      <span className="text-xs">—</span> {item}
+                    </li>
                   ))}
                 </ul>
                 {tier.external ? (
                   <Link
-                    href={tier.ctaHref}
+                    href={tier.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-md border border-gray-700 bg-gray-900 text-sm font-medium hover:bg-gray-800"
+                    className="mt-8 block w-full rounded-xl py-2.5 text-center text-sm font-medium transition hover:-translate-y-px"
+                    style={{ border: '1px solid rgba(45,212,122,0.2)', background: 'rgba(45,212,122,0.04)', color: '#a3b8a8' }}
                   >
-                    {tier.ctaLabel}
+                    {tier.cta}
                   </Link>
                 ) : (
                   <a
-                    href={tier.ctaHref}
-                    className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-md bg-indigo-500 text-sm font-semibold text-white hover:bg-indigo-400"
+                    href={tier.href}
+                    className="mt-8 block w-full rounded-xl py-2.5 text-center text-sm font-semibold text-white transition hover:-translate-y-px"
+                    style={tier.featured ? {
+                      background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)',
+                      boxShadow: '0 4px 16px rgba(255,59,111,0.2)',
+                    } : {
+                      border: '1px solid rgba(45,212,122,0.2)',
+                      background: 'rgba(45,212,122,0.04)',
+                      color: '#a3b8a8',
+                    }}
                   >
-                    {tier.ctaLabel}
+                    {tier.cta}
                   </a>
                 )}
               </article>
@@ -432,98 +464,125 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="mt-20 rounded-2xl border border-white/10 bg-gray-900/50 px-8 py-10 md:px-10">
-          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-            <div>
-              <h2 className="text-2xl font-bold">Shape what we build next</h2>
-              <p className="mt-2 max-w-xl text-sm text-gray-300">
-                Early members get a direct line to the roadmap. Vote on features, submit requests, and watch your ideas ship. AiPipe router, Stripe billing, and full gamification are all up next.
+        {/* ══ ROADMAP ══ */}
+        <section className="py-24">
+          <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-md">
+              <SectionLabel>Trajectory</SectionLabel>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+                Shape what we build next
+              </h2>
+              <p className="mt-4 leading-relaxed" style={{ color: '#a3b8a8' }}>
+                Early members get a direct line to the roadmap. Vote on features, submit requests, and watch your ideas ship.
               </p>
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {['✅ Kanban + Agent Chat', '✅ Cost Savings Tracking', '🔜 AiPipe Router', '🔜 Stripe Billing'].map(
-                  (item) => (
-                    <li
-                      key={item}
-                      className="rounded-full border border-white/10 bg-gray-800 px-3 py-1 text-xs text-gray-200"
-                    >
-                      {item}
-                    </li>
-                  ),
-                )}
-              </ul>
+              <Link
+                href="/roadmap"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-medium transition hover:gap-3"
+                style={{ color: '#ff6b8a' }}
+              >
+                View full roadmap →
+              </Link>
             </div>
-            <Link
-              href="/roadmap"
-              className="inline-flex h-11 shrink-0 items-center justify-center rounded-md border border-indigo-400/60 px-6 text-sm font-semibold text-indigo-200 transition hover:border-indigo-300 hover:text-indigo-100"
-            >
-              View full roadmap →
-            </Link>
+
+            <div className="w-full max-w-sm space-y-2.5">
+              {[
+                { done: true,  label: 'Kanban + Agent Chat' },
+                { done: true,  label: 'Cost Savings Tracking' },
+                { done: true,  label: '3-Pane Dashboard' },
+                { done: false, label: 'AiPipe LLM Router' },
+                { done: false, label: 'XP & Streaks' },
+                { done: false, label: 'Stripe Billing' },
+              ].map(({ done, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 hover:translate-x-1.5"
+                  style={done ? {
+                    border: '1px solid rgba(45,212,122,0.25)',
+                    background: 'rgba(45,212,122,0.05)',
+                    color: '#5eeaa0',
+                  } : {
+                    border: '1px solid rgba(45,212,122,0.1)',
+                    background: '#0f2418',
+                    color: '#a3b8a8',
+                  }}
+                >
+                  <span>{done ? '✅' : '🔜'}</span>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        <section
-          id="waitlist"
-          className="mt-20 rounded-2xl border border-indigo-400/40 bg-gradient-to-br from-indigo-900/40 to-gray-900 p-8 md:p-10"
-        >
-          <h2 className="text-3xl font-extrabold">Join free. Ship smarter.</h2>
-          <p className="mt-3 max-w-2xl text-gray-200">
-            Get early access to Mission Control, lock in founding member pricing, and help shape what we build. Takes 10 seconds.
-          </p>
+        {/* ══ WAITLIST CTA ══ */}
+        <section id="waitlist" className="py-24">
+          <div className="relative overflow-hidden rounded-3xl px-8 py-16 text-center md:px-16" style={{ border: '1px solid rgba(255,59,111,0.2)', background: 'linear-gradient(180deg, #0f2418, #0a1a12)' }}>
+            <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-3xl" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)' }} />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-64" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,59,111,0.07), transparent 70%)' }} />
 
-          <ul className="mt-6 space-y-2 text-sm text-gray-100 md:text-base">
-            <li>⚡ Founding member pricing — locked in forever at sign-up</li>
-            <li>🚀 Early access before public launch</li>
-            <li>🗳️ Direct vote on roadmap features</li>
-            <li>🔒 No credit card, no commitment</li>
-          </ul>
+            <div className="relative">
+              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+                Join free.{' '}
+                <span style={{ background: 'linear-gradient(135deg, #ff3b6f, #ff6b8a, #2dd47a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Ship smarter.
+                </span>
+              </h2>
+              <p className="mx-auto mt-4 max-w-md" style={{ color: '#a3b8a8' }}>
+                Get early access, lock in founding member pricing, and help shape what we build. Takes 10 seconds.
+              </p>
 
-          <form onSubmit={handleJoinWaitlist} className="mt-7 flex flex-col gap-3 md:flex-row">
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@company.com"
-              className="h-11 flex-1 rounded-md border border-white/20 bg-gray-950/80 px-4 text-white placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none"
-              required
-            />
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-11 rounded-md bg-indigo-500 px-6 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-70 whitespace-nowrap"
-            >
-              {isSubmitting ? 'Securing your spot...' : 'Get early access →'}
-            </button>
-          </form>
+              <ul className="mx-auto mt-7 flex flex-col items-center gap-2 text-sm" style={{ color: '#a3b8a8' }}>
+                <li><span className="text-[#2dd47a]">⚡</span> Founding pricing — locked in forever at sign-up</li>
+                <li><span className="text-[#2dd47a]">🚀</span> Early access before public launch</li>
+                <li><span className="text-[#2dd47a]">🗳️</span> Direct vote on roadmap features</li>
+              </ul>
 
-          <p className="mt-3 text-sm text-indigo-100">Join {count} builders already on the waitlist</p>
+              <form onSubmit={handleSubmit} className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  className="h-12 flex-1 rounded-xl px-4 text-[#f1f5f0] placeholder-[#6a7f6f] outline-none transition"
+                  style={{ border: '1px solid rgba(45,212,122,0.25)', background: 'rgba(45,212,122,0.04)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,59,111,0.5)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,59,111,0.1)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(45,212,122,0.25)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-12 rounded-xl px-6 text-sm font-semibold text-white transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
+                  style={{ background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)', boxShadow: '0 4px 20px rgba(255,59,111,0.25)' }}
+                >
+                  {isSubmitting ? 'Securing your spot...' : 'Get early access →'}
+                </button>
+              </form>
 
-          {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
-          {success ? <p className="mt-3 text-sm text-emerald-300">{success}</p> : null}
+              <p className="mt-4 text-xs" style={{ color: '#6a7f6f' }}>
+                {count > 0 ? `Join ${count} builders already on the waitlist` : 'No credit card · No commitment'}
+              </p>
+              {error && <p className="mt-3 text-sm text-[#ff6b8a]">{error}</p>}
+              {success && <p className="mt-3 text-sm text-[#2dd47a]">{success}</p>}
+            </div>
+          </div>
         </section>
+
       </div>
 
-      <footer className="border-t border-white/10 py-6 text-xs text-gray-400">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 md:flex-row md:px-10">
-          <p>🧭 archonhq · Built with OpenClaw</p>
-          <div className="flex items-center gap-4">
-            <Link
-              href="https://github.com/MikeS071/Mission-Control"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white"
-            >
-              GitHub
-            </Link>
-            <Link href="/signin" className="hover:text-white">
-              Sign In
-            </Link>
-            <Link href="/roadmap" className="hover:text-white">
-              Roadmap
-            </Link>
+      {/* ── Footer ── */}
+      <footer className="relative z-10 py-7" style={{ borderTop: '1px solid rgba(45,212,122,0.1)' }}>
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs md:flex-row md:px-10" style={{ fontFamily: 'var(--font-jetbrains, monospace)', color: '#6a7f6f' }}>
+          <p className="font-bold text-[#a3b8a8]">🧭 archonhq · Built with OpenClaw</p>
+          <div className="flex gap-5">
+            <Link href="https://github.com/MikeS071/Mission-Control" target="_blank" rel="noreferrer" className="transition hover:text-[#ff6b8a]">GitHub</Link>
+            <Link href="/signin" className="transition hover:text-[#ff6b8a]">Sign In</Link>
+            <Link href="/roadmap" className="transition hover:text-[#ff6b8a]">Roadmap</Link>
           </div>
           <p>© 2026 archonhq.ai</p>
         </div>
       </footer>
+
     </main>
   );
 }
