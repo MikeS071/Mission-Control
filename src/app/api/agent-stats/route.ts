@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { agentStats } from '@/db/schema';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 
 type AgentStatInput = {
   agentName?: string;
@@ -11,7 +11,7 @@ type AgentStatInput = {
 };
 
 export async function GET(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rows = await db.execute(sql`
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = (await req.json()) as AgentStatInput;

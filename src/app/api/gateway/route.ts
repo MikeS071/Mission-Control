@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { gatewayConnections } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 import { checkGatewayHealth, hashToken } from '@/lib/gateway';
 
 type CreateGatewayBody = {
@@ -12,7 +12,7 @@ type CreateGatewayBody = {
 };
 
 export async function GET(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rows = await db
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = (await req.json()) as CreateGatewayBody;

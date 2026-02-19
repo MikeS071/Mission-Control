@@ -353,7 +353,7 @@ export function KanbanBoard() {
         saved: `$${savedCost.toFixed(2)}`,
         agents: String(activeAgents),
         taskSummary: `${pct}%`,
-        tokenPct: tokenPct !== null ? `${tokenPct}%` : '--',
+        tokenPct: typeof tokenPct === 'number' ? `${tokenPct}%` : '--',
       });
     } catch {
       // noop

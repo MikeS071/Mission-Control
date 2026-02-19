@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { tasks } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
