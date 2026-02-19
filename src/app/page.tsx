@@ -196,6 +196,12 @@ export default function LandingPage() {
           <span className="text-lg font-extrabold tracking-tight">🧭 archonhq</span>
           <div className="flex items-center gap-3">
             <Link
+              href="/roadmap"
+              className="hidden items-center rounded-md px-4 text-sm font-medium text-gray-300 transition hover:bg-white/10 sm:inline-flex sm:h-10"
+            >
+              Roadmap
+            </Link>
+            <Link
               href="/signin"
               className="inline-flex h-10 items-center rounded-md px-4 text-sm font-medium text-gray-200 transition hover:bg-white/10"
             >
@@ -253,26 +259,21 @@ export default function LandingPage() {
               <p className="mt-2 text-sm leading-6 text-gray-300">{item.description}</p>
             </article>
           ))}
-        </section>
-
-        <section className="mt-16">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            {features.map((feature) => (
-              <article
-                key={feature.title}
-                className="relative rounded-xl border border-white/10 bg-gray-900/70 p-5"
-              >
-                {feature.comingSoon ? (
-                  <span className="absolute right-3 top-3 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300">
-                    Coming soon
-                  </span>
-                ) : null}
-                <div className="text-2xl">{feature.icon}</div>
-                <h3 className="mt-3 pr-20 text-base font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-300">{feature.description}</p>
-              </article>
-            ))}
-          </div>
+          {features.map((feature) => (
+            <article
+              key={feature.title}
+              className="relative rounded-xl border border-white/10 bg-gray-900/70 p-5"
+            >
+              {feature.comingSoon ? (
+                <span className="absolute right-3 top-3 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300">
+                  Coming soon
+                </span>
+              ) : null}
+              <div className="text-2xl">{feature.icon}</div>
+              <h3 className="mt-3 pr-20 text-base font-semibold">{feature.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-300">{feature.description}</p>
+            </article>
+          ))}
         </section>
 
         <section className="mt-20">
@@ -318,6 +319,36 @@ export default function LandingPage() {
                 )}
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-20 rounded-2xl border border-white/10 bg-gray-900/50 px-8 py-10 md:px-10">
+          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-2xl font-bold">What&apos;s coming next?</h2>
+              <p className="mt-2 max-w-xl text-sm text-gray-300">
+                AiPipe router, gamification, multi-tenancy, Stripe billing — see what&apos;s
+                shipped, in progress, and planned. Vote for what matters to you.
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {['✅ Kanban + Activity Feed', '🔜 AiPipe Router', '🔜 XP & Streaks', '🔜 Stripe Billing'].map(
+                  (item) => (
+                    <li
+                      key={item}
+                      className="rounded-full border border-white/10 bg-gray-800 px-3 py-1 text-xs text-gray-200"
+                    >
+                      {item}
+                    </li>
+                  ),
+                )}
+              </ul>
+            </div>
+            <Link
+              href="/roadmap"
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-md border border-indigo-400/60 px-6 text-sm font-semibold text-indigo-200 transition hover:border-indigo-300 hover:text-indigo-100"
+            >
+              View full roadmap →
+            </Link>
           </div>
         </section>
 

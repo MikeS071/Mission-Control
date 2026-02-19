@@ -3,9 +3,12 @@ import { heartbeats } from '@/db/schema';
 
 const gatewayUrl = process.env.GATEWAY_URL || 'http://127.0.0.1:18789';
 
+// Default to tenant 1 (Mike's workspace) for the background heartbeat worker
+const DEFAULT_TENANT_ID = 1;
+
 async function writeHeartbeat(source: string, status: string, payload: string, checkedAt: Date) {
   try {
-    await db.insert(heartbeats).values({ source, status, payload, checkedAt });
+    await db.insert(heartbeats).values({ tenantId: DEFAULT_TENANT_ID, source, status, payload, checkedAt });
   } catch (error) {
     console.error('Failed to write heartbeat', error);
   }
