@@ -23,7 +23,7 @@ export NODE_ENV=production
 export PORT_HTTPS=3002
 export PORT_HTTP=3003
 export HTTP_BIND=0.0.0.0
-export NEXTAUTH_URL=https://ocprd-sgp1-01.tailb9b7d3.ts.net:3002
+export NEXTAUTH_URL=https://dev.archonhq.ai
 
 echo "Building dev instance..."
 npx next build > /tmp/mc-dev-build.log 2>&1

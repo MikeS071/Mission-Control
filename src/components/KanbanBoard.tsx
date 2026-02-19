@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { Bot, ChevronDown, ChevronRight, Clock3, Pencil, Plus, Settings2 } from 'lucide-react';
+import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, Pencil, Plus, Settings2, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -32,11 +32,30 @@ type TaskForm = {
   priority: string;
   status: string;
   tags: string;
-  assignedAgent: string;
   checklist: ChecklistItem[];
 };
 
 type Filters = { search: string; priority: string; goal: string; agent: string; tags: string };
+
+type AgentStatus = 'working' | 'idle' | 'inactive';
+
+type ActiveAgent = {
+  agentName: string;
+  tokens: number;
+  costUsd: string;
+  lastSeenAt: string;
+  status: AgentStatus;
+};
+
+type StatsSummary = {
+  pctComplete: number;
+  activeAgents: number;
+  totalCostUsd: string;
+  tasksDoneToday: number;
+  totalTasks: number;
+  doneTasks: number;
+  totalTokens: number;
+};
 
 const STATUS_COLUMNS = ['todo', 'in_progress', 'done'];
 const STATUS_LABELS: Record<string, string> = { todo: 'Todo', in_progress: 'In Progress', done: 'Done' };
@@ -44,8 +63,7 @@ const COLUMN_LABELS_KEY = 'mc-column-labels';
 const COLUMN_COLLAPSED_KEY = 'mc-column-collapsed';
 const WIP_LIMITS_KEY = 'mc-wip-limits';
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const AGENTS = ['Unassigned', 'Navi (main)', 'Sub-agent 1', 'Sub-agent 2'];
-const emptyForm: TaskForm = { title: '', description: '', goal: '', priority: 'Medium', status: 'todo', tags: '', assignedAgent: 'Unassigned', checklist: [] };
+const emptyForm: TaskForm = { title: '', description: '', goal: '', priority: 'Medium', status: 'todo', tags: '', checklist: [] };
 const emptyFilters: Filters = { search: '', priority: 'All', goal: 'All', agent: 'All', tags: '' };
 
 function normalizeStatus(status: string) {
@@ -67,10 +85,42 @@ function mapTask(t: ApiTask): Task {
   };
 }
 
-function StatsTile({ label, value, color }: { label: string; value: string; color: string }) {
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+function getTaskTags(tags: string): string[] {
+  return (tags || '').split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+}
+
+function isTaskBlocked(tags: string): boolean {
+  const list = getTaskTags(tags);
+  return list.includes('blocked') || list.includes('needs-human') || list.includes('needs human');
+}
+
+function isTaskNeedsHuman(tags: string): boolean {
+  const list = getTaskTags(tags);
+  return list.includes('needs-human') || list.includes('needs human');
+}
+
+function toggleBlockedTag(tags: string, flagKey: 'blocked' | 'needs-human'): string {
+  const list = getTaskTags(tags);
+  const otherFlags = ['blocked', 'needs-human', 'needs human'];
+  const hasFlag = list.some((t) => otherFlags.includes(t));
+  const cleaned = list.filter((t) => !otherFlags.includes(t));
+  if (hasFlag) {
+    return cleaned.join(', ');
+  }
+  return [...cleaned, flagKey].join(', ');
+}
+
+function StatsTile({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
     <div className={`h-32 w-44 rounded-lg border-2 ${color} bg-gray-900 p-3 flex flex-col items-center justify-center`}>
       <div className="text-2xl font-bold text-white text-center">{value}</div>
+      {sub && <div className="text-[10px] text-gray-500 mt-0.5">{sub}</div>}
       <div className="mt-2 text-xs text-center text-gray-400">{label}</div>
     </div>
   );
@@ -116,13 +166,118 @@ function TaskFormFields({ value, onChange, goalOptions }: { value: TaskForm; onC
           {goalOptions.map((goalId) => <option key={goalId} value={goalId}>{goalId}</option>)}
         </select>
         <select className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" value={value.priority} onChange={(e) => onChange({ ...value, priority: e.target.value })}>{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-        <select className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" value={value.status} onChange={(e) => onChange({ ...value, status: e.target.value })}>{STATUS_COLUMNS.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select>
-        <select className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm" value={value.assignedAgent} onChange={(e) => onChange({ ...value, assignedAgent: e.target.value })}>{AGENTS.map((agent) => <option key={agent} value={agent}>{agent}</option>)}</select>
+        <select className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm col-span-2" value={value.status} onChange={(e) => onChange({ ...value, status: e.target.value })}>{STATUS_COLUMNS.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select>
       </div>
       <ChecklistEditor items={value.checklist} onChange={(checklist) => onChange({ ...value, checklist })} />
     </div>
   );
 }
+
+// ─── Agent Team Panel ─────────────────────────────────────────────────────────
+
+function timeSince(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(diffMs) || diffMs < 0) return 'just now';
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+function activityWord(status: AgentStatus): string {
+  if (status === 'working') return 'Active';
+  if (status === 'idle') return 'Idle';
+  return 'Offline';
+}
+
+function ActivityLights({ status }: { status: AgentStatus }) {
+  const base = 'h-1.5 w-1.5 rounded-full';
+  if (status === 'working') {
+    return (
+      <span className="flex items-center gap-0.5">
+        <span className={`${base} bg-emerald-400 animate-[pulse_1.0s_ease-in-out_infinite]`} />
+        <span className={`${base} bg-emerald-400 animate-[pulse_1.0s_ease-in-out_0.33s_infinite]`} />
+        <span className={`${base} bg-emerald-400 animate-[pulse_1.0s_ease-in-out_0.66s_infinite]`} />
+      </span>
+    );
+  }
+  if (status === 'idle') {
+    return (
+      <span className="flex items-center gap-0.5">
+        <span className={`${base} bg-yellow-400 animate-[pulse_2.5s_ease-in-out_infinite]`} />
+        <span className={`${base} bg-yellow-400/50`} />
+        <span className={`${base} bg-yellow-400/20`} />
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-0.5">
+      <span className={`${base} bg-gray-600`} />
+      <span className={`${base} bg-gray-700`} />
+      <span className={`${base} bg-gray-800`} />
+    </span>
+  );
+}
+
+function AgentTile({ name, status, lastSeen, isNavi }: { name: string; status: AgentStatus; lastSeen?: string; isNavi?: boolean }) {
+  return (
+    <div className={`rounded-md border p-2 space-y-1.5 ${status === 'working' ? 'border-emerald-700/60 bg-emerald-950/20' : 'border-gray-800 bg-gray-950'}`}>
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Bot className={`h-3.5 w-3.5 flex-shrink-0 ${status === 'working' ? 'text-emerald-400' : 'text-gray-500'}`} />
+          <span className="text-xs font-semibold text-white truncate" title={name}>{isNavi ? '🧭 Navi' : name}</span>
+        </div>
+        <ActivityLights status={status} />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className={`text-[10px] font-medium ${status === 'working' ? 'text-emerald-400' : status === 'idle' ? 'text-yellow-400' : 'text-gray-500'}`}>{activityWord(status)}</span>
+        {lastSeen && <span className="text-[10px] text-gray-600">{timeSince(lastSeen)}</span>}
+      </div>
+    </div>
+  );
+}
+
+function AgentTeamPanel({ gatewayOk }: { gatewayOk: boolean }) {
+  const [agents, setAgents] = useState<ActiveAgent[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch('/api/agents/active', { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as ActiveAgent[];
+        setAgents(Array.isArray(data) ? data : []);
+      }
+    };
+    void load();
+    const interval = setInterval(() => void load(), 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const naviStatus: AgentStatus = gatewayOk ? 'working' : 'inactive';
+  const subAgents = agents.filter((a) => a.agentName.toLowerCase() !== 'navi');
+
+  return (
+    <div className="w-44 flex-shrink-0 space-y-2">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 px-1">Team</div>
+      <AgentTile name="Navi" status={naviStatus} isNavi />
+      {subAgents.map((agent) => (
+        <AgentTile
+          key={agent.agentName}
+          name={agent.agentName}
+          status={agent.status}
+          lastSeen={agent.lastSeenAt}
+        />
+      ))}
+      {subAgents.length === 0 && (
+        <div className="text-[10px] text-gray-600 px-1">No sub-agents active</div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main KanbanBoard ─────────────────────────────────────────────────────────
 
 export function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -132,6 +287,7 @@ export function KanbanBoard() {
   const [editTask, setEditTask] = useState<TaskForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--' });
+  const [gatewayOk, setGatewayOk] = useState(false);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
@@ -154,27 +310,32 @@ export function KanbanBoard() {
   }, []);
 
   const loadStats = useCallback(async () => {
-    let tokens = '--';
-    let cost = '--';
-    let agents = '--';
     try {
-      const [gatewayRes, agentStatsRes] = await Promise.all([fetch('/api/gateway', { cache: 'no-store' }), fetch('/api/agent-stats', { cache: 'no-store' })]);
+      const [summaryRes, gatewayRes] = await Promise.all([
+        fetch('/api/stats/summary', { cache: 'no-store' }),
+        fetch('/api/gateway', { cache: 'no-store' }),
+      ]);
+
+      const summary = (summaryRes.ok ? await summaryRes.json() : {}) as Partial<StatsSummary>;
       const gatewayData = (gatewayRes.ok ? await gatewayRes.json() : []) as Array<{ status: string }>;
       const connected = gatewayData.filter((item) => item.status === 'ok').length;
-      tokens = String(connected);
-      cost = `/${gatewayData.length}`;
-      const agentStatsData = (agentStatsRes?.ok ? await agentStatsRes.json() : []) as { agentName: string }[];
-      const activeFromTasks = new Set(tasks.map((t) => t.assignedAgent).filter(Boolean)).size;
-      agents = String(activeFromTasks || agentStatsData.length || 0);
+      setGatewayOk(connected > 0);
+
+      const totalTokens = summary.totalTokens ?? 0;
+      const totalCost = parseFloat(summary.totalCostUsd ?? '0');
+      const activeAgents = summary.activeAgents ?? 0;
+      const pct = summary.pctComplete ?? 0;
+
+      setStats({
+        tokens: formatTokens(totalTokens),
+        cost: `$${totalCost.toFixed(2)}`,
+        agents: String(activeAgents),
+        taskSummary: `${pct}%`,
+      });
     } catch {
       // noop
     }
-
-    const total = tasks.length;
-    const completed = tasks.filter((t) => t.status === 'done').length;
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    setStats({ tokens, cost, agents, taskSummary: `${pct}%` });
-  }, [tasks]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -282,6 +443,30 @@ export function KanbanBoard() {
     }
   };
 
+  const toggleBlocked = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newTags = toggleBlockedTag(task.tags, 'blocked');
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, tags: newTags } : t)));
+    try {
+      const updated = await updateTask(task.id, { tags: newTags });
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+    } catch {
+      void load();
+    }
+  };
+
+  const toggleNeedsHuman = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newTags = toggleBlockedTag(task.tags, 'needs-human');
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, tags: newTags } : t)));
+    try {
+      const updated = await updateTask(task.id, { tags: newTags });
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+    } catch {
+      void load();
+    }
+  };
+
   const openAddForColumn = (status: string) => {
     setNewTask({ ...emptyForm, status, goal: goalOptions[0] || '' });
     setErrorMessage(null);
@@ -290,10 +475,15 @@ export function KanbanBoard() {
 
   const createTask = async () => {
     setErrorMessage(null);
-    const payload = { ...newTask, assignedAgent: newTask.assignedAgent === 'Unassigned' ? null : newTask.assignedAgent, checklist: newTask.checklist.filter((item) => item.text.trim().length > 0) };
+    const payload = { ...newTask, checklist: newTask.checklist.filter((item) => item.text.trim().length > 0) };
     const response = await fetch('/api/tasks', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
     if (!response.ok) {
-      setErrorMessage('Failed to create goal');
+      let detail = 'Failed to create goal';
+      try {
+        const err = (await response.json()) as { error?: string };
+        if (err.error) detail = err.error;
+      } catch { /* noop */ }
+      setErrorMessage(detail);
       return;
     }
     const created = mapTask((await response.json()) as ApiTask);
@@ -305,7 +495,7 @@ export function KanbanBoard() {
   const saveTask = async () => {
     if (!editingId) return;
     setErrorMessage(null);
-    const payload = { ...editTask, assignedAgent: editTask.assignedAgent === 'Unassigned' ? null : editTask.assignedAgent, checklist: editTask.checklist.filter((item) => item.text.trim().length > 0) };
+    const payload = { ...editTask, checklist: editTask.checklist.filter((item) => item.text.trim().length > 0) };
     const response = await fetch(`/api/tasks/${editingId}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
     if (!response.ok) {
       setErrorMessage('Failed to save goal');
@@ -327,7 +517,7 @@ export function KanbanBoard() {
 
   const openEdit = (task: Task) => {
     setEditingId(task.id);
-    setEditTask({ title: task.title, description: task.description, goal: task.goalId || task.goal || '', priority: task.priority, status: task.status, tags: task.tags || '', assignedAgent: task.assignedAgent || 'Unassigned', checklist: task.checklist || [] });
+    setEditTask({ title: task.title, description: task.description, goal: task.goalId || task.goal || '', priority: task.priority, status: task.status, tags: task.tags || '', checklist: task.checklist || [] });
     setErrorMessage(null);
     setIsEditOpen(true);
   };
@@ -371,6 +561,7 @@ export function KanbanBoard() {
 
   return (
     <div className="space-y-4">
+      {/* Stats tiles */}
       <div className="flex items-center justify-between">
         <div className="flex gap-3 overflow-x-auto pb-1">
           <StatsTile label="Session Tokens" value={stats.tokens} color="border-blue-700" />
@@ -380,6 +571,7 @@ export function KanbanBoard() {
         </div>
       </div>
 
+      {/* Filters */}
       <div className="rounded-lg border border-gray-800 bg-gray-900 p-3">
         <div className="grid gap-2 md:grid-cols-6">
           <input className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" placeholder="Search title/description" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
@@ -394,94 +586,142 @@ export function KanbanBoard() {
 
       {errorMessage && <div className="rounded-md border border-red-800 bg-red-950/40 p-2 text-xs text-red-200">{errorMessage}</div>}
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-3 overflow-x-auto pb-4">
-          {grouped.map(({ col, items }) => {
-            const isCollapsed = Boolean(collapsedColumns[col]);
-            const limit = wipLimits[col];
-            const isOverWip = typeof limit === 'number' && limit > 0 && items.length > limit;
-            const titleColor = isOverWip ? 'text-amber-300' : 'text-gray-400';
+      {/* Main area: Agent panel + Kanban columns */}
+      <div className="flex gap-4">
+        {/* Agent Team Panel */}
+        <AgentTeamPanel gatewayOk={gatewayOk} />
 
-            return (
-              <div key={col} className="w-80 flex-shrink-0">
-                <div className={`mb-2 rounded-md border px-2 py-1 ${isOverWip ? 'border-amber-600 bg-amber-950/30' : 'border-transparent bg-transparent'}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wide ${titleColor}`}>
-                      <button type="button" onClick={() => toggleColumnCollapsed(col)} className="rounded p-0.5 hover:bg-gray-800" aria-label={isCollapsed ? 'Expand column' : 'Collapse column'}>
-                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                      </button>
-                      {editingColumn === col ? <input autoFocus value={editingLabelValue} onChange={(e) => setEditingLabelValue(e.target.value)} onBlur={() => saveColumnLabel(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveColumnLabel(col); if (e.key === 'Escape') setEditingColumn(null); }} className="w-32 rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs normal-case text-white" /> : <span className="normal-case">{columnLabels[col] || STATUS_LABELS[col]}</span>}
-                      <Badge variant="outline" className="text-[10px]">({items.length})</Badge>
-                      {typeof limit === 'number' && limit > 0 && <Badge variant="outline" className="text-[10px]">WIP {limit}</Badge>}
+        {/* Kanban columns */}
+        <div className="flex-1 min-w-0">
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex gap-3 overflow-x-auto pb-4">
+              {grouped.map(({ col, items }) => {
+                const isCollapsed = Boolean(collapsedColumns[col]);
+                const limit = wipLimits[col];
+                const isOverWip = typeof limit === 'number' && limit > 0 && items.length > limit;
+                const titleColor = isOverWip ? 'text-amber-300' : 'text-gray-400';
+
+                return (
+                  <div key={col} className="w-80 flex-shrink-0">
+                    <div className={`mb-2 rounded-md border px-2 py-1 ${isOverWip ? 'border-amber-600 bg-amber-950/30' : 'border-transparent bg-transparent'}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wide ${titleColor}`}>
+                          <button type="button" onClick={() => toggleColumnCollapsed(col)} className="rounded p-0.5 hover:bg-gray-800" aria-label={isCollapsed ? 'Expand column' : 'Collapse column'}>
+                            {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {editingColumn === col ? <input autoFocus value={editingLabelValue} onChange={(e) => setEditingLabelValue(e.target.value)} onBlur={() => saveColumnLabel(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveColumnLabel(col); if (e.key === 'Escape') setEditingColumn(null); }} className="w-32 rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs normal-case text-white" /> : <span className="normal-case">{columnLabels[col] || STATUS_LABELS[col]}</span>}
+                          <Badge variant="outline" className="text-[10px]">({items.length})</Badge>
+                          {typeof limit === 'number' && limit > 0 && <Badge variant="outline" className="text-[10px]">WIP {limit}</Badge>}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {(col === 'todo' || col === 'in_progress') && (
+                            <button type="button" onClick={() => openAddForColumn(col)} className="h-7 w-7 rounded border border-gray-700 p-0 text-gray-300 hover:bg-gray-800" aria-label={`Add ${STATUS_LABELS[col]} goal`}>
+                              <Plus className="mx-auto h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          <button type="button" onClick={() => startEditingLabel(col)} className="h-7 w-7 rounded border border-gray-700 p-0 text-gray-300 hover:bg-gray-800" aria-label="Edit column label"><Pencil className="mx-auto h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => startWipEdit(col)} className="h-7 w-7 rounded border border-gray-700 p-0 text-gray-300 hover:bg-gray-800" aria-label="Set WIP limit"><Settings2 className="mx-auto h-3.5 w-3.5" /></button>
+                        </div>
+                      </div>
+                      {editingWipColumn === col && <div className="mt-2 flex items-center gap-2"><input type="number" min={1} placeholder="No limit" value={editingWipValue} onChange={(e) => setEditingWipValue(e.target.value)} onBlur={() => saveWipLimit(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveWipLimit(col); if (e.key === 'Escape') setEditingWipColumn(null); }} className="w-24 rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-white" /><span className="text-[11px] text-gray-400">Set empty/0 to clear</span></div>}
                     </div>
-                    <div className="flex items-center gap-1">
-                      {(col === 'todo' || col === 'in_progress') && (
-                        <button type="button" onClick={() => openAddForColumn(col)} className="h-7 w-7 rounded border border-gray-700 p-0 text-gray-300 hover:bg-gray-800" aria-label={`Add ${STATUS_LABELS[col]} goal`}>
-                          <Plus className="mx-auto h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      <button type="button" onClick={() => startEditingLabel(col)} className="h-7 w-7 rounded border border-gray-700 p-0 text-gray-300 hover:bg-gray-800" aria-label="Edit column label"><Pencil className="mx-auto h-3.5 w-3.5" /></button>
-                      <button type="button" onClick={() => startWipEdit(col)} className="h-7 w-7 rounded border border-gray-700 p-0 text-gray-300 hover:bg-gray-800" aria-label="Set WIP limit"><Settings2 className="mx-auto h-3.5 w-3.5" /></button>
-                    </div>
-                  </div>
-                  {editingWipColumn === col && <div className="mt-2 flex items-center gap-2"><input type="number" min={1} placeholder="No limit" value={editingWipValue} onChange={(e) => setEditingWipValue(e.target.value)} onBlur={() => saveWipLimit(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveWipLimit(col); if (e.key === 'Escape') setEditingWipColumn(null); }} className="w-24 rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-white" /><span className="text-[11px] text-gray-400">Set empty/0 to clear</span></div>}
-                </div>
 
-                {!isCollapsed && (
-                  <Droppable droppableId={col}>
-                    {(provided, snapshot) => (
-                      <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-40 rounded-lg p-2 space-y-2 transition-colors ${snapshot.isDraggingOver ? 'bg-gray-800' : 'bg-gray-900'}`}>
-                        {items.map((task, i) => {
-                          const completeCount = task.checklist.filter((item) => item.checked).length;
-                          const totalCount = task.checklist.length;
-                          const isWorking = Boolean(workingByTask[task.id]);
+                    {!isCollapsed && (
+                      <Droppable droppableId={col}>
+                        {(provided, snapshot) => (
+                          <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-40 rounded-lg p-2 space-y-2 transition-colors ${snapshot.isDraggingOver ? 'bg-gray-800' : 'bg-gray-900'}`}>
+                            {items.map((task, i) => {
+                              const completeCount = task.checklist.filter((item) => item.checked).length;
+                              const totalCount = task.checklist.length;
+                              const isWorking = Boolean(workingByTask[task.id]);
+                              const blocked = isTaskBlocked(task.tags);
+                              const needsHuman = isTaskNeedsHuman(task.tags);
 
-                          return (
-                            <Draggable key={task.id} draggableId={String(task.id)} index={i}>
-                              {(p, s) => (
-                                <div ref={p.innerRef} {...p.draggableProps} className={`relative rounded border bg-gray-800 p-3 ${isWorking ? 'border-indigo-500/70 shadow-[0_0_18px_rgba(99,102,241,0.35)] animate-pulse' : 'border-gray-700'} ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
-                                  {isWorking && <div className="absolute right-2 top-2"><Bot className="h-4 w-4 text-indigo-300 animate-spin" /></div>}
-                                  <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
-                                    <div className="flex items-center gap-1">
-                                      {task.goalId && <Badge className="bg-indigo-600 text-white text-[10px]">{task.goalId}</Badge>}
-                                      <p className="text-sm font-medium text-white">{task.title}</p>
-                                    </div>
-                                    {task.description && <p className="mt-1 line-clamp-2 text-xs text-gray-400">{task.description}</p>}
-                                  </div>
-                                  {task.checklist.length > 0 && (
-                                    <div className="mt-2 space-y-1">
-                                      {task.checklist.map((item) => (
-                                        <label key={item.id} className="flex items-center gap-2 text-xs text-gray-300">
-                                          <input type="checkbox" checked={item.checked} readOnly />
-                                          <span className={item.checked ? 'line-through text-gray-500' : ''}>{item.text}</span>
-                                        </label>
-                                      ))}
+                              return (
+                                <Draggable key={task.id} draggableId={String(task.id)} index={i}>
+                                  {(p, s) => (
+                                    <div ref={p.innerRef} {...p.draggableProps} className={`relative rounded border bg-gray-800 p-3 ${blocked ? 'border-red-700/70 shadow-[0_0_12px_rgba(239,68,68,0.2)]' : isWorking ? 'border-indigo-500/70 shadow-[0_0_18px_rgba(99,102,241,0.35)] animate-pulse' : 'border-gray-700'} ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
+                                      {isWorking && !blocked && <div className="absolute right-2 top-2"><Bot className="h-4 w-4 text-indigo-300 animate-spin" /></div>}
+
+                                      {/* Blocked / Needs Human label */}
+                                      {blocked && (
+                                        <div className="mb-2 flex items-center gap-1.5">
+                                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white ${needsHuman ? 'bg-red-600' : 'bg-red-700'}`}>
+                                            <AlertTriangle className="h-2.5 w-2.5" />
+                                            {needsHuman ? 'NEEDS YOU' : 'BLOCKED'}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
+                                        <div className="flex items-center gap-1">
+                                          {task.goalId && <Badge className="bg-indigo-600 text-white text-[10px]">{task.goalId}</Badge>}
+                                          <p className="text-sm font-medium text-white">{task.title}</p>
+                                        </div>
+                                        {task.description && <p className="mt-1 line-clamp-2 text-xs text-gray-400">{task.description}</p>}
+                                      </div>
+
+                                      {task.checklist.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          {task.checklist.map((item) => (
+                                            <label key={item.id} className="flex items-center gap-2 text-xs text-gray-300">
+                                              <input type="checkbox" checked={item.checked} readOnly />
+                                              <span className={item.checked ? 'line-through text-gray-500' : ''}>{item.text}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                                        <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-600 bg-gray-950 px-2 py-1 text-xs">{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
+                                        <Badge variant="outline" className="text-xs">{task.goal}</Badge>
+                                        {task.checklist.length > 0 && <Badge variant="outline" className="text-xs">{completeCount}/{totalCount}</Badge>}
+                                        {task.assignedAgent && <Badge className="text-xs">{task.assignedAgent}</Badge>}
+                                        {task.tags && (() => {
+                                          const displayTags = task.tags.split(',').map(t => t.trim()).filter(t => t && !['blocked','needs-human','needs human'].includes(t.toLowerCase()));
+                                          return displayTags.length > 0 ? <Badge variant="outline" className="text-xs">{displayTags.join(', ')}</Badge> : null;
+                                        })()}
+                                      </div>
+
+                                      {/* Quick action buttons */}
+                                      <div className="mt-2 flex items-center gap-1 flex-wrap">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => void toggleBlocked(task, e)}
+                                          className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] transition-colors ${blocked && !needsHuman ? 'border-red-700 bg-red-900/40 text-red-300' : 'border-gray-700 text-gray-400 hover:border-red-700 hover:text-red-300'}`}
+                                          title="Toggle blocked"
+                                        >
+                                          <AlertTriangle className="h-2.5 w-2.5" />Blocked
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => void toggleNeedsHuman(task, e)}
+                                          className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] transition-colors ${needsHuman ? 'border-red-600 bg-red-900/40 text-red-300' : 'border-gray-700 text-gray-400 hover:border-red-600 hover:text-red-300'}`}
+                                          title="Toggle needs human"
+                                        >
+                                          <UserX className="h-2.5 w-2.5" />Needs you
+                                        </button>
+                                        <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => void toggleHistory(task.id)}><Clock3 className="mr-1 h-3 w-3" />History</Button>
+                                      </div>
+
+                                      {openHistoryTaskId === task.id && <div className="mt-2 rounded border border-gray-700 bg-gray-900 p-2"><EventTimeline events={historyByTask[task.id] || []} /></div>}
                                     </div>
                                   )}
-                                  <div className="mt-2 flex flex-wrap items-center gap-1">
-                                    <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-600 bg-gray-950 px-2 py-1 text-xs">{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-                                    <Badge variant="outline" className="text-xs">{task.goal}</Badge>
-                                    <Badge variant="outline" className="text-xs">{completeCount}/{totalCount} items</Badge>
-                                    {task.assignedAgent && <Badge className="text-xs">{task.assignedAgent}</Badge>}
-                                    {task.tags && <Badge variant="outline" className="text-xs">{task.tags}</Badge>}
-                                  </div>
-                                  <Button variant="outline" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => void toggleHistory(task.id)}><Clock3 className="mr-1 h-3.5 w-3.5" />History</Button>
-                                  {openHistoryTaskId === task.id && <div className="mt-2 rounded border border-gray-700 bg-gray-900 p-2"><EventTimeline events={historyByTask[task.id] || []} /></div>}
-                                </div>
-                              )}
-                            </Draggable>
-                          );
-                        })}
-                        {provided.placeholder}
-                      </div>
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
                     )}
-                  </Droppable>
-                )}
-              </div>
-            );
-          })}
+                  </div>
+                );
+              })}
+            </div>
+          </DragDropContext>
         </div>
-      </DragDropContext>
+      </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="bg-gray-950 border-gray-800 text-white">
@@ -493,7 +733,7 @@ export function KanbanBoard() {
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="bg-gray-950 border-gray-800 text-white">
-          <DialogHeader><DialogTitle>Edit Goal</DialogTitle><DialogDescription>Update goal details, status, assignment, and checklist.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Edit Goal</DialogTitle><DialogDescription>Update goal details, status, and checklist.</DialogDescription></DialogHeader>
           <TaskFormFields value={editTask} onChange={setEditTask} goalOptions={goalOptions} />
           <DialogFooter className="justify-between"><Button variant="destructive" onClick={deleteTask}>Delete</Button><div className="flex gap-2"><Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button><Button onClick={saveTask}>Save</Button></div></DialogFooter>
         </DialogContent>
