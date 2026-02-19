@@ -3,7 +3,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+# Install ALL deps (including dev) for the build step regardless of NODE_ENV
+RUN npm ci --include=dev
 
 COPY . .
 RUN npm run build
