@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
+import { ProductPreview } from '@/components/ProductPreview';
 
 type WaitlistResponse = {
   ok?: boolean;
@@ -263,7 +264,18 @@ export default function LandingPage() {
           </p>
         </section>
 
-        <section className="mt-16 grid gap-4 md:grid-cols-3">
+        {/* Product preview */}
+        <section className="mt-20">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold">See it in action</h2>
+            <p className="mt-3 text-gray-400 max-w-2xl mx-auto text-sm leading-6">
+              A real-time command centre for your AI agents — overview, task management, and chat in one resizable workspace.
+            </p>
+          </div>
+          <ProductPreview />
+        </section>
+
+        <section className="mt-20 grid gap-4 md:grid-cols-3">
           {valueProps.map((item) => (
             <article key={item.title} className="rounded-xl border border-white/10 bg-gray-900/70 p-6">
               <div className="text-2xl">{item.icon}</div>
