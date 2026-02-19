@@ -123,10 +123,12 @@ function toggleBlockedTag(tags: string, flagKey: 'blocked' | 'needs-human'): str
 
 function StatsTile({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
-    <div className={`h-32 w-44 rounded-lg border-2 ${color} bg-gray-900 p-3 flex flex-col items-center justify-center`}>
-      <div className="text-2xl font-bold text-white text-center">{value}</div>
-      {sub && <div className="text-[10px] text-gray-500 mt-0.5">{sub}</div>}
-      <div className="mt-2 text-xs text-center text-gray-400">{label}</div>
+    <div className={`h-32 w-44 rounded-lg border-2 ${color} bg-gray-900 p-3 flex flex-col`}>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="text-2xl font-bold text-white text-center">{value}</div>
+        {sub && <div className="text-[10px] text-gray-500 mt-0.5 text-center">{sub}</div>}
+      </div>
+      <div className="text-xs text-center text-gray-400 pt-1 border-t border-gray-800">{label}</div>
     </div>
   );
 }
