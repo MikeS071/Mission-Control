@@ -59,7 +59,7 @@ const features = [
 const pricing = [
   {
     name: 'Initiate',
-    label: 'Free forever · Self-hosted',
+    label: 'Self-hosted · Run on your own machine',
     price: '$0',
     period: '/mo',
     items: ['1 user', '1 agent', 'Gamification + XP', 'Leaderboard', '7-day logs', 'Community support'],
@@ -70,10 +70,10 @@ const pricing = [
   },
   {
     name: 'Strategos',
-    label: 'For serious operators · Self-hosted',
-    price: '$39',
+    label: '☁️ Cloud-hosted · 2GB droplet · 3 agents',
+    price: '$59',
     period: '/mo',
-    items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router'],
+    items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router', 'Managed infra on DigitalOcean'],
     missing: [],
     cta: 'Lock in founding price →',
     href: '#waitlist',
@@ -81,10 +81,10 @@ const pricing = [
   },
   {
     name: 'Archon',
-    label: '☁️ Cloud-hosted · We run your agents',
-    price: '$119',
+    label: '☁️ Cloud-hosted · 4GB droplet · 8 agents',
+    price: '$149',
     period: '/mo',
-    items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Managed infra on DigitalOcean'],
+    items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Dedicated infra on DigitalOcean'],
     missing: [],
     cta: 'Join Waitlist',
     href: '#waitlist',
