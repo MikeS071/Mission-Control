@@ -23,6 +23,7 @@ export NODE_ENV=production
 export PORT_HTTPS=3002
 export PORT_HTTP=3003
 export HTTP_BIND=0.0.0.0
+export NEXTAUTH_URL=http://100.116.243.21:3003
 
 echo "Building dev instance..."
 npx next build > /tmp/mc-dev-build.log 2>&1
