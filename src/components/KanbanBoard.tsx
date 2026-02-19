@@ -1,8 +1,8 @@
 'use client';
 
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, Pencil, Plus, Settings2, UserX } from 'lucide-react';
+import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, MessageSquare, Pencil, Plus, Send, Settings2, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -126,7 +126,8 @@ function StatsTile({ label, value, sub, color }: { label: string; value: string;
     <div className={`h-32 w-44 rounded-lg border-2 ${color} bg-gray-900 p-3 flex flex-col`}>
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="text-2xl font-bold text-white text-center">{value}</div>
-        {sub && <div className="text-[10px] text-gray-500 mt-0.5 text-center">{sub}</div>}
+        {/* Fixed height sub-label — keeps all numbers vertically aligned */}
+        <div className="text-[10px] text-gray-500 mt-0.5 text-center h-[14px] leading-[14px]">{sub ?? ''}</div>
       </div>
       <div className="text-xs text-center text-gray-400 pt-1 border-t border-gray-800">{label}</div>
     </div>
@@ -294,6 +295,141 @@ function AgentTeamPanel({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; p
   );
 }
 
+// ─── Resizable Divider ────────────────────────────────────────────────────────
+
+function ResizableDivider({ onDrag }: { onDrag: (dx: number) => void }) {
+  const lastX = useRef<number | null>(null);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    lastX.current = e.clientX;
+    const onMove = (me: MouseEvent) => {
+      if (lastX.current === null) return;
+      onDrag(me.clientX - lastX.current);
+      lastX.current = me.clientX;
+    };
+    const onUp = () => {
+      lastX.current = null;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  };
+
+  return (
+    <div
+      className="w-1.5 flex-shrink-0 cursor-col-resize group relative"
+      onMouseDown={onMouseDown}
+    >
+      <div className="absolute inset-0 bg-gray-800 group-hover:bg-indigo-500/50 transition-colors duration-150" />
+      <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gray-700 group-hover:bg-indigo-400 transition-colors duration-150" />
+    </div>
+  );
+}
+
+// ─── Chat Pane ────────────────────────────────────────────────────────────────
+
+type ChatThread = { id: string; name: string; lastMsg: string; time: string; unread?: number };
+type ChatMessage = { id: string; from: 'agent' | 'user'; avatar: string; text: string };
+
+const PLACEHOLDER_THREADS: ChatThread[] = [
+  { id: 'navi', name: '🧭 Navi', lastMsg: 'Working on T006…', time: '2m', unread: 1 },
+  { id: 'spark', name: '⚡ Spark', lastMsg: 'Analytics task done', time: '8m' },
+  { id: 'pixel', name: '🎨 Pixel', lastMsg: 'Email template drafted', time: '12m' },
+  { id: 'tasks', name: '📋 Sprint', lastMsg: '7/8 tasks complete', time: '1h' },
+];
+
+const PLACEHOLDER_MESSAGES: Record<string, ChatMessage[]> = {
+  navi: [
+    { id: '1', from: 'agent', avatar: 'N', text: 'Working on T006 — auth middleware refactor. 3 subtasks complete, wrapping up tests.' },
+    { id: '2', from: 'user', avatar: 'M', text: 'What\'s the ETA?' },
+    { id: '3', from: 'agent', avatar: 'N', text: '~15 minutes. Will update T006 status to done when complete.' },
+  ],
+  spark: [
+    { id: '1', from: 'agent', avatar: 'S', text: 'Finished T007 — usage analytics dashboard. All tests passing.' },
+    { id: '2', from: 'user', avatar: 'M', text: 'Nice. Can you start on T009 next?' },
+    { id: '3', from: 'agent', avatar: 'S', text: 'On it.' },
+  ],
+  pixel: [
+    { id: '1', from: 'agent', avatar: 'P', text: 'T008 complete. Onboarding email is drafted and ready for your review.' },
+  ],
+  tasks: [
+    { id: '1', from: 'agent', avatar: 'N', text: 'Sprint summary: 7/8 tasks done. T006 (auth middleware) still in progress with Drift.' },
+  ],
+};
+
+function ChatPane() {
+  const [activeThread, setActiveThread] = useState('navi');
+  const [input, setInput] = useState('');
+  const messages = PLACEHOLDER_MESSAGES[activeThread] ?? [];
+
+  return (
+    <div className="flex flex-col h-full bg-gray-950 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-800 flex-shrink-0">
+        <MessageSquare className="h-3.5 w-3.5 text-indigo-400" />
+        <span className="text-xs font-semibold text-white">Threads</span>
+        <span className="ml-auto text-[10px] text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded-full">preview</span>
+      </div>
+
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Thread list */}
+        <div className="w-32 flex-shrink-0 border-r border-gray-800 flex flex-col overflow-y-auto">
+          {PLACEHOLDER_THREADS.map((thread) => (
+            <button
+              key={thread.id}
+              type="button"
+              onClick={() => setActiveThread(thread.id)}
+              className={`text-left px-2 py-2.5 hover:bg-gray-900 transition-colors border-b border-gray-800/50 ${activeThread === thread.id ? 'bg-gray-900 border-l-2 border-l-indigo-500' : ''}`}
+            >
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-medium text-white truncate">{thread.name}</span>
+                {thread.unread && <span className="h-4 w-4 rounded-full bg-indigo-600 text-[9px] text-white flex items-center justify-center flex-shrink-0">{thread.unread}</span>}
+              </div>
+              <div className="text-[10px] text-gray-500 truncate mt-0.5">{thread.lastMsg}</div>
+              <div className="text-[10px] text-gray-700 mt-0.5">{thread.time}</div>
+            </button>
+          ))}
+          <button type="button" className="px-2 py-2 text-[10px] text-indigo-500 hover:text-indigo-400 text-left">+ New thread</button>
+        </div>
+
+        {/* Message area */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex gap-2 ${msg.from === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 ${msg.from === 'agent' ? 'bg-indigo-700' : 'bg-gray-700'}`}>
+                  {msg.avatar}
+                </div>
+                <div className={`rounded-lg px-3 py-2 text-[11px] text-gray-200 max-w-[85%] ${msg.from === 'agent' ? 'bg-gray-800' : 'bg-indigo-900/60'}`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div className="p-2 border-t border-gray-800 flex-shrink-0">
+            <div className="flex gap-1.5 items-center">
+              <input
+                className="flex-1 min-w-0 rounded-md border border-gray-700 bg-gray-900 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600"
+                placeholder={`Message ${PLACEHOLDER_THREADS.find(t => t.id === activeThread)?.name ?? 'agent'}…`}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setInput(''); }}
+              />
+              <button type="button" onClick={() => setInput('')} className="flex-shrink-0 rounded-md bg-indigo-700 hover:bg-indigo-600 p-1.5 transition-colors">
+                <Send className="h-3 w-3 text-white" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main KanbanBoard ─────────────────────────────────────────────────────────
 
 export function KanbanBoard() {
@@ -306,6 +442,8 @@ export function KanbanBoard() {
   const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--', saved: '--', tokenPct: '--' });
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(176);
+  const [rightWidth, setRightWidth] = useState(300);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
@@ -585,38 +723,42 @@ export function KanbanBoard() {
   return (
     <div className="space-y-4">
       {/* Stats tiles */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
-          <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
-          <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
-          <StatsTile label="Active Agents" value={stats.agents} color="border-purple-700" />
-          <StatsTile label="% Complete" value={stats.taskSummary} color="border-orange-700" />
-        </div>
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
+        <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
+        <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
+        <StatsTile label="Active Agents" value={stats.agents} color="border-purple-700" />
+        <StatsTile label="% Complete" value={stats.taskSummary} color="border-orange-700" />
       </div>
 
-      {/* Filters */}
-      <div className="rounded-lg border border-gray-800 bg-gray-900 p-3">
-        <div className="grid gap-2 md:grid-cols-6">
-          <input className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" placeholder="Search title/description" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
-          <select className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" value={filters.priority} onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}><option value="All">All priorities</option>{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-          <select className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" value={filters.goal} onChange={(e) => setFilters((prev) => ({ ...prev, goal: e.target.value }))}>{filterGoalOptions.map((goal) => <option key={goal} value={goal}>{goal === 'All' ? 'All goals' : goal}</option>)}</select>
-          <select className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" value={filters.agent} onChange={(e) => setFilters((prev) => ({ ...prev, agent: e.target.value }))}>{agentOptions.map((agent) => <option key={agent} value={agent}>{agent === 'All' ? 'All agents' : agent}</option>)}</select>
-          <input className="rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm" placeholder="Filter by tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
-          <Button variant="outline" onClick={() => setFilters(emptyFilters)}>Clear filters</Button>
+      {/* 3-pane resizable layout */}
+      <div className="flex h-[calc(100vh-260px)] rounded-lg overflow-hidden border border-gray-800">
+
+        {/* ── Left pane: Agent Team ── */}
+        <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
+          <AgentTeamPanel gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
         </div>
-        {hasActiveFilters && hiddenCount > 0 && <Badge variant="outline" className="mt-2">({hiddenCount} tasks hidden)</Badge>}
-      </div>
 
-      {errorMessage && <div className="rounded-md border border-red-800 bg-red-950/40 p-2 text-xs text-red-200">{errorMessage}</div>}
+        <ResizableDivider onDrag={(dx) => setLeftWidth((w) => Math.max(140, Math.min(320, w + dx)))} />
 
-      {/* Main area: Agent panel + Kanban columns */}
-      <div className="flex gap-4">
-        {/* Agent Team Panel */}
-        <AgentTeamPanel gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
+        {/* ── Middle pane: Filters + Kanban ── */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          {/* Compact filter bar */}
+          <div className="flex-shrink-0 border-b border-gray-800 bg-gray-900/30 px-3 py-2">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <input className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-36" placeholder="Search…" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
+              <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.priority} onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}><option value="All">Priority</option>{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+              <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.goal} onChange={(e) => setFilters((prev) => ({ ...prev, goal: e.target.value }))}>{filterGoalOptions.map((g) => <option key={g} value={g}>{g === 'All' ? 'Goal' : g}</option>)}</select>
+              <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.agent} onChange={(e) => setFilters((prev) => ({ ...prev, agent: e.target.value }))}>{agentOptions.map((a) => <option key={a} value={a}>{a === 'All' ? 'Agent' : a}</option>)}</select>
+              <input className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-24" placeholder="Tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
+              {hasActiveFilters && <button type="button" onClick={() => setFilters(emptyFilters)} className="text-[10px] text-gray-500 hover:text-gray-300 px-1">✕ Clear</button>}
+              {hasActiveFilters && hiddenCount > 0 && <span className="text-[10px] text-gray-600">{hiddenCount} hidden</span>}
+            </div>
+            {errorMessage && <div className="mt-1.5 rounded border border-red-800 bg-red-950/40 px-2 py-1 text-[10px] text-red-200">{errorMessage}</div>}
+          </div>
 
-        {/* Kanban columns */}
-        <div className="flex-1 min-w-0">
+          {/* Kanban columns */}
+          <div className="flex-1 overflow-auto p-3">
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex gap-3 overflow-x-auto pb-4">
               {grouped.map(({ col, items }) => {
@@ -744,8 +886,17 @@ export function KanbanBoard() {
               })}
             </div>
           </DragDropContext>
+          </div>{/* end overflow-auto */}
+        </div>{/* end middle pane */}
+
+        <ResizableDivider onDrag={(dx) => setRightWidth((w) => Math.max(240, Math.min(560, w - dx)))} />
+
+        {/* ── Right pane: Chat ── */}
+        <div style={{ width: rightWidth, minWidth: 240, maxWidth: 560 }} className="flex-shrink-0 overflow-hidden">
+          <ChatPane />
         </div>
-      </div>
+
+      </div>{/* end 3-pane */}
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="bg-gray-950 border-gray-800 text-white">
