@@ -275,6 +275,66 @@ export default function LandingPage() {
           <ProductPreview />
         </section>
 
+        {/* Gamification teaser */}
+        <section className="mt-20 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-950/30 via-gray-900 to-gray-950 px-8 py-10 md:px-12">
+          <div className="flex flex-col gap-8 md:flex-row md:items-center">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300 mb-4">
+                🏆 Coming Soon · Gamification
+              </div>
+              <h2 className="text-2xl font-bold text-white sm:text-3xl">Level up your AI operation</h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-gray-300">
+                Every task completed, challenge solved, and agent milestone hit earns you XP. As you level up,
+                you unlock real benefits — not just bragging rights.
+              </p>
+              <div className="mt-6 space-y-3">
+                {[
+                  { level: 'Level 5', perk: 'Extended log history (90 days)', color: 'text-amber-400' },
+                  { level: 'Level 10', perk: 'Custom agent personas & names', color: 'text-orange-400' },
+                  { level: 'Level 20', perk: 'Priority model routing + reduced latency', color: 'text-red-400' },
+                  { level: 'Level 50', perk: 'Founding Legend status — permanent perks & badge', color: 'text-purple-400' },
+                ].map(({ level, perk, color }) => (
+                  <div key={level} className="flex items-center gap-3">
+                    <span className={`text-xs font-bold w-16 flex-shrink-0 ${color}`}>{level}</span>
+                    <div className="flex-1 h-px bg-gray-800" />
+                    <span className="text-sm text-gray-300">{perk}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 w-full md:w-64 space-y-3">
+              <div className="rounded-xl border border-amber-500/20 bg-gray-900/70 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-amber-300">🌟 Daily Challenge</span>
+                  <span className="text-xs text-gray-500">+150 XP</span>
+                </div>
+                <p className="text-sm text-white font-medium">Close 3 In Progress tasks</p>
+                <div className="mt-3 rounded-full bg-gray-800 h-2 overflow-hidden">
+                  <div className="h-full bg-amber-400 rounded-full" style={{ width: '66%' }} />
+                </div>
+                <p className="mt-1 text-[10px] text-gray-500">2 of 3 complete</p>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-gray-900/70 p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-semibold text-white">Level 7 · Operator</span>
+                  <span className="text-xs text-indigo-400">2,340 XP</span>
+                </div>
+                <div className="mt-2 rounded-full bg-gray-800 h-2 overflow-hidden">
+                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: '47%' }} />
+                </div>
+                <p className="mt-1 text-[10px] text-gray-500">47% to Level 8</p>
+                <div className="mt-3 flex gap-1.5 flex-wrap">
+                  {['7-day streak 🔥', 'Early Backer ⚡', '10 tasks done ✅'].map((badge) => (
+                    <span key={badge} className="rounded-full bg-gray-800 border border-gray-700 px-2 py-0.5 text-[9px] text-gray-300">{badge}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-20 grid gap-4 md:grid-cols-3">
           {valueProps.map((item) => (
             <article key={item.title} className="rounded-xl border border-white/10 bg-gray-900/70 p-6">
