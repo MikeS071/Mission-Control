@@ -247,13 +247,21 @@ function AgentTile({ name, status, lastSeen, isNavi }: { name: string; status: A
   );
 }
 
-// Fun short names for sub-agents — deterministic from agent name hash
-const FUN_NAMES = ['Spark', 'Pixel', 'Drift', 'Blaze', 'Scout', 'Echo', 'Nova', 'Flux', 'Cleo', 'Zed', 'Rook', 'Mox', 'Sage', 'Fern', 'Byte', 'Koda', 'Vex', 'Luma'];
+// Fun short names for sub-agents — deterministic, collision-free per session
+const FUN_NAMES = ['Spark', 'Pixel', 'Drift', 'Blaze', 'Echo', 'Nova', 'Flux', 'Cleo', 'Zed', 'Rook', 'Mox', 'Sage', 'Fern', 'Byte', 'Koda', 'Vex', 'Luma', 'Cruz', 'Wren', 'Jett'];
+const agentNameCache = new Map<string, string>();
 
 function funNameFor(rawName: string): string {
+  if (agentNameCache.has(rawName)) return agentNameCache.get(rawName)!;
+  // Pick from names not yet assigned
+  const used = new Set(agentNameCache.values());
   let hash = 0;
   for (let i = 0; i < rawName.length; i++) hash = (hash * 31 + rawName.charCodeAt(i)) >>> 0;
-  return FUN_NAMES[hash % FUN_NAMES.length] ?? rawName;
+  const available = FUN_NAMES.filter((n) => !used.has(n));
+  const pool = available.length > 0 ? available : FUN_NAMES;
+  const name = pool[hash % pool.length] ?? rawName;
+  agentNameCache.set(rawName, name);
+  return name;
 }
 
 function AgentTeamPanel({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; primaryAgentName: string | null }) {
