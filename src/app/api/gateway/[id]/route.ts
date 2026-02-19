@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { gatewayConnections } from '@/db/schema';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function DELETE(req: NextRequest, context: RouteContext) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await context.params;

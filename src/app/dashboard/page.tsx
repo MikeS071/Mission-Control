@@ -54,9 +54,6 @@ export default async function DashboardPage() {
           <div className="mt-1 flex items-center gap-2">
             <span className="text-sm text-gray-400">{tenant?.name ?? 'Tenant'}</span>
             <Badge variant="secondary">{plan === 'free' ? 'Free' : plan === 'pro' ? 'Pro' : 'Team'}</Badge>
-            <Link href="/dashboard/billing" className="text-xs text-indigo-300 hover:text-indigo-200">
-              Billing
-            </Link>
           </div>
           <Link href="https://archonhq.ai" target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-indigo-300 hover:text-indigo-200">🌐 View public site</Link>
         </div>

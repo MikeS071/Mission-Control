@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
 import { sendTelegramMessage } from '@/lib/telegram';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 
@@ -73,7 +73,7 @@ function mapTaskOutput(task: typeof tasks.$inferSelect) {
 }
 
 export async function GET(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const all = await db.select().from(tasks).where(eq(tasks.tenantId, tenantId)).orderBy(tasks.createdAt);
@@ -81,52 +81,58 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as TaskInput;
-  const title = body.title?.trim() || 'Untitled Task';
-  const description = body.description || '';
-  const providedChecklist = parseChecklistInput(body.checklist);
-  const aiChecklist = providedChecklist.length === 0 ? await generateChecklistItems(title, description) : [];
-  const checklist = providedChecklist.length > 0 ? providedChecklist : aiChecklist;
-  const goalId = await generateGoalId(tenantId);
+  try {
+    const body = (await req.json()) as TaskInput;
+    const title = body.title?.trim() || 'Untitled Task';
+    const description = body.description || '';
+    const providedChecklist = parseChecklistInput(body.checklist);
+    const aiChecklist = providedChecklist.length === 0 ? await generateChecklistItems(title, description) : [];
+    const checklist = providedChecklist.length > 0 ? providedChecklist : aiChecklist;
+    const goalId = await generateGoalId(tenantId);
 
-  const [task] = await db
-    .insert(tasks)
-    .values({
-      tenantId,
-      title,
-      description,
-      goal: body.goal || goalId,
-      goalId,
-      priority: normalizePriority(body.priority),
-      status: normalizeStatus(body.status),
-      assignedAgent: body.assignedAgent ?? body.assigned_agent ?? null,
-      tags: body.tags || '',
-      checklist: stringifyChecklist(checklist),
-      updatedAt: new Date(),
-    })
-    .returning();
+    const [task] = await db
+      .insert(tasks)
+      .values({
+        tenantId,
+        title,
+        description,
+        goal: body.goal || goalId,
+        goalId,
+        priority: normalizePriority(body.priority),
+        status: normalizeStatus(body.status),
+        assignedAgent: body.assignedAgent ?? body.assigned_agent ?? null,
+        tags: body.tags || '',
+        checklist: stringifyChecklist(checklist),
+        updatedAt: new Date(),
+      })
+      .returning();
 
-  if (task) {
-    await db.insert(events).values({
-      tenantId,
-      taskId: task.id,
-      agentName: 'system',
-      eventType: 'created',
-      payload: `Task created: ${task.title} (${task.goalId})`,
-    });
+    if (task) {
+      await db.insert(events).values({
+        tenantId,
+        taskId: task.id,
+        agentName: 'system',
+        eventType: 'created',
+        payload: `Task created: ${task.title} (${task.goalId})`,
+      });
 
-    void awardXp(tenantId, XP_RULES.TASK_CREATED, 'task_created', String(task.id));
-    void sendTelegramMessage(`🆕 Goal created: <b>${task.goalId}</b> ${task.title} [${task.priority}]`);
+      void awardXp(tenantId, XP_RULES.TASK_CREATED, 'task_created', String(task.id));
+      void sendTelegramMessage(`🆕 Goal created: <b>${task.goalId}</b> ${task.title} [${task.priority}]`);
+    }
+
+    return NextResponse.json(task ? mapTaskOutput(task) : null);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[POST /api/tasks]', message);
+    return NextResponse.json({ error: `Failed to create task: ${message}` }, { status: 500 });
   }
-
-  return NextResponse.json(task ? mapTaskOutput(task) : null);
 }
 
 export async function PATCH(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = (await req.json()) as TaskInput;
@@ -173,7 +179,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = (await req.json()) as { id?: number };

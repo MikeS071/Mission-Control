@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { tenantSettings } from '@/db/schema';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 
 type SettingsPayload = {
   anthropicKey?: string;
   openaiKey?: string;
   xaiKey?: string;
+  primaryAgentName?: string;       // display name for the primary agent (default: Navi)
+  savingsRatePct?: number;         // AiPipe/router savings rate vs direct (0–100, default: 30)
+  tokenLimitMonthly?: number;      // monthly token budget across all providers
   models?: {
     mainAgent?: string;
     subagents?: string;
@@ -27,7 +30,7 @@ type SettingsPayload = {
 };
 
 export async function GET(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const [row] = await db
@@ -40,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = (await req.json()) as { settings?: SettingsPayload; merge?: boolean; testNotification?: boolean };

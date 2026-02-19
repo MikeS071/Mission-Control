@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { getTenantId } from '@/lib/tenant';
+import { resolveTenantId } from '@/lib/tenant';
 
 type AgentStatus = 'working' | 'idle' | 'inactive';
 
@@ -14,7 +14,7 @@ function computeStatus(lastSeenAt: Date): AgentStatus {
 }
 
 export async function GET(req: NextRequest) {
-  const tenantId = getTenantId(req);
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const rows = await db.execute(sql`
