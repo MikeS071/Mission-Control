@@ -148,6 +148,14 @@ export const streaks = pgTable('streaks', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+export const newsletterIssues = pgTable('newsletter_issues', {
+  id:          serial('id').primaryKey(),
+  issueNumber: integer('issue_number').notNull(),
+  subject:     text('subject').notNull(),
+  html:        text('html').notNull(),
+  sentAt:      timestamp('sent_at', { withTimezone: true }).defaultNow(),
+});
+
 export const challenges = pgTable('challenges', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id')
