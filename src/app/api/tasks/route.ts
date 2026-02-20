@@ -1,26 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { resolveTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
+import { parseBody, TaskCreateSchema, TaskPatchSchema } from '@/lib/validate';
 
-type ChecklistItem = { id: string; text: string; checked: boolean };
-
-type TaskInput = {
-  id?: number;
-  title?: string;
-  description?: string;
-  goal?: string;
-  priority?: string;
-  status?: string;
-  tags?: string;
-  assignedAgent?: string | null;
-  assigned_agent?: string | null;
-  checklist?: ChecklistItem[] | string;
-};
+const TaskPatchWithIdSchema = TaskPatchSchema.extend({
+  id: z.number().int().positive('id must be a positive integer'),
+});
 
 const normalizeStatus = (status?: string) => {
   const value = (status || '').toLowerCase();
@@ -37,7 +28,9 @@ const normalizePriority = (priority?: string) => {
   return 'Medium';
 };
 
-const parseChecklistInput = (checklist: TaskInput['checklist']) => {
+type ChecklistInputValue = Array<{ id: string; text: string; checked: boolean }> | string | undefined;
+
+const parseChecklistInput = (checklist: ChecklistInputValue) => {
   if (typeof checklist === 'string') return parseChecklist(checklist);
   if (Array.isArray(checklist)) {
     return checklist
@@ -85,8 +78,10 @@ export async function POST(req: NextRequest) {
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const body = (await req.json()) as TaskInput;
-    const title = body.title?.trim() || 'Untitled Task';
+    const parsed = parseBody(TaskCreateSchema, await req.json());
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
+    const title = body.title.trim() || 'Untitled Task';
     const description = body.description || '';
     const providedChecklist = parseChecklistInput(body.checklist);
     const aiChecklist = providedChecklist.length === 0 ? await generateChecklistItems(title, description) : [];
@@ -134,9 +129,9 @@ export async function PATCH(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as TaskInput;
-  const { id, ...data } = body;
-  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+  const parsedPatch = parseBody(TaskPatchWithIdSchema, await req.json());
+  if (!parsedPatch.ok) return parsedPatch.response;
+  const { id, ...data } = parsedPatch.data;
 
   const [before] = await db.select().from(tasks).where(and(eq(tasks.id, id), eq(tasks.tenantId, tenantId))).limit(1);
   if (!before) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -181,9 +176,9 @@ export async function DELETE(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as { id?: number };
-  const id = body.id;
-  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+  const parsedDel = parseBody(z.object({ id: z.number().int().positive('id must be a positive integer') }), await req.json());
+  if (!parsedDel.ok) return parsedDel.response;
+  const { id } = parsedDel.data;
 
   const [existing] = await db.select().from(tasks).where(and(eq(tasks.id, id), eq(tasks.tenantId, tenantId))).limit(1);
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
