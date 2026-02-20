@@ -25,6 +25,8 @@ export PORT_HTTP=3003
 export HTTP_BIND=0.0.0.0
 export NEXTAUTH_URL=https://dev.archonhq.ai
 
+source /home/openclaw/projects/openclaw-mission-control/scripts/build-lock.sh
+acquire_build_lock
 echo "Building dev instance..."
 npx next build > /tmp/mc-dev-build.log 2>&1
 
