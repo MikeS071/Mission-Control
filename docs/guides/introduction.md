@@ -1,0 +1,50 @@
+# Introduction to Mission Control
+
+Mission Control is an AI agent coordination dashboard — a single place to manage tasks, track what your agents are doing, monitor costs, and keep work moving without constant manual intervention.
+
+It was built for engineering teams and solo founders who run AI agents as part of their workflow and need more than a chat window to stay on top of it.
+
+---
+
+## What it does
+
+### Task and project management
+A full kanban board with drag-and-drop, priority levels, WIP limits, custom labels, and per-card activity timelines. Every status change, comment, and transition is logged automatically so you always have a complete audit trail.
+
+### AI agent coordination
+Agents connect to Mission Control via the gateway. You can see which agents are active, what they're working on, and their cost and token usage in real time. Agents can create and update tasks directly via the API, keeping the board in sync with actual work.
+
+### Smart LLM routing (AiPipe)
+Every AI call made through Mission Control goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower total cost — automatically, with no configuration per request. [Read the full benchmark →](/features/aipipe-routing-benchmark)
+
+### Notifications
+Mission Control sends Telegram notifications when tasks are created, updated, or reach a critical state. You stay informed without watching a dashboard.
+
+### Billing and plans
+Two tiers: Strategos ($39/mo) for individuals and small teams, Archon ($99/mo) for larger teams. Stripe-powered, cancel any time.
+
+---
+
+## Who it's for
+
+**AI-first engineering teams** running coding agents, research agents, or workflow automation and needing a central coordination layer.
+
+**Solo founders and indie hackers** who run AI agents as part of their product development workflow and want visibility without overhead.
+
+**Teams evaluating AI spend** who want to understand where their LLM costs are going and apply smart routing to reduce waste.
+
+---
+
+## How it's built
+
+Mission Control is a Next.js 16 application backed by PostgreSQL. The AI routing proxy (AiPipe) is a Go binary that runs alongside the dashboard. The gateway connects your local AI agents to the cloud dashboard over a secure tunnel.
+
+Everything is open source: [github.com/MikeS071/Mission-Control](https://github.com/MikeS071/Mission-Control)
+
+---
+
+## Next steps
+
+- [Get started →](/guides/getting-started) — create your account and connect in under 10 minutes
+- [Explore the kanban board →](/features/kanban-board)
+- [Understand AI routing →](/features/aipipe-routing-benchmark)
