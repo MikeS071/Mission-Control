@@ -87,26 +87,22 @@ const pricing = [
   {
     name: 'Strategos',
     label: '☁️ Our Cloud · Fully managed · 3 agents',
-    price: '$39',
-    regularPrice: '$59',
+    price: '$59',
     period: '/mo',
-    founding: true,
     items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router', 'Managed secure cloud infra', 'End-to-end encryption', 'Private data isolation'],
     missing: ['ContentAI', 'CoderAI'],
-    cta: 'Lock in founding price →',
+    cta: 'Get started →',
     href: '/dashboard/billing?plan=pro',
     featured: true,
   },
   {
     name: 'Archon',
     label: '☁️ Our Cloud · Dedicated infra · 8 agents',
-    price: '$99',
-    regularPrice: '$149',
+    price: '$149',
     period: '/mo',
-    founding: true,
     items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Dedicated secure cloud infra', '🔒 Advanced privacy controls', '📋 Audit logs + compliance exports', '✍️ ContentAI — ideas-to-content pipeline', '👨‍💻 CoderAI — autonomous coder agent'],
     missing: [],
-    cta: 'Lock in founding price →',
+    cta: 'Get started →',
     href: '/dashboard/billing?plan=team',
   },
 ];
@@ -240,7 +236,7 @@ export default function LandingPage() {
             <span>✅ No credit card</span>
             <span>✅ Apache 2.0 Licensed</span>
             <span>✅ Self-host always free</span>
-            <span>⚡ Founding pricing locked at sign-up</span>
+            <span>⚡ Simple transparent pricing</span>
           </div>
         </section>
 
@@ -397,7 +393,7 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
             Simple pricing for every stage
           </h2>
-          <p className="mt-4 max-w-lg" style={{ color: '#a3b8a8' }}>Sign up now to lock in founding member pricing — guaranteed for life.</p>
+          <p className="mt-4 max-w-lg" style={{ color: '#a3b8a8' }}>Simple, transparent pricing. Cancel any time.</p>
 
           <div className="mt-14 grid gap-5 md:grid-cols-3">
             {pricing.map((tier) => (
@@ -416,17 +412,13 @@ export default function LandingPage() {
                 {tier.featured && (
                   <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)' }} />
                 )}
-                {'founding' in tier && tier.founding && (
-                  <span className="absolute right-5 top-5 rounded-full px-2.5 py-1 text-[10px] font-bold font-mono tracking-wider" style={{ border: '1px solid rgba(255,59,111,0.4)', background: 'rgba(255,59,111,0.1)', color: '#ff3b6f' }}>FOUNDING</span>
-                )}
+
                 <h3 className="text-xl font-bold text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.name}</h3>
                 <p className="mt-0.5 text-[11px]" style={{ color: '#6a7f6f', fontFamily: 'var(--font-jetbrains, monospace)' }}>{tier.label}</p>
                 <div className="mt-4 flex items-end gap-1">
                   <span className="text-4xl font-extrabold tracking-tight text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.price}</span>
                   <span className="mb-1 text-sm" style={{ color: '#6a7f6f' }}>{tier.period}</span>
-                  {'regularPrice' in tier && tier.regularPrice && (
-                    <span className="mb-1 ml-1 text-sm line-through" style={{ color: '#6a7f6f' }}>{tier.regularPrice}</span>
-                  )}
+
                 </div>
                 <ul className="mt-6 space-y-2.5">
                   {tier.items.map((item) => (
@@ -535,11 +527,11 @@ export default function LandingPage() {
                 </span>
               </h2>
               <p className="mx-auto mt-4 max-w-md" style={{ color: '#a3b8a8' }}>
-                Get early access, lock in founding member pricing, and help shape what we build. Takes 10 seconds.
+                Get early access and help shape what we build. Takes 10 seconds.
               </p>
 
               <ul className="mx-auto mt-7 flex flex-col items-center gap-2 text-sm" style={{ color: '#a3b8a8' }}>
-                <li><span className="text-[#2dd47a]">⚡</span> Founding pricing — locked in forever at sign-up</li>
+                <li><span className="text-[#2dd47a]">⚡</span> Early access — shape the product before public launch</li>
                 <li><span className="text-[#2dd47a]">🚀</span> Early access before public launch</li>
                 <li><span className="text-[#2dd47a]">🗳️</span> Direct vote on roadmap features</li>
               </ul>
