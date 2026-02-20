@@ -3,14 +3,36 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { tenantSettings } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
+import { aipipeSyncTenantKeys } from '@/lib/aipipe';
+
+const PROVIDER_KEY_FIELDS = [
+  'openaiKey', 'anthropicKey', 'xaiKey',
+  'openrouterKey', 'minimaxKey', 'kimiKey', 'geminiKey',
+] as const;
 
 type SettingsPayload = {
   anthropicKey?: string;
   openaiKey?: string;
   xaiKey?: string;
+  openrouterKey?: string;
+  minimaxKey?: string;
+  kimiKey?: string;
+  geminiKey?: string;
   primaryAgentName?: string;       // display name for the primary agent (default: Navi)
   savingsRatePct?: number;         // AiPipe/router savings rate vs direct (0–100, default: 30)
   tokenLimitMonthly?: number;      // monthly token budget across all providers
+  agentRoles?: {
+    architect?: string;
+    planner?: string;
+    codeAgent?: string;
+    tddGuide?: string;
+    codeReviewer?: string;
+    securityReviewer?: string;
+    buildErrorResolver?: string;
+    docUpdater?: string;
+    e2eRunner?: string;
+    refactorCleaner?: string;
+  };
   models?: {
     mainAgent?: string;
     subagents?: string;
@@ -80,20 +102,38 @@ export async function POST(req: NextRequest) {
 
   const nextSettings = merge ? { ...(existing?.settings as object | undefined), ...incoming } : incoming;
 
+  let savedSettings: SettingsPayload;
+  let savedAt: Date | null;
+
   if (existing) {
     const [updated] = await db
       .update(tenantSettings)
       .set({ settings: nextSettings, updatedAt: new Date() })
       .where(and(eq(tenantSettings.id, existing.id), eq(tenantSettings.tenantId, tenantId)))
       .returning({ settings: tenantSettings.settings, updatedAt: tenantSettings.updatedAt });
-
-    return NextResponse.json({ settings: (updated?.settings ?? {}) as SettingsPayload, updatedAt: updated?.updatedAt ?? null });
+    savedSettings = (updated?.settings ?? {}) as SettingsPayload;
+    savedAt = updated?.updatedAt ?? null;
+  } else {
+    const [created] = await db
+      .insert(tenantSettings)
+      .values({ tenantId, settings: nextSettings, updatedAt: new Date() })
+      .returning({ settings: tenantSettings.settings, updatedAt: tenantSettings.updatedAt });
+    savedSettings = (created?.settings ?? {}) as SettingsPayload;
+    savedAt = created?.updatedAt ?? null;
   }
 
-  const [created] = await db
-    .insert(tenantSettings)
-    .values({ tenantId, settings: nextSettings, updatedAt: new Date() })
-    .returning({ settings: tenantSettings.settings, updatedAt: tenantSettings.updatedAt });
+  // Sync provider API keys to AiPipe per-tenant store whenever any key field is present.
+  // Non-fatal: log error but don't fail the settings save.
+  const hasProviderKeys = PROVIDER_KEY_FIELDS.some((f) => Boolean(incoming[f]));
+  if (hasProviderKeys) {
+    const keyMap: Record<string, string | undefined> = {};
+    for (const field of PROVIDER_KEY_FIELDS) {
+      keyMap[field] = (incoming[field] as string | undefined) ?? undefined;
+    }
+    aipipeSyncTenantKeys(String(tenantId), keyMap).catch((err: unknown) => {
+      console.error('[settings] AiPipe key sync failed (non-fatal):', err);
+    });
+  }
 
-  return NextResponse.json({ settings: (created?.settings ?? {}) as SettingsPayload, updatedAt: created?.updatedAt ?? null });
+  return NextResponse.json({ settings: savedSettings, updatedAt: savedAt });
 }
