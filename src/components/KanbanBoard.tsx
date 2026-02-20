@@ -786,7 +786,7 @@ export function KanbanBoard() {
       </div>
 
       {/* 3-pane resizable layout */}
-      <div className="flex h-[calc(100vh-260px)] rounded-lg overflow-hidden border border-gray-800">
+      <div className="flex h-[calc(100vh-210px)] rounded-lg overflow-hidden border border-gray-800">
 
         {/* ── Left pane: Agent Team ── */}
         <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">

@@ -51,11 +51,11 @@ export default async function DashboardPage() {
     <Tabs defaultValue="kanban" className="flex min-h-screen flex-col bg-gray-950 text-white">
 
       {/* ── Unified top navbar ── */}
-      <nav className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center gap-0 border-b border-gray-800 bg-gray-900/95 px-4 backdrop-blur">
+      <nav className="sticky top-0 z-50 flex h-14 flex-shrink-0 items-center gap-0 border-b border-gray-800 bg-gray-900/95 px-4 backdrop-blur">
 
         {/* Logo + workspace */}
         <div className="flex flex-shrink-0 items-center gap-2 pr-6 border-r border-gray-800 mr-4">
-          <span className="text-sm font-bold tracking-tight text-white">Archon<span className="text-red-500">HQ</span></span>
+          <span className="text-lg font-bold tracking-tight text-white">Archon<span className="text-red-500">HQ</span></span>
           <span className="text-gray-700 select-none">·</span>
           <span className="text-xs text-gray-400 max-w-[160px] truncate">{tenant?.name ?? 'Workspace'}</span>
           <Badge variant="secondary" className="ml-0.5 text-[10px] px-1.5 py-0">{planLabel}</Badge>
