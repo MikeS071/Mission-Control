@@ -31,13 +31,13 @@ const delivered = [
 
 const inProgress = [
   'Goal 6: Commercialise archonhq.ai — Stripe billing & onboarding flow',
+  'Subscription billing (Stripe)',
 ];
 
 const planned = [
   'AiPipe intelligent LLM router',
   'Gamification (XP, streaks, challenges, leaderboard)',
   'Multi-tenancy & org management',
-  'Subscription billing (Stripe)',
   'Per-tenant API key vault',
   'Connect your OpenClaw instance',
   'ContentAI — ideas-to-content pipeline (Archon)',
@@ -137,8 +137,8 @@ export default function RoadmapPage() {
         <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold">
           {[
             { name: 'Initiate', label: 'Free · self-hosted', color: 'rgba(45,212,122,0.15)', border: 'rgba(45,212,122,0.3)', text: '#2dd47a' },
-            { name: 'Strategos', label: '$59/mo · Our Cloud', color: 'rgba(255,59,111,0.1)', border: 'rgba(255,59,111,0.3)', text: '#ff6b8a' },
-            { name: 'Archon', label: '$149/mo · dedicated + ContentAI + CoderAI', color: 'rgba(255,191,36,0.1)', border: 'rgba(255,191,36,0.3)', text: '#ffc837' },
+            { name: 'Strategos', label: '$39/mo · Our Cloud', color: 'rgba(255,59,111,0.1)', border: 'rgba(255,59,111,0.3)', text: '#ff6b8a' },
+            { name: 'Archon', label: '$99/mo · dedicated + ContentAI + CoderAI', color: 'rgba(255,191,36,0.1)', border: 'rgba(255,191,36,0.3)', text: '#ffc837' },
           ].map((tier) => (
             <span
               key={tier.name}

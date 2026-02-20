@@ -87,23 +87,27 @@ const pricing = [
   {
     name: 'Strategos',
     label: '☁️ Our Cloud · Fully managed · 3 agents',
-    price: '$59',
+    price: '$39',
+    regularPrice: '$59',
     period: '/mo',
+    founding: true,
     items: ['1 user', '3 agents', 'Gamification + XP', 'Leaderboard', '30-day logs', 'Priority support', 'AiPipe router', 'Managed secure cloud infra', 'End-to-end encryption', 'Private data isolation'],
     missing: ['ContentAI', 'CoderAI'],
     cta: 'Lock in founding price →',
-    href: '#waitlist',
+    href: '/dashboard/billing?plan=pro',
     featured: true,
   },
   {
     name: 'Archon',
     label: '☁️ Our Cloud · Dedicated infra · 8 agents',
-    price: '$149',
+    price: '$99',
+    regularPrice: '$149',
     period: '/mo',
+    founding: true,
     items: ['1 user', '8 agents', 'Gamification + XP', 'Leaderboard', '90-day logs', 'Priority support', 'AiPipe router', 'Dedicated secure cloud infra', '🔒 Advanced privacy controls', '📋 Audit logs + compliance exports', '✍️ ContentAI — ideas-to-content pipeline', '👨‍💻 CoderAI — autonomous coder agent'],
     missing: [],
-    cta: 'Join Waitlist',
-    href: '#waitlist',
+    cta: 'Lock in founding price →',
+    href: '/dashboard/billing?plan=team',
   },
 ];
 
@@ -410,16 +414,19 @@ export default function LandingPage() {
                 }}
               >
                 {tier.featured && (
-                  <>
-                    <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)' }} />
-                    <span className="absolute right-5 top-5 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white" style={{ background: 'linear-gradient(135deg, #ff3b6f, #e91e5a)' }}>Most Popular</span>
-                  </>
+                  <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, #ff3b6f, #2dd47a, transparent)' }} />
+                )}
+                {'founding' in tier && tier.founding && (
+                  <span className="absolute right-5 top-5 rounded-full px-2.5 py-1 text-[10px] font-bold font-mono tracking-wider" style={{ border: '1px solid rgba(255,59,111,0.4)', background: 'rgba(255,59,111,0.1)', color: '#ff3b6f' }}>FOUNDING</span>
                 )}
                 <h3 className="text-xl font-bold text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.name}</h3>
                 <p className="mt-0.5 text-[11px]" style={{ color: '#6a7f6f', fontFamily: 'var(--font-jetbrains, monospace)' }}>{tier.label}</p>
                 <div className="mt-4 flex items-end gap-1">
                   <span className="text-4xl font-extrabold tracking-tight text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.price}</span>
                   <span className="mb-1 text-sm" style={{ color: '#6a7f6f' }}>{tier.period}</span>
+                  {'regularPrice' in tier && tier.regularPrice && (
+                    <span className="mb-1 ml-1 text-sm line-through" style={{ color: '#6a7f6f' }}>{tier.regularPrice}</span>
+                  )}
                 </div>
                 <ul className="mt-6 space-y-2.5">
                   {tier.items.map((item) => (
