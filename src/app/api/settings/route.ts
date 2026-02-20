@@ -8,9 +8,25 @@ type SettingsPayload = {
   anthropicKey?: string;
   openaiKey?: string;
   xaiKey?: string;
+  openrouterKey?: string;
+  minimaxKey?: string;
+  kimiKey?: string;
+  geminiKey?: string;
   primaryAgentName?: string;       // display name for the primary agent (default: Navi)
   savingsRatePct?: number;         // AiPipe/router savings rate vs direct (0–100, default: 30)
   tokenLimitMonthly?: number;      // monthly token budget across all providers
+  agentRoles?: {
+    architect?: string;
+    planner?: string;
+    codeAgent?: string;
+    tddGuide?: string;
+    codeReviewer?: string;
+    securityReviewer?: string;
+    buildErrorResolver?: string;
+    docUpdater?: string;
+    e2eRunner?: string;
+    refactorCleaner?: string;
+  };
   models?: {
     mainAgent?: string;
     subagents?: string;
