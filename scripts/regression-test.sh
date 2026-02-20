@@ -457,7 +457,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 16. AiPipe Per-Tenant Auth
 # ─────────────────────────────────────────────────────────────────────────────
-print_section "16. AiPipe Per-Tenant Auth"
+echo -e "\n\033[36m── 16. AiPipe Per-Tenant Auth ──\033[0m"
 
 # Check AIPIPE_ADMIN_SECRET is configured in AiPipe env file
 if grep -q "AIPIPE_ADMIN_SECRET" "$HOME/.config/aipipe/env" 2>/dev/null; then
