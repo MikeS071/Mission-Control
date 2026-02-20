@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Pool } from 'pg'
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+import { eq } from 'drizzle-orm'
+import { db } from '@/lib/db'
+import { waitlist } from '@/db/schema'
 
 function decodeToken(token: string): string | null {
   try {
@@ -26,16 +26,16 @@ async function handleUnsubscribe(req: NextRequest) {
   const baseUrl = (process.env.NEXTAUTH_URL ?? 'https://archonhq.ai').replace(/\/$/, '')
 
   try {
-    const result = await pool.query(
-      'DELETE FROM waitlist WHERE email = $1 RETURNING email',
-      [email]
-    )
-    const status = result.rowCount === 0 ? 'already' : 'ok'
+    const deleted = await db
+      .delete(waitlist)
+      .where(eq(waitlist.email, email))
+      .returning({ email: waitlist.email })
+
+    const status = deleted.length === 0 ? 'already' : 'ok'
     return NextResponse.redirect(
       `${baseUrl}/unsubscribe?status=${status}&email=${encodeURIComponent(email)}`
     )
-  } catch (err) {
-    console.error('[unsubscribe]', err)
+  } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

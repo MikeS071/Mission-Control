@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { waitlist } from '@/db/schema';
-import { sql } from 'drizzle-orm';
-import { Pool } from 'pg';
-
-const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+import { newsletterIssues, waitlist } from '@/db/schema';
+import { desc, sql } from 'drizzle-orm';
 
 function emailToken(email: string): string {
   return Buffer.from(email).toString('base64url');
@@ -12,10 +9,12 @@ function emailToken(email: string): string {
 
 async function getLatestNewsletterIssue(): Promise<{ subject: string; html: string } | null> {
   try {
-    const res = await pgPool.query(
-      'SELECT subject, html FROM newsletter_issues ORDER BY sent_at DESC LIMIT 1'
-    );
-    return res.rows[0] ?? null;
+    const rows = await db
+      .select({ subject: newsletterIssues.subject, html: newsletterIssues.html })
+      .from(newsletterIssues)
+      .orderBy(desc(newsletterIssues.sentAt))
+      .limit(1);
+    return rows[0] ?? null;
   } catch {
     return null;
   }
@@ -90,8 +89,8 @@ export async function POST(req: NextRequest) {
           html: htmlBody,
         }),
       });
-    } catch (emailError) {
-      console.error('waitlist welcome email error', emailError);
+    } catch {
+      // welcome email failure is non-fatal — user is already on the list
     }
 
     // Send latest newsletter issue (non-blocking, fire-and-forget)
@@ -114,8 +113,8 @@ export async function POST(req: NextRequest) {
             html,
           }),
         });
-      } catch (err) {
-        console.error('waitlist newsletter send error', err);
+      } catch {
+        // newsletter send failure is non-fatal
       }
     }).catch(() => {});
 
@@ -125,7 +124,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, alreadyJoined: true }, { status: 409 });
     }
 
-    console.error('waitlist POST error', error);
     return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 });
   }
 }

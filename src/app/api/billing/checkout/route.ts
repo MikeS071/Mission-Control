@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/tenant';
 import { isStripePlaceholderMode } from '@/lib/billing';
-
-type CheckoutBody = {
-  plan?: 'pro' | 'team';
-};
+import { parseBody, BillingCheckoutSchema } from '@/lib/validate';
 
 export async function POST(req: NextRequest) {
   const tenantId = getTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json().catch(() => ({}))) as CheckoutBody;
-  const plan = body.plan;
-
-  if (plan !== 'pro' && plan !== 'team') {
-    return NextResponse.json({ error: 'Invalid plan. Must be pro or team.' }, { status: 400 });
-  }
+  const parsed = parseBody(BillingCheckoutSchema, await req.json().catch(() => ({})));
+  if (!parsed.ok) return parsed.response;
+  const { plan } = parsed.data;
 
   if (isStripePlaceholderMode()) {
     return NextResponse.json({ url: '/dashboard?billing=placeholder', mock: true });

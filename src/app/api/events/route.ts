@@ -3,13 +3,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
-
-type EventInput = {
-  taskId?: number | null;
-  agentName?: string | null;
-  eventType?: string;
-  payload?: string;
-};
+import { parseBody, EventCreateSchema } from '@/lib/validate';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -50,10 +44,9 @@ export async function POST(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as EventInput;
-  if (!body.eventType) {
-    return NextResponse.json({ error: 'eventType is required' }, { status: 400 });
-  }
+  const parsed = parseBody(EventCreateSchema, await req.json());
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const [created] = await db
     .insert(events)

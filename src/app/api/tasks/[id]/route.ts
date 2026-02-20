@@ -6,19 +6,7 @@ import { sendTelegramMessage } from '@/lib/telegram';
 import { getTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
-
-type ChecklistItem = { id: string; text: string; checked: boolean };
-type TaskInput = {
-  title?: string;
-  description?: string;
-  goal?: string;
-  priority?: string;
-  status?: string;
-  tags?: string;
-  assignedAgent?: string | null;
-  assigned_agent?: string | null;
-  checklist?: ChecklistItem[] | string;
-};
+import { parseBody, TaskPatchSchema } from '@/lib/validate';
 
 const normalizeStatus = (status?: string) => {
   const value = (status || '').toLowerCase();
@@ -35,7 +23,9 @@ const normalizePriority = (priority?: string) => {
   return 'Medium';
 };
 
-const parseChecklistInput = (checklist: TaskInput['checklist']) => {
+type ChecklistInputValue = Array<{ id: string; text: string; checked: boolean }> | string | undefined;
+
+const parseChecklistInput = (checklist: ChecklistInputValue) => {
   if (typeof checklist === 'string') return parseChecklist(checklist);
   if (!Array.isArray(checklist)) return [];
   return checklist
@@ -72,7 +62,10 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
   const { id } = await context.params;
   const taskId = Number(id);
-  const body = (await req.json()) as TaskInput;
+
+  const parsed = parseBody(TaskPatchSchema, await req.json());
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const [before] = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId))).limit(1);
   if (!before) return NextResponse.json({ error: 'Task not found' }, { status: 404 });

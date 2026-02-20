@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { featureRequests } from '@/db/schema';
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { parseBody, FeatureRequestSchema } from '@/lib/validate';
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as { email?: string; description?: string };
-  const email = body.email?.trim().toLowerCase();
-  const description = body.description?.trim();
-
-  if (!email || !emailRegex.test(email)) {
-    return NextResponse.json({ ok: false, error: 'Invalid email' }, { status: 400 });
-  }
-
-  if (!description) {
-    return NextResponse.json({ ok: false, error: 'Description is required' }, { status: 400 });
-  }
+  const parsed = parseBody(FeatureRequestSchema, await req.json());
+  if (!parsed.ok) return parsed.response;
+  const { email, description } = parsed.data;
 
   await db.insert(featureRequests).values({
-    email,
+    email: email.trim().toLowerCase(),
     description,
     status: 'pending',
   });

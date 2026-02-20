@@ -4,12 +4,7 @@ import { gatewayConnections } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { resolveTenantId } from '@/lib/tenant';
 import { checkGatewayHealth, hashToken } from '@/lib/gateway';
-
-type CreateGatewayBody = {
-  label?: string;
-  url?: string;
-  token?: string;
-};
+import { parseBody, GatewayCreateSchema } from '@/lib/validate';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -36,12 +31,12 @@ export async function POST(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as CreateGatewayBody;
-  const url = body.url?.trim();
-  if (!url) return NextResponse.json({ error: 'url is required' }, { status: 400 });
+  const parsed = parseBody(GatewayCreateSchema, await req.json());
+  if (!parsed.ok) return parsed.response;
+  const { url, label: labelRaw, token: tokenRaw } = parsed.data;
 
-  const label = body.label?.trim() || 'My Gateway';
-  const token = body.token?.trim();
+  const label = labelRaw?.trim() || 'My Gateway';
+  const token = tokenRaw?.trim();
   const tokenHash = hashToken(token ?? undefined);
 
   const check = await checkGatewayHealth(url, token);

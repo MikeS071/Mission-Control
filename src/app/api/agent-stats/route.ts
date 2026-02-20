@@ -3,12 +3,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { agentStats } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
-
-type AgentStatInput = {
-  agentName?: string;
-  tokens?: number;
-  costUsd?: string;
-};
+import { parseBody, AgentStatCreateSchema } from '@/lib/validate';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -33,17 +28,16 @@ export async function POST(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as AgentStatInput;
-  if (!body.agentName?.trim()) {
-    return NextResponse.json({ error: 'agentName is required' }, { status: 400 });
-  }
+  const parsed = parseBody(AgentStatCreateSchema, await req.json());
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const [created] = await db
     .insert(agentStats)
     .values({
       tenantId,
       agentName: body.agentName.trim(),
-      tokens: Number.isFinite(body.tokens) ? Number(body.tokens) : 0,
+      tokens: body.tokens ?? 0,
       costUsd: body.costUsd ?? '0.00',
     })
     .returning();
