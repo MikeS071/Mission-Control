@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/tenant';
-import { getTeamSeatCount, isStripePlaceholderMode } from '@/lib/billing';
+import { isStripePlaceholderMode } from '@/lib/billing';
 
 type CheckoutBody = {
   plan?: 'pro' | 'team';
-  seats?: number;
 };
 
 export async function POST(req: NextRequest) {
@@ -16,11 +15,6 @@ export async function POST(req: NextRequest) {
 
   if (plan !== 'pro' && plan !== 'team') {
     return NextResponse.json({ error: 'Invalid plan. Must be pro or team.' }, { status: 400 });
-  }
-
-  const seats = plan === 'team' ? getTeamSeatCount(body.seats) : 1;
-  if (plan === 'team' && seats < 10) {
-    return NextResponse.json({ error: 'Team plan requires at least 10 seats.' }, { status: 400 });
   }
 
   if (isStripePlaceholderMode()) {
@@ -38,19 +32,17 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://127.0.0.1:3003';
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    line_items: [{ price: priceId, quantity: plan === 'team' ? seats : 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/dashboard/billing?checkout=success`,
     cancel_url: `${baseUrl}/dashboard/billing?checkout=canceled`,
     metadata: {
       tenantId: String(tenantId),
       plan,
-      seats: String(seats),
     },
     subscription_data: {
       metadata: {
         tenantId: String(tenantId),
         plan,
-        seats: String(seats),
       },
     },
   });
