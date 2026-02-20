@@ -123,12 +123,12 @@ function toggleBlockedTag(tags: string, flagKey: 'blocked' | 'needs-human'): str
 
 function StatsTile({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
-    <div className={`h-20 w-44 rounded-lg border-2 ${color} bg-gray-900 px-3 py-2 flex flex-col justify-between`}>
+    <div className={`h-14 w-44 rounded-lg border-2 ${color} bg-gray-900 px-3 py-1.5 flex flex-col justify-between`}>
       <div className="flex items-baseline gap-1.5 min-w-0">
-        <div className="text-xl font-bold text-white truncate">{value}</div>
-        {sub && <div className="text-[10px] text-gray-500 truncate">{sub}</div>}
+        <div className="text-base font-bold text-white truncate">{value}</div>
+        {sub && <div className="text-[9px] text-gray-500 truncate">{sub}</div>}
       </div>
-      <div className="text-[11px] text-gray-400 border-t border-gray-800 pt-1.5">{label}</div>
+      <div className="text-[10px] text-gray-400 border-t border-gray-800 pt-1">{label}</div>
     </div>
   );
 }
@@ -496,7 +496,7 @@ export function KanbanBoard() {
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [leftWidth, setLeftWidth] = useState(220);
-  const [rightWidth, setRightWidth] = useState(520);
+  const [rightWidth, setRightWidth] = useState(572);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
@@ -785,7 +785,7 @@ export function KanbanBoard() {
       </div>
 
       {/* 3-pane resizable layout */}
-      <div className="flex h-[calc(100vh-185px)] rounded-lg overflow-hidden border border-gray-800">
+      <div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
 
         {/* ── Left pane: Agent Team ── */}
         <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
