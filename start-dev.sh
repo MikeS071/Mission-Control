@@ -2,8 +2,6 @@
 # Start the DEV instance on ports 3004 (HTTPS) / 3003 (HTTP).
 # Builds from the current working tree — always run on the `dev` branch.
 # Does NOT touch prod (PID /tmp/mc.pid, ports 3000/3001).
-set -e
-
 DEV_PID_FILE="/tmp/mc-dev.pid"
 
 # Kill existing dev instance
@@ -29,7 +27,11 @@ source /home/openclaw/projects/openclaw-mission-control/scripts/build-lock.sh
 acquire_build_lock
 rm -f .next/lock  # clear stale Next.js build lock
 echo "Building dev instance..."
-npx next build > /tmp/mc-dev-build.log 2>&1
+if ! npx next build > /tmp/mc-dev-build.log 2>&1; then
+  echo "Build failed — check /tmp/mc-dev-build.log" >&2
+  tail -20 /tmp/mc-dev-build.log >&2
+  exit 1
+fi
 
 nohup ./node_modules/.bin/tsx server.ts >> /tmp/mc-dev.log 2>&1 &
 DEV_PID=$!
