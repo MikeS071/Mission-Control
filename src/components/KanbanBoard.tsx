@@ -123,13 +123,12 @@ function toggleBlockedTag(tags: string, flagKey: 'blocked' | 'needs-human'): str
 
 function StatsTile({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
-    <div className={`h-32 w-44 rounded-lg border-2 ${color} bg-gray-900 p-3 flex flex-col`}>
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-2xl font-bold text-white text-center">{value}</div>
-        {/* Fixed height sub-label — keeps all numbers vertically aligned */}
-        <div className="text-[10px] text-gray-500 mt-0.5 text-center h-[14px] leading-[14px]">{sub ?? ''}</div>
+    <div className={`h-14 w-44 rounded-lg border-2 ${color} bg-gray-900 px-3 py-1.5 flex flex-col justify-between`}>
+      <div className="flex items-baseline gap-1.5 min-w-0">
+        <div className="text-base font-bold text-white truncate">{value}</div>
+        {sub && <div className="text-[9px] text-gray-500 truncate">{sub}</div>}
       </div>
-      <div className="text-xs text-center text-gray-400 pt-1 border-t border-gray-800">{label}</div>
+      <div className="text-[10px] text-gray-400 border-t border-gray-800 pt-1">{label}</div>
     </div>
   );
 }
@@ -469,7 +468,6 @@ function ChatPane({ primaryAgentName }: { primaryAgentName: string | null }) {
             <textarea
               className="flex-1 min-w-0 rounded border border-gray-700/60 bg-gray-900 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/60 resize-none"
               placeholder={`Message ${displayName}\u2026`}
-              rows={3}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
@@ -497,7 +495,7 @@ export function KanbanBoard() {
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [leftWidth, setLeftWidth] = useState(220);
-  const [rightWidth, setRightWidth] = useState(400);
+const [rightWidth, setRightWidth] = useState(402);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
@@ -775,9 +773,9 @@ export function KanbanBoard() {
   const saveWipLimit = (column: string) => { const parsed = Number(editingWipValue); setWipLimits((prev) => ({ ...prev, [column]: Number.isFinite(parsed) && parsed > 0 ? parsed : null })); setEditingWipColumn(null); };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Stats tiles */}
-      <div className="flex gap-3 overflow-x-auto pb-1">
+      <div className="flex gap-3 overflow-x-auto pb-0.5">
         <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
         <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
         <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
@@ -786,7 +784,7 @@ export function KanbanBoard() {
       </div>
 
       {/* 3-pane resizable layout */}
-      <div className="flex h-[calc(100vh-340px)] rounded-lg overflow-hidden border border-gray-800">
+<div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
 
         {/* ── Left pane: Agent Team ── */}
         <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
@@ -943,10 +941,10 @@ export function KanbanBoard() {
           </div>{/* end overflow-auto */}
         </div>{/* end middle pane */}
 
-        <ResizableDivider onDrag={(dx) => setRightWidth((w) => Math.max(240, Math.min(560, w - dx)))} />
+        <ResizableDivider onDrag={(dx) => setRightWidth((w) => Math.max(280, Math.min(700, w - dx)))} />
 
         {/* ── Right pane: Chat ── */}
-        <div style={{ width: rightWidth, minWidth: 240, maxWidth: 560 }} className="flex-shrink-0 overflow-hidden h-full">
+        <div style={{ width: rightWidth, minWidth: 280, maxWidth: 700 }} className="flex-shrink-0 overflow-hidden h-full">
           <ChatPane primaryAgentName={primaryAgentName} />
         </div>
 
