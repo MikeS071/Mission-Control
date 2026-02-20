@@ -54,14 +54,16 @@ fi
 # ── 1. Git branch check ───────────────────────────────────────────────────────
 echo "── 1. Git"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "dev" ]]; then
-  red "Not on dev branch (current: $BRANCH). Switch to dev before running."
-else
+if [[ "$BRANCH" == "dev" ]]; then
   green "On dev branch"
+elif [[ "$BRANCH" == "main" ]]; then
+  green "On main branch (merge flow — OK)"
+else
+  red "On unexpected branch: $BRANCH (expected dev or main)"
 fi
 
 UNPUSHED=$(git log origin/dev..dev --oneline 2>/dev/null | wc -l | tr -d ' ' || echo 0)
-if [[ "$UNPUSHED" -gt 0 ]]; then
+if [[ "$UNPUSHED" -gt 0 && "$BRANCH" == "dev" ]]; then
   red "Unpushed commits on dev: $UNPUSHED. Push before merging."
 else
   green "dev is in sync with origin/dev"
