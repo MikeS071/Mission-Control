@@ -32,6 +32,25 @@ echo "  $(date -u '+%Y-%m-%d %H:%M UTC')"
 echo "════════════════════════════════════════"
 echo ""
 
+
+# ── 0. Regression test suite (mandatory first gate) ──────────────────────────
+echo "── 0. Regression Suite"
+REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" 2>&1)
+REGR_EXIT=$?
+REGR_SUMMARY=$(echo "$REGR_OUT" | grep "Results:")
+if [[ "$REGR_EXIT" -eq 0 ]]; then
+  green "Regression suite passed — $REGR_SUMMARY"
+else
+  echo ""
+  echo "$REGR_OUT" | tail -30
+  red "Regression suite FAILED — $REGR_SUMMARY"
+  echo ""
+  echo "════════════════════════════════════════"
+  echo -e "\033[31m  FAIL — fix regression failures before merging.\033[0m"
+  echo "════════════════════════════════════════"
+  exit 1
+fi
+
 # ── 1. Git branch check ───────────────────────────────────────────────────────
 echo "── 1. Git"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
