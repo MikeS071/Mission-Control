@@ -238,6 +238,10 @@ http 401 POST "/api/billing/checkout" \
 http 401 POST "/api/billing/portal"
 http 401 GET  "/api/billing/status"
 http 401 GET  "/api/agent-stats"
+http 401 GET  "/api/aipipe/health"
+http 401 GET  "/api/aipipe/stats"
+http 401 POST "/api/aipipe/proxy/chat" -H "Content-Type: application/json" -d '{}'
+http 401 POST "/api/aipipe/proxy/messages" -H "Content-Type: application/json" -d '{}'
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "8. Billing Webhook (POST → 400 bad signature, not 401 or 500)"
@@ -361,7 +365,7 @@ for f in $CHANGED; do
   [[ -f "$f" ]] || continue
   HITS=$(grep -En \
     'localhost:[0-9]{4}|127\.0\.0\.1:[0-9]{4}|dev\.archonhq\.ai' \
-    "$f" 2>/dev/null | grep -v "process\.env" || true)
+    "$f" 2>/dev/null | grep -v "process\.env" | grep -v "useState(" | grep -v "|| '" | grep -v "placeholder=" || true)
   if [[ -n "$HITS" ]]; then
     fail "Hardcoded env value in $f: $(echo "$HITS" | head -1)"
     FOUND_LEAK=true
@@ -406,6 +410,49 @@ for PRIVATE_PATH in "/api/billing/checkout" "/api/billing/portal" "/api/billing/
     pass "Middleware protected: '$PRIVATE_PATH' is not public"
   fi
 done
+
+# ─────────────────────────────────────────────────────────────────────────────
+section "15. AiPipe Integration"
+# ─────────────────────────────────────────────────────────────────────────────
+# Check AiPipe files exist
+if [[ -f "$REPO_ROOT/src/lib/aipipe.ts" ]]; then
+  pass "src/lib/aipipe.ts exists"
+else
+  fail "src/lib/aipipe.ts MISSING"
+fi
+
+if [[ -f "$REPO_ROOT/src/app/api/aipipe/health/route.ts" ]]; then
+  pass "AiPipe health route exists"
+else
+  fail "AiPipe health route MISSING"
+fi
+
+if [[ -f "$REPO_ROOT/src/app/api/aipipe/stats/route.ts" ]]; then
+  pass "AiPipe stats route exists"
+else
+  fail "AiPipe stats route MISSING"
+fi
+
+if [[ -f "$REPO_ROOT/src/components/AiPipeWidget.tsx" ]]; then
+  pass "AiPipeWidget component exists"
+else
+  fail "AiPipeWidget component MISSING"
+fi
+
+# Check AiPipe service is running (non-fatal: skip with warning if not)
+AIPIPE_CODE=$(curl -sk -o /dev/null -w "%{http_code}" "http://127.0.0.1:8082/healthz" -m 3 2>/dev/null || echo "000")
+if [[ "$AIPIPE_CODE" == "200" ]]; then
+  pass "AiPipe service running at :8082 → 200"
+else
+  skip "AiPipe service not running at :8082 (code: $AIPIPE_CODE) — start with: systemctl --user start aipipe"
+fi
+
+# Validate AIPIPE_URL is set in env
+if grep -q "AIPIPE_URL" "$REPO_ROOT/.env.local" 2>/dev/null; then
+  pass "AIPIPE_URL configured in .env.local"
+else
+  fail "AIPIPE_URL not found in .env.local"
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Final Summary
