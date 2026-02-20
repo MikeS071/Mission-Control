@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
+# ⚠️  DEPRECATED — DO NOT USE
+# Prod is now served via Coolify container (port 3002) + tls-proxy.js (port 3001).
+# Running this script will hijack port 3001 and break prod by serving a stale build.
+# To restart prod: trigger a Coolify redeploy, then ensure tls-proxy.js is running.
+#   curl -s -X GET "http://100.116.243.21:8000/api/v1/deploy?uuid=w884wcw8g8co44k4cgssc8cw&force=true" \
+#     -H "Authorization: Bearer <token>"
+#   nohup node /home/openclaw/projects/tls-proxy.js > /tmp/tls-proxy.log 2>&1 &
+echo "❌  start.sh is deprecated. Prod runs via Coolify + tls-proxy.js. See comments above."
+exit 1
+
 set -e
 
 MC_PID_FILE="/tmp/mc.pid"
