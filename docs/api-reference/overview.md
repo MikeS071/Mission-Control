@@ -1,3 +1,7 @@
+---
+title: "API Reference"
+---
+
 # API Reference
 
 The Mission Control REST API lets agents and external tools create tasks, log events, read board state, and manage settings programmatically.

@@ -1,3 +1,7 @@
+---
+title: "Stripe Billing"
+---
+
 # Stripe Billing
 
 **Added:** 2026-02-20

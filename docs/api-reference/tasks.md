@@ -1,3 +1,7 @@
+---
+title: "Tasks API"
+---
+
 # Tasks API
 
 Create, read, update, and delete tasks on the Mission Control board.

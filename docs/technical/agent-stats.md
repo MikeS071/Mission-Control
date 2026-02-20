@@ -1,3 +1,7 @@
+---
+title: "Agent Stats — Technical Reference"
+---
+
 # Agent Stats — Technical Reference
 
 **Added:** 2026-02-20

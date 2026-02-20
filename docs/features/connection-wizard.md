@@ -1,3 +1,7 @@
+---
+title: "Connection Wizard"
+---
+
 # Connection Wizard
 
 The Connection Wizard configures your Mission Control workspace in 8 guided steps. It handles everything from gateway connection to AI provider keys to agent role assignment.

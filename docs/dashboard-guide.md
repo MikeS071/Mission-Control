@@ -1,3 +1,7 @@
+---
+title: "Mission Control — Dashboard Guide"
+---
+
 # Mission Control — Dashboard Guide
 
 _Last updated: 2026-02-19_

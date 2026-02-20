@@ -1,3 +1,7 @@
+---
+title: "Operations Runbook"
+---
+
 # Operations Runbook
 
 This runbook applies to OpenClaw Mission Control for multi-agent workloads.

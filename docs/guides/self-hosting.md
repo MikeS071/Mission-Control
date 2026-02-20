@@ -1,3 +1,7 @@
+---
+title: "Self-Hosting Mission Control"
+---
+
 # Self-Hosting Mission Control
 
 Run Mission Control on your own infrastructure. Requires Docker, PostgreSQL, and a Node.js environment.

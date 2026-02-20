@@ -1,3 +1,7 @@
+---
+title: "Waitlist"
+---
+
 # Waitlist
 
 **Added:** 2026-02-20

@@ -1,3 +1,7 @@
+---
+title: "AiPipe Integration"
+---
+
 # AiPipe Integration
 
 AiPipe is an on-device LLM router that automatically selects the most cost-effective model for each request, reducing AI spend without changing how agents work.

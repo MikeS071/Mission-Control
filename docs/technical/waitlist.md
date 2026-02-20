@@ -1,3 +1,7 @@
+---
+title: "Waitlist — Technical Reference"
+---
+
 # Waitlist — Technical Reference
 
 **Added:** 2026-02-20

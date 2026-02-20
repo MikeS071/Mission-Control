@@ -1,3 +1,7 @@
+---
+title: "Technical: AI Provider Auth & Per-Tenant Routing"
+---
+
 # Technical: AI Provider Auth & Per-Tenant Routing
 
 ## Architecture Overview

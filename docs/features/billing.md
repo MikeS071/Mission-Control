@@ -1,3 +1,7 @@
+---
+title: "Billing and Plans"
+---
+
 # Billing and Plans
 
 Mission Control offers two paid plans. Both include the full feature set — the difference is team size and usage limits.

@@ -1,3 +1,7 @@
+---
+title: "navi-ops CLI"
+---
+
 # navi-ops CLI
 
 **Added:** 2026-02-20

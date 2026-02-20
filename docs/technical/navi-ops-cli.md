@@ -1,3 +1,7 @@
+---
+title: "navi-ops CLI — Technical Reference"
+---
+
 # navi-ops CLI — Technical Reference
 
 **Added:** 2026-02-20

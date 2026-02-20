@@ -1,3 +1,7 @@
+---
+title: "API Reference"
+---
+
 # API Reference
 
 This document describes the current API routes implemented in OpenClaw Mission Control (`src/app/api`) for multi-agent workloads.

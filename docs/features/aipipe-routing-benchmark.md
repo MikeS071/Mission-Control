@@ -1,3 +1,7 @@
+---
+title: "AiPipe Smart Routing: Benchmark & Guide"
+---
+
 # AiPipe Smart Routing: Benchmark & Guide
 
 **Stop paying for a Ferrari when you need a bicycle.** Most applications send every LLM request to the same model regardless of complexity. A greeting gets the same treatment as a mathematical proof. AiPipe fixes that by routing each request to the right model automatically — cheapest for simple tasks, highest quality for complex ones.

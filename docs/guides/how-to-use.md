@@ -1,3 +1,7 @@
+---
+title: "How to Use Mission Control"
+---
+
 # How to Use Mission Control
 
 A practical guide to the daily workflow — managing tasks, working with agents, monitoring costs, and keeping work moving.

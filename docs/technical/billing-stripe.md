@@ -1,3 +1,7 @@
+---
+title: "Stripe Billing — Technical Reference"
+---
+
 # Stripe Billing — Technical Reference
 
 **Added:** 2026-02-20

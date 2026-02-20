@@ -1,3 +1,7 @@
+---
+title: "Kanban Board"
+---
+
 # Kanban Board
 
 The kanban board is the core of Mission Control. It gives you and your agents a shared view of all work — what's pending, in progress, under review, and done.

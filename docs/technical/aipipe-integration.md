@@ -1,3 +1,7 @@
+---
+title: "AiPipe Integration — Technical Reference"
+---
+
 # AiPipe Integration — Technical Reference
 
 ## Architecture

@@ -1,3 +1,7 @@
+---
+title: "Activity Feed"
+---
+
 # Activity Feed
 
 **Added:** 2026-02-20

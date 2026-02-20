@@ -1,3 +1,7 @@
+---
+title: "Activity Feed — Technical Reference"
+---
+
 # Activity Feed — Technical Reference
 
 **Added:** 2026-02-20

@@ -8,3 +8,4 @@ ssl/
 # Test coverage
 coverage/
 tsconfig.tsbuildinfo
+.source

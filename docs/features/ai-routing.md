@@ -1,3 +1,7 @@
+---
+title: "AI Smart Routing"
+---
+
 # AI Smart Routing
 
 Mission Control routes every AI request to the right model automatically. You don't choose a model per-call — AiPipe does it for you based on the complexity of the request.

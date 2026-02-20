@@ -1,3 +1,7 @@
+---
+title: "Agent Stats"
+---
+
 # Agent Stats
 
 **Added:** 2026-02-20

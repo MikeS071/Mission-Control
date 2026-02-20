@@ -1,3 +1,7 @@
+---
+title: "AI Provider Management"
+---
+
 # AI Provider Management
 
 Connect your AI provider API keys to Archon and let the smart router pick the best model for every job — automatically.

@@ -1,3 +1,7 @@
+---
+title: "Docs System Proposal"
+---
+
 # Mission Control Docs System — Proposal
 
 ## Recommendation: Mintlify (fast path) → Fumadocs (long term)

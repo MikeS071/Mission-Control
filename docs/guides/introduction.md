@@ -1,3 +1,7 @@
+---
+title: "Introduction to Mission Control"
+---
+
 # Introduction to Mission Control
 
 Mission Control is an AI agent coordination dashboard — a single place to manage tasks, track what your agents are doing, monitor costs, and keep work moving without constant manual intervention.

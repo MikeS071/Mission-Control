@@ -1,3 +1,7 @@
+---
+title: "Kanban Board — Technical Reference"
+---
+
 # Kanban Board — Technical Reference
 
 **Added:** 2026-02-20
