@@ -5,7 +5,19 @@
  */
 
 const AIPIPE_URL = (process.env.AIPIPE_URL ?? 'http://127.0.0.1:8082').replace(/\/$/, '');
+const AIPIPE_ADMIN_SECRET = process.env.AIPIPE_ADMIN_SECRET ?? '';
 const AIPIPE_TIMEOUT_MS = 5_000; // for health/stats — not for proxy calls
+
+// Provider name map: MC settings field → AiPipe provider name
+const PROVIDER_KEY_MAP: Record<string, string> = {
+  openaiKey:     'openai',
+  anthropicKey:  'anthropic',
+  xaiKey:        'grok',
+  openrouterKey: 'openrouter',
+  minimaxKey:    'minimax',
+  kimiKey:       'kimi',
+  geminiKey:     'gemini',
+};
 
 export interface AiPipeStats {
   runtime: {
@@ -50,6 +62,67 @@ export interface AiPipeStats {
   queue_capacity: number;
 }
 
+/** Per-tenant stats snapshot returned by AiPipe's /v1/tenants/{id}/stats endpoint. */
+export interface TenantStatsSnapshot {
+  tenant_id: string;
+  requests:  number;
+  in_tokens:  number;
+  out_tokens: number;
+  cost_usd:   number;
+  updated_at: string;
+}
+
+/**
+ * Sync provider API keys for a tenant into AiPipe's per-tenant store.
+ * Silently no-ops if AIPIPE_ADMIN_SECRET is not configured.
+ * Failure is non-fatal — keys are also persisted in MC DB.
+ */
+export async function aipipeSyncTenantKeys(
+  tenantId: string,
+  settings: Record<string, string | undefined>,
+): Promise<void> {
+  if (!AIPIPE_ADMIN_SECRET) return;
+
+  const syncs = Object.entries(PROVIDER_KEY_MAP)
+    .map(([field, provider]) => ({ provider, apiKey: settings[field] }))
+    .filter((e): e is { provider: string; apiKey: string } => Boolean(e.apiKey));
+
+  await Promise.allSettled(
+    syncs.map(({ provider, apiKey }) =>
+      fetch(`${AIPIPE_URL}/v1/tenants/${encodeURIComponent(tenantId)}/providers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':    'application/json',
+          'X-Admin-Secret':  AIPIPE_ADMIN_SECRET,
+        },
+        body: JSON.stringify({ provider, api_key: apiKey }),
+        signal: AbortSignal.timeout(AIPIPE_TIMEOUT_MS),
+      }),
+    ),
+  );
+}
+
+/**
+ * Fetch per-tenant stats from AiPipe.
+ * Returns null if unavailable or admin secret not configured.
+ */
+export async function aipipeTenantStats(tenantId: string): Promise<TenantStatsSnapshot | null> {
+  if (!AIPIPE_ADMIN_SECRET) return null;
+  try {
+    const res = await fetch(
+      `${AIPIPE_URL}/v1/tenants/${encodeURIComponent(tenantId)}/stats`,
+      {
+        headers: { 'X-Admin-Secret': AIPIPE_ADMIN_SECRET },
+        signal: AbortSignal.timeout(AIPIPE_TIMEOUT_MS),
+      },
+    );
+    if (!res.ok) return null;
+    return res.json() as Promise<TenantStatsSnapshot>;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch AiPipe health status. Returns true if healthy, false if unreachable. */
 export async function aipipeHealthy(): Promise<boolean> {
   try {
@@ -74,20 +147,32 @@ export async function aipipeStats(): Promise<AiPipeStats> {
 }
 
 /** Forward a raw request body to AiPipe's OpenAI-compatible endpoint. */
-export async function aipipeProxyChat(body: unknown, timeoutMs = 120_000): Promise<Response> {
+export async function aipipeProxyChat(
+  body: unknown,
+  tenantId?: string,
+  timeoutMs = 120_000,
+): Promise<Response> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (tenantId) headers['X-Tenant-ID'] = tenantId;
   return fetch(`${AIPIPE_URL}/v1/chat/completions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
   });
 }
 
 /** Forward a raw request body to AiPipe's Anthropic-compatible endpoint. */
-export async function aipipeProxyMessages(body: unknown, timeoutMs = 120_000): Promise<Response> {
+export async function aipipeProxyMessages(
+  body: unknown,
+  tenantId?: string,
+  timeoutMs = 120_000,
+): Promise<Response> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (tenantId) headers['X-Tenant-ID'] = tenantId;
   return fetch(`${AIPIPE_URL}/v1/messages`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
   });

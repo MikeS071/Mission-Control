@@ -455,6 +455,82 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 16. AiPipe Per-Tenant Auth
+# ─────────────────────────────────────────────────────────────────────────────
+echo -e "\n\033[36m── 16. AiPipe Per-Tenant Auth ──\033[0m"
+
+# Check AIPIPE_ADMIN_SECRET is configured in AiPipe env file
+if grep -q "AIPIPE_ADMIN_SECRET" "$HOME/.config/aipipe/env" 2>/dev/null; then
+  pass "AIPIPE_ADMIN_SECRET set in ~/.config/aipipe/env"
+else
+  fail "AIPIPE_ADMIN_SECRET missing from ~/.config/aipipe/env"
+fi
+
+# Check AIPIPE_ADMIN_SECRET is configured in MC .env.local
+if grep -q "AIPIPE_ADMIN_SECRET" "$REPO_ROOT/.env.local" 2>/dev/null; then
+  pass "AIPIPE_ADMIN_SECRET set in MC .env.local"
+else
+  fail "AIPIPE_ADMIN_SECRET missing from MC .env.local"
+fi
+
+# Check aipipe.ts exports the new sync + tenant-stats functions
+if grep -q "aipipeSyncTenantKeys" "$REPO_ROOT/src/lib/aipipe.ts" 2>/dev/null; then
+  pass "aipipe.ts: aipipeSyncTenantKeys exported"
+else
+  fail "aipipe.ts: aipipeSyncTenantKeys MISSING"
+fi
+
+if grep -q "aipipeTenantStats" "$REPO_ROOT/src/lib/aipipe.ts" 2>/dev/null; then
+  pass "aipipe.ts: aipipeTenantStats exported"
+else
+  fail "aipipe.ts: aipipeTenantStats MISSING"
+fi
+
+# Live admin endpoint tests (only if AiPipe is running)
+AIPIPE_LIVE=$(curl -sk -o /dev/null -w "%{http_code}" "http://127.0.0.1:8082/healthz" -m 3 2>/dev/null || echo "000")
+if [[ "$AIPIPE_LIVE" == "200" ]]; then
+  # POST without admin secret → 401
+  UNAUTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+    -X POST http://127.0.0.1:8082/v1/tenants/regression-test/providers \
+    -H "Content-Type: application/json" \
+    -d '{"provider":"openai","api_key":"sk-test"}' -m 5 2>/dev/null || echo "000")
+  if [[ "$UNAUTH_CODE" == "401" ]]; then
+    pass "AiPipe admin: POST without secret → 401"
+  else
+    fail "AiPipe admin: expected 401 without secret, got $UNAUTH_CODE"
+  fi
+
+  # POST with admin secret → 200
+  ADMIN_SECRET=$(grep "AIPIPE_ADMIN_SECRET" "$HOME/.config/aipipe/env" 2>/dev/null | cut -d'=' -f2- | head -1)
+  if [[ -n "$ADMIN_SECRET" ]]; then
+    UPSERT_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+      -X POST http://127.0.0.1:8082/v1/tenants/regression-test/providers \
+      -H "Content-Type: application/json" \
+      -H "X-Admin-Secret: $ADMIN_SECRET" \
+      -d '{"provider":"openai","api_key":"sk-regression-test"}' -m 5 2>/dev/null || echo "000")
+    if [[ "$UPSERT_CODE" == "200" ]]; then
+      pass "AiPipe admin: POST with secret → 200"
+    else
+      fail "AiPipe admin: expected 200 with secret, got $UPSERT_CODE"
+    fi
+
+    # GET stats → JSON with requests field
+    STATS_BODY=$(curl -s \
+      http://127.0.0.1:8082/v1/tenants/regression-test/stats \
+      -H "X-Admin-Secret: $ADMIN_SECRET" -m 5 2>/dev/null || echo "{}")
+    if echo "$STATS_BODY" | grep -q '"requests"'; then
+      pass "AiPipe admin: GET /v1/tenants/{id}/stats returns requests field"
+    else
+      fail "AiPipe admin: stats response missing 'requests' field — got: $STATS_BODY"
+    fi
+  else
+    skip "AiPipe admin secret not readable — skipping live endpoint tests"
+  fi
+else
+  skip "AiPipe not running — skipping live per-tenant endpoint tests"
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Final Summary
 # ─────────────────────────────────────────────────────────────────────────────
 TOTAL=$((PASS + FAIL + SKIP))

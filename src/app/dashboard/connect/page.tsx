@@ -6,12 +6,30 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+type AgentRoles = {
+  architect?: string;
+  planner?: string;
+  codeAgent?: string;
+  tddGuide?: string;
+  codeReviewer?: string;
+  securityReviewer?: string;
+  buildErrorResolver?: string;
+  docUpdater?: string;
+  e2eRunner?: string;
+  refactorCleaner?: string;
+};
 
 type SettingsPayload = {
   anthropicKey?: string;
   openaiKey?: string;
   xaiKey?: string;
+  openrouterKey?: string;
+  minimaxKey?: string;
+  kimiKey?: string;
+  geminiKey?: string;
+  agentRoles?: AgentRoles;
   models?: {
     mainAgent?: string;
     subagents?: string;
@@ -44,6 +62,27 @@ const MODEL_DEFAULTS = {
   costEfficient: 'claude-haiku-3',
 };
 
+const ALL_AGENT_MODELS = [
+  'claude-haiku-3', 'claude-sonnet-4-6', 'claude-opus-4',
+  'gpt-4o-mini', 'gpt-4o', 'gpt-5.1-codex', 'gpt-5.3-codex',
+  'openrouter/auto', 'minimax/abab6.5s-chat',
+  'moonshot-v1-8k', 'moonshot-v1-32k',
+  'gemini-2.0-flash', 'gemini-2.0-pro',
+];
+
+const AGENT_ROLE_DEFAULTS: Required<AgentRoles> = {
+  architect:           'claude-sonnet-4-6',
+  planner:             'claude-sonnet-4-6',
+  codeAgent:           'gpt-5.3-codex',
+  tddGuide:            'gpt-5.3-codex',
+  codeReviewer:        'claude-opus-4',
+  securityReviewer:    'claude-sonnet-4-6',
+  buildErrorResolver:  'gpt-5.3-codex',
+  docUpdater:          'claude-opus-4',
+  e2eRunner:           'claude-sonnet-4-6',
+  refactorCleaner:     'gpt-5.3-codex',
+};
+
 export default function ConnectGatewayPage() {
   const router = useRouter();
   const [step, setStep] = useState<WizardStep>(1);
@@ -59,6 +98,11 @@ export default function ConnectGatewayPage() {
   const [anthropicKey, setAnthropicKey] = useState('');
   const [openaiKey, setOpenaiKey] = useState('');
   const [xaiKey, setXaiKey] = useState('');
+  const [openrouterKey, setOpenrouterKey] = useState('');
+  const [minimaxKey, setMinimaxKey] = useState('');
+  const [kimiKey, setKimiKey] = useState('');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [agentRoles, setAgentRoles] = useState<Required<AgentRoles>>({ ...AGENT_ROLE_DEFAULTS });
 
   const [models, setModels] = useState({ ...MODEL_DEFAULTS });
 
@@ -85,6 +129,13 @@ export default function ConnectGatewayPage() {
         setAnthropicKey(settings.anthropicKey || '');
         setOpenaiKey(settings.openaiKey || '');
         setXaiKey(settings.xaiKey || '');
+        setOpenrouterKey(settings.openrouterKey || '');
+        setMinimaxKey(settings.minimaxKey || '');
+        setKimiKey(settings.kimiKey || '');
+        setGeminiKey(settings.geminiKey || '');
+        if (settings.agentRoles) {
+          setAgentRoles((prev) => ({ ...prev, ...settings.agentRoles }));
+        }
 
         setModels({
           mainAgent: settings.models?.mainAgent || MODEL_DEFAULTS.mainAgent,
@@ -101,7 +152,7 @@ export default function ConnectGatewayPage() {
     })();
   }, []);
 
-  const progressLabel = useMemo(() => `Step ${step} of 7`, [step]);
+  const progressLabel = useMemo(() => `Step ${step} of 8`, [step]);
 
   const saveSettings = async (partial: SettingsPayload) => {
     setSaving(true);
@@ -221,8 +272,9 @@ export default function ConnectGatewayPage() {
               {step === 3 && 'Add your AI keys 🔑'}
               {step === 4 && 'Enable Smart Routing ⚡'}
               {step === 5 && 'Pick your AI team 🤖'}
-              {step === 6 && 'Stay in the loop 📱'}
-              {step === 7 && 'All done! 🎉'}
+              {step === 6 && 'Configure your AI team 🤖'}
+              {step === 7 && 'Stay in the loop 📱'}
+              {step === 8 && 'All done! 🎉'}
             </CardTitle>
           </CardHeader>
 
@@ -272,12 +324,35 @@ export default function ConnectGatewayPage() {
 
                   <label className="block text-sm">⚡ xAI (Grok, optional) · <a className="text-indigo-300" href="https://console.x.ai" target="_blank" rel="noreferrer">Get key</a></label>
                   <input className="w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2" value={xaiKey} onChange={(e) => setXaiKey(e.target.value)} placeholder="xai-..." type="password" />
+
+                  <label className="block text-sm">🔀 OpenRouter (multi-model) · <a className="text-indigo-300" href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">Get key</a></label>
+                  <input className="w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2" value={openrouterKey} onChange={(e) => setOpenrouterKey(e.target.value)} placeholder="sk-or-..." type="password" />
+
+                  <label className="block text-sm">🟦 MiniMax · <a className="text-indigo-300" href="https://api.minimax.chat" target="_blank" rel="noreferrer">Get key</a></label>
+                  <input className="w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2" value={minimaxKey} onChange={(e) => setMinimaxKey(e.target.value)} placeholder="MiniMax API key" type="password" />
+
+                  <label className="block text-sm">🌙 Kimi (Moonshot AI) · <a className="text-indigo-300" href="https://platform.moonshot.cn" target="_blank" rel="noreferrer">Get key</a></label>
+                  <input className="w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2" value={kimiKey} onChange={(e) => setKimiKey(e.target.value)} placeholder="Moonshot API key" type="password" />
+
+                  <label className="block text-sm">✨ Gemini (Google AI Studio) · <a className="text-indigo-300" href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">Get key</a></label>
+                  <input className="w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2" value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)} placeholder="AIza..." type="password" />
                 </div>
 
-                <Button disabled={saving || (!anthropicKey.trim() && !openaiKey.trim() && !xaiKey.trim())} onClick={async () => {
-                  await saveSettings({ anthropicKey: anthropicKey.trim(), openaiKey: openaiKey.trim(), xaiKey: xaiKey.trim() });
-                  setStep(4);
-                }}>{saving ? 'Saving...' : 'Save & continue'}</Button>
+                <Button
+                  disabled={saving || (!anthropicKey.trim() && !openaiKey.trim() && !xaiKey.trim() && !openrouterKey.trim() && !minimaxKey.trim() && !kimiKey.trim() && !geminiKey.trim())}
+                  onClick={async () => {
+                    await saveSettings({
+                      anthropicKey: anthropicKey.trim(),
+                      openaiKey: openaiKey.trim(),
+                      xaiKey: xaiKey.trim(),
+                      openrouterKey: openrouterKey.trim(),
+                      minimaxKey: minimaxKey.trim(),
+                      kimiKey: kimiKey.trim(),
+                      geminiKey: geminiKey.trim(),
+                    });
+                    setStep(4);
+                  }}
+                >{saving ? 'Saving...' : 'Save & continue'}</Button>
               </>
             )}
 
@@ -348,6 +423,42 @@ export default function ConnectGatewayPage() {
 
             {step === 6 && (
               <>
+                <p className="text-gray-300">Each agent role has a smart default — override if you want a different model.</p>
+                <p className="text-xs text-gray-400">These control which model handles each part of your autonomous dev loop.</p>
+                <div className="space-y-2">
+                  {(
+                    [
+                      { key: 'architect' as const,          label: 'Architect',            desc: 'System design & planning' },
+                      { key: 'planner' as const,             label: 'Planner',              desc: 'Story breakdown & specs' },
+                      { key: 'codeAgent' as const,           label: 'Code Agent',           desc: 'Implementation work' },
+                      { key: 'tddGuide' as const,            label: 'TDD Guide',            desc: 'Test writing & red-green-refactor' },
+                      { key: 'codeReviewer' as const,        label: 'Code Reviewer',        desc: 'Pre-merge review' },
+                      { key: 'securityReviewer' as const,    label: 'Security Reviewer',    desc: 'Auth, tenant & input security' },
+                      { key: 'buildErrorResolver' as const,  label: 'Build Error Resolver', desc: 'Fix build & type failures' },
+                      { key: 'docUpdater' as const,          label: 'Doc Updater',          desc: 'Phase 5 docs gate' },
+                      { key: 'e2eRunner' as const,           label: 'E2E Runner',           desc: 'Regression & smoke tests' },
+                      { key: 'refactorCleaner' as const,     label: 'Refactor Cleaner',     desc: 'Post-feature cleanup' },
+                    ]
+                  ).map(({ key, label, desc }) => (
+                    <ModelPicker
+                      key={key}
+                      label={label}
+                      description={desc}
+                      value={agentRoles[key]}
+                      options={ALL_AGENT_MODELS}
+                      onChange={(value) => setAgentRoles((s) => ({ ...s, [key]: value }))}
+                    />
+                  ))}
+                </div>
+                <Button disabled={saving} onClick={async () => {
+                  await saveSettings({ agentRoles });
+                  setStep(7);
+                }}>{saving ? 'Saving...' : 'Save & continue'}</Button>
+              </>
+            )}
+
+            {step === 7 && (
+              <>
                 <div className="space-y-2">
                   <label className="block text-sm">Telegram bot token</label>
                   <input className="w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2" value={telegramBotToken} onChange={(e) => setTelegramBotToken(e.target.value)} placeholder="123456:ABC..." type="password" />
@@ -363,20 +474,21 @@ export default function ConnectGatewayPage() {
                   </Button>
                   <Button disabled={saving} onClick={async () => {
                     await saveSettings({ notifications: { telegramBotToken: telegramBotToken.trim(), telegramChatId: telegramChatId.trim() } });
-                    setStep(7);
+                    setStep(8);
                   }}>{saving ? 'Saving...' : 'Save & continue'}</Button>
                 </div>
                 {notificationStatus && <p className={notificationStatus.startsWith('✅') ? 'text-green-400' : 'text-red-400'}>{notificationStatus}</p>}
               </>
             )}
 
-            {step === 7 && (
+            {step === 8 && (
               <>
                 <div className="space-y-2 rounded-md border border-gray-700 bg-gray-950 p-3 text-sm">
                   <p>{gatewayConnected ? '✅ Gateway connected' : '⚪ Gateway skipped for now'}</p>
-                  <p>{anthropicKey || openaiKey || xaiKey ? '✅ AI keys added' : '⚪ AI keys not added yet'}</p>
+                  <p>{anthropicKey || openaiKey || xaiKey || openrouterKey || minimaxKey || kimiKey || geminiKey ? '✅ AI keys added' : '⚪ AI keys not added yet'}</p>
                   <p>{aipipeStatus === 'ok' ? '✅ Smart routing enabled' : '⚪ Smart routing not running'}</p>
                   <p>✅ Models picked</p>
+                  <p>✅ Agent roles configured</p>
                   <p>{telegramBotToken && telegramChatId ? '✅ Notifications saved' : '⚪ Notifications skipped'}</p>
                 </div>
 
