@@ -496,7 +496,7 @@ export function KanbanBoard() {
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [leftWidth, setLeftWidth] = useState(220);
-  const [rightWidth, setRightWidth] = useState(472);
+  const [rightWidth, setRightWidth] = useState(422);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
