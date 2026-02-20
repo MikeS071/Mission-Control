@@ -7,8 +7,8 @@ title: "Technical: AI Provider Auth & Per-Tenant Routing"
 ## Architecture Overview
 
 Provider API keys are stored in two places:
-1. **MC Database** — `tenantSettings.settings` JSON column (per-tenant, Postgres)
-2. **AiPipe SQLite store** — `~/.config/aipipe/aipipe.db` (per-tenant, local)
+1. **MC Database**: `tenantSettings.settings` JSON column (per-tenant, Postgres)
+2. **AiPipe SQLite store**: `~/.config/aipipe/aipipe.db` (per-tenant, local)
 
 The two stores are kept in sync: whenever a tenant saves provider keys via the settings API, MC calls the AiPipe admin endpoints to mirror the keys to the local store. The AiPipe process uses its own store as the authoritative source for routing decisions.
 
@@ -66,7 +66,7 @@ All admin endpoints require `X-Admin-Secret` header matching `AIPIPE_ADMIN_SECRE
 | `GET` | `/v1/tenants/{id}/stats` | Per-tenant stats snapshot |
 | `GET` | `/v1/tenants` | List all tenant IDs (admin) |
 
-AiPipe binds to `127.0.0.1:8082` — not publicly exposed. MC calls these endpoints server-side only.
+AiPipe binds to `127.0.0.1:8082`, not publicly exposed. MC calls these endpoints server-side only.
 
 ## Per-Tenant Request Routing Flow
 
@@ -92,7 +92,7 @@ tenant key (from SQLite store)
     → skip provider (not available for this request)
 ```
 
-If `X-Tenant-ID` is absent, AiPipe falls back to global env-var keys only (host-operator mode — backward compatible).
+If `X-Tenant-ID` is absent, AiPipe falls back to global env-var keys only (host-operator mode, backward compatible).
 
 ## New Providers
 
@@ -119,15 +119,15 @@ if (hasProviderKeys) {
 }
 ```
 
-Sync is fire-and-forget — failure does not fail the settings save. The MC DB is the source of truth; AiPipe store is a performance cache.
+Sync is fire-and-forget, failure does not fail the settings save. The MC DB is the source of truth; AiPipe store is a performance cache.
 
 **`aipipeSyncTenantKeys`** fans out to `POST /v1/tenants/{id}/providers` for each non-empty key, using `Promise.allSettled` (individual failures don't block others).
 
 ## Per-Tenant Stats
 
 **MC stats endpoint** (`GET /api/aipipe/stats`) fetches in parallel:
-- Global: `GET /v1/stats` — model health, latency percentiles, queue depth
-- Per-tenant: `GET /v1/tenants/{id}/stats` — this tenant's requests, tokens, cost
+- Global: `GET /v1/stats`, model health, latency percentiles, queue depth
+- Per-tenant: `GET /v1/tenants/{id}/stats`, this tenant's requests, tokens, cost
 
 Response shape:
 ```typescript
@@ -163,8 +163,8 @@ Response shape:
 
 ## Security Notes
 
-- AiPipe admin endpoints are bound to localhost only — no public exposure
-- SQLite DB file is `chmod 0600` — owner read/write only
+- AiPipe admin endpoints are bound to localhost only, no public exposure
+- SQLite DB file is `chmod 0600`, owner read/write only
 - API keys are stored in plaintext in SQLite (at-rest encryption via filesystem permissions)
 - Full key vault (AES-256 at-rest encryption) is roadmap
 - `AIPIPE_ADMIN_SECRET` is generated via `openssl rand -hex 32` and stored in `pass`

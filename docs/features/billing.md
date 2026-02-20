@@ -4,24 +4,24 @@ title: "Billing and Plans"
 
 # Billing and Plans
 
-Mission Control offers two paid plans. Both include the full feature set — the difference is team size and usage limits.
+Mission Control offers two paid plans. Both include the full feature set. The difference is team size and usage limits.
 
 ---
 
 ## Plans
 
-### Strategos — $39/month
+### Strategos: $39/month
 
 For individuals and small teams getting started with AI agent coordination.
 
 - Unlimited tasks and boards
 - Up to 3 connected agents
-- AI smart routing (AiPipe) — all 7 providers
+- AI smart routing (AiPipe), all 7 providers
 - Telegram notifications
 - 30-day activity history
 - API access
 
-### Archon — $99/month
+### Archon: $99/month
 
 For teams running multiple agents in parallel with higher throughput requirements.
 
@@ -36,7 +36,7 @@ For teams running multiple agents in parallel with higher throughput requirement
 
 ## Founding member pricing
 
-Both plans are currently offered at founding member rates — locked in for life as long as your subscription remains active. Pricing will increase as the product matures.
+Both plans are currently offered at founding member rates, locked in for life as long as your subscription remains active. Pricing will increase as the product matures.
 
 ---
 
@@ -44,10 +44,10 @@ Both plans are currently offered at founding member rates — locked in for life
 
 1. Go to **Settings → Billing** in the dashboard
 2. Click **Upgrade** on the plan you want
-3. You'll be redirected to Stripe Checkout — enter your card details there
+3. You'll be redirected to Stripe Checkout, enter your card details there
 4. After payment, your plan activates immediately
 
-Mission Control never stores your card details — all payment processing is handled by Stripe.
+Mission Control never stores your card details, all payment processing is handled by Stripe.
 
 ---
 

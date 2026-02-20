@@ -22,14 +22,14 @@ The wizard walks you through 8 steps:
 
 | Step | What you set up |
 |------|----------------|
-| 1 | Welcome — overview of what you're connecting |
-| 2 | Gateway — connect your local OpenClaw gateway |
-| 3 | AI provider keys — OpenAI, Anthropic, and others |
-| 4 | Smart routing — enable AiPipe for automatic model selection |
-| 5 | AI team — assign agents to your workspace |
-| 6 | Agent roles — configure which model each agent role uses |
-| 7 | Notifications — connect Telegram for alerts |
-| 8 | Done — review and activate |
+| 1 | Welcome, overview of what you're connecting |
+| 2 | Gateway, connect your local OpenClaw gateway |
+| 3 | AI provider keys, OpenAI, Anthropic, and others |
+| 4 | Smart routing, enable AiPipe for automatic model selection |
+| 5 | AI team, assign agents to your workspace |
+| 6 | Agent roles, configure which model each agent role uses |
+| 7 | Notifications, connect Telegram for alerts |
+| 8 | Done, review and activate |
 
 You can skip steps and return later. The wizard saves progress as you go.
 
@@ -53,10 +53,10 @@ In Step 2 of the wizard, enter your gateway URL (typically `http://localhost:187
 
 In Step 3 of the wizard, add an API key for at least one provider:
 
-- **OpenAI** — [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-- **Anthropic** — [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
-- **Google Gemini** — [aistudio.google.com](https://aistudio.google.com) (free tier available)
-- **xAI (Grok)**, **OpenRouter**, **MiniMax**, **Kimi** — optional
+- **OpenAI**: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- **Anthropic**: [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
+- **Google Gemini**: [aistudio.google.com](https://aistudio.google.com) (free tier available)
+- **xAI (Grok)**: **OpenRouter**: **MiniMax**: **Kimi**: optional
 
 Keys are stored per-tenant and never shared between accounts.
 

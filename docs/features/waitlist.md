@@ -14,16 +14,16 @@ It also supports unsubscribe links via a tokenized endpoint and an admin-protect
 
 ## How to use
 
-### Step 1 — Join from landing page
+### Step 1: Join from landing page
 On the public site, enter your email in the waitlist form.
 
-### Step 2 — Receive confirmation
+### Step 2: Receive confirmation
 If accepted, your signup position is returned and a welcome email is sent (non-blocking).
 
-### Step 3 — Newsletter follow-up
+### Step 3: Newsletter follow-up
 If a newsletter issue exists in the database, the latest issue is sent automatically after join.
 
-### Step 4 — Unsubscribe (if needed)
+### Step 4: Unsubscribe (if needed)
 Use the unsubscribe link token in emails; this removes the address from waitlist storage.
 
 ## Key concepts

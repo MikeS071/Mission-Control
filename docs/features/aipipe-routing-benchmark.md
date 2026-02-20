@@ -4,7 +4,7 @@ title: "AiPipe Smart Routing: Benchmark & Guide"
 
 # AiPipe Smart Routing: Benchmark & Guide
 
-**Stop paying for a Ferrari when you need a bicycle.** Most applications send every LLM request to the same model regardless of complexity. A greeting gets the same treatment as a mathematical proof. AiPipe fixes that by routing each request to the right model automatically — cheapest for simple tasks, highest quality for complex ones.
+**Stop paying for a Ferrari when you need a bicycle.** Most applications send every LLM request to the same model regardless of complexity. A greeting gets the same treatment as a mathematical proof. AiPipe fixes that by routing each request to the right model automatically, cheapest for simple tasks, highest quality for complex ones.
 
 This document explains how AiPipe routing works, shows benchmark results across real prompts, and walks through what you get by connecting it to Mission Control.
 
@@ -48,9 +48,9 @@ adjusted_cost = raw_cost / quality_score ^ quality_exponent
 quality_exponent = max(0, complexity − 0.25) × 6
 ```
 
-At **low complexity** (below 0.25), quality exponent is zero — it's pure cost optimisation and the cheapest capable model wins.
+At **low complexity** (below 0.25), quality exponent is zero, it's pure cost optimisation and the cheapest capable model wins.
 
-At **high complexity**, the quality exponent grows, giving better models an increasing cost discount. A model with quality=0.97 pays a progressively smaller "effective cost" than a model at quality=0.82, even if its nominal price is higher.
+At **high complexity**: the quality exponent grows, giving better models an increasing cost discount. A model with quality=0.97 pays a progressively smaller "effective cost" than a model at quality=0.82, even if its nominal price is higher.
 
 This means:
 - Simple tasks always go to the cheapest adequate model
@@ -79,9 +79,9 @@ Quality scores are calibrated from independent 2025 benchmarks including LMSYS C
 
 Five prompts spanning the full complexity range were run through three paths simultaneously:
 
-1. **GPT-4o direct** — always using `gpt-4o-2024-11-20` (expensive baseline)
-2. **Claude Haiku direct** — always using `claude-haiku-4-5-20251001` (cheap baseline)
-3. **AiPipe** — automatic routing across all configured providers
+1. **GPT-4o direct**: always using `gpt-4o-2024-11-20` (expensive baseline)
+2. **Claude Haiku direct**: always using `claude-haiku-4-5-20251001` (cheap baseline)
+3. **AiPipe**: automatic routing across all configured providers
 
 ### Test Prompts
 
@@ -110,8 +110,8 @@ Five prompts spanning the full complexity range were run through three paths sim
 | Simple greeting | $0.000315 | $0.000169 | **$0.0000195** | −94% |
 | Translation | $0.000223 | $0.000481 | **$0.0000133** | −94% |
 | Code review | $0.00270 | $0.00135 | **$0.000162** | −94% |
-| Architecture | $0.00267 | $0.00133 | $0.00400 | +50% (by design — better model) |
-| Math proof | $0.00269 | $0.00134 | $0.00401 | +50% (by design — better model) |
+| Architecture | $0.00267 | $0.00133 | $0.00400 | +50% (by design, better model) |
+| Math proof | $0.00269 | $0.00134 | $0.00401 | +50% (by design, better model) |
 | **Total** | **$0.00861** | **$0.00467** | **$0.00821** | **−4.7%** |
 
 ### Latency
@@ -122,7 +122,7 @@ Five prompts spanning the full complexity range were run through three paths sim
 | Haiku direct | 2,245ms | 1,901ms | 4,127ms |
 | AiPipe | 3,852ms | 4,225ms | 7,278ms |
 
-**Note on latency:** AiPipe's higher average is entirely explained by routing architecture tasks to Claude Sonnet, which has a higher TTFT than GPT-4o for the same query. The routing is correct — when quality matters, a modest latency increase is the right tradeoff. For the three simple prompts, AiPipe latency is comparable to GPT-4o direct.
+**Note on latency:** AiPipe's higher average is entirely explained by routing architecture tasks to Claude Sonnet, which has a higher TTFT than GPT-4o for the same query. The routing is correct, when quality matters, a modest latency increase is the right tradeoff. For the three simple prompts, AiPipe latency is comparable to GPT-4o direct.
 
 ---
 
@@ -142,7 +142,7 @@ The total cost saving looks modest (4.7%) because the benchmark mixes cheap and 
 
 AiPipe costs 71% less than always-GPT-4o and 46% less than always-Haiku in a realistic mixed workload, because it routes simple tasks to gpt-4o-mini (8× cheaper than Haiku for short outputs) while upgrading complex tasks to Claude Sonnet rather than degrading them to Haiku.
 
-### Quality is not a dial — it's a gate
+### Quality is not a dial: it's a gate
 
 AiPipe doesn't reduce quality across the board. It applies a **complexity gate**: below the threshold, cheapest wins; above it, quality wins. This means:
 
@@ -164,7 +164,7 @@ Every model maintains a running success rate and penalty score. If a provider re
 
 ### Per-Tenant Key Isolation
 
-In multi-tenant deployments (e.g. Mission Control), each tenant can configure their own API keys via the setup wizard. AiPipe routes each tenant's requests using their keys — cost is charged to their accounts, not a shared pool. Admin endpoints allow programmatic key management:
+In multi-tenant deployments (e.g. Mission Control), each tenant can configure their own API keys via the setup wizard. AiPipe routes each tenant's requests using their keys, cost is charged to their accounts, not a shared pool. Admin endpoints allow programmatic key management:
 
 ```
 POST /v1/tenants/{id}/providers   — add or update a provider key
@@ -238,7 +238,7 @@ The table below shows what happens when gpt-4o-mini handles a task above its com
 | Formal mathematical proof | ❌ Often incorrect steps | ✅ Rigorous, correct |
 | Security vulnerability analysis | ❌ Pattern-matches only | ✅ Reasons about context |
 
-Routing to cheap models for everything is not neutral — it produces subtly wrong answers on the exact tasks where correctness matters most.
+Routing to cheap models for everything is not neutral, it produces subtly wrong answers on the exact tasks where correctness matters most.
 
 ---
 
@@ -254,7 +254,7 @@ Routing to cheap models for everything is not neutral — it produces subtly wro
 | Reliability fallback | ❌ | ❌ | ✅ |
 | Config required | None | None | API keys only |
 
-AiPipe is not an abstraction layer that trades control for convenience. It's a routing layer that gives you better outcomes — lower cost on simple tasks, higher quality on complex ones — with no changes to your application code.
+AiPipe is not an abstraction layer that trades control for convenience. It's a routing layer that gives you better outcomes, lower cost on simple tasks, higher quality on complex ones, with no changes to your application code.
 
 ---
 
@@ -266,7 +266,7 @@ AiPipe is not an abstraction layer that trades control for convenience. It's a r
 
 ### A day of development work
 
-The benchmark above uses five equal-weight prompts. Real workloads are skewed heavily toward simple interactions. To illustrate, here is an analysis of a full day of active AI-assisted development work — 80+ LLM interactions across coding, debugging, status checks, and planning.
+The benchmark above uses five equal-weight prompts. Real workloads are skewed heavily toward simple interactions. To illustrate, here is an analysis of a full day of active AI-assisted development work, 80+ LLM interactions across coding, debugging, status checks, and planning.
 
 | Task type | Interactions | AiPipe routes to | Per-interaction saving |
 |---|:---:|---|:---:|
@@ -285,7 +285,7 @@ The benchmark above uses five equal-weight prompts. Real workloads are skewed he
 | AiPipe smart routing | ~$1.33 |
 | **Saving** | **~$0.47 (26%)** |
 
-The saving is moderate here because this was an unusually complex day — six substantial coding stories requiring frontier-quality reasoning. AiPipe correctly kept those on Claude Sonnet. The 75 simple interactions (91% of the count but only 24% of the tokens) were rerouted to gpt-4o-mini at 96% lower cost each.
+The saving is moderate here because this was an unusually complex day, six substantial coding stories requiring frontier-quality reasoning. AiPipe correctly kept those on Claude Sonnet. The 75 simple interactions (91% of the count but only 24% of the tokens) were rerouted to gpt-4o-mini at 96% lower cost each.
 
 ### Typical Mission Control user workload
 

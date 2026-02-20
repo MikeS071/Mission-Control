@@ -26,7 +26,7 @@ All endpoints require a bearer token:
 Authorization: Bearer <your-api-secret>
 ```
 
-Your API secret is in **Settings → API** in the dashboard. Keep it private — it grants full write access to your workspace.
+Your API secret is in **Settings → API** in the dashboard. Keep it private, it grants full write access to your workspace.
 
 ---
 
@@ -128,10 +128,10 @@ All responses are JSON. Successful responses return the resource object. Errors 
 |------|---------|
 | `200` | Success |
 | `201` | Created |
-| `400` | Bad request — invalid input |
-| `401` | Unauthorized — missing or invalid token |
+| `400` | Bad request, invalid input |
+| `401` | Unauthorized, missing or invalid token |
 | `404` | Not found |
-| `422` | Validation error — request shape is valid but values are rejected |
+| `422` | Validation error, request shape is valid but values are rejected |
 | `429` | Rate limit exceeded |
 | `500` | Server error |
 

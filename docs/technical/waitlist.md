@@ -1,8 +1,8 @@
 ---
-title: "Waitlist — Technical Reference"
+title: "Waitlist: Technical Reference"
 ---
 
-# Waitlist — Technical Reference
+# Waitlist: Technical Reference
 
 **Added:** 2026-02-20
 **Author:** navi-ops doc-updater
@@ -17,23 +17,23 @@ The waitlist is a public API flow wired into landing-page UI:
 5. Protected export endpoint `/api/waitlist/emails` returns ordered email list.
 
 ## Key files
-- `src/app/page.tsx` — landing page waitlist form + fetch calls
-- `src/app/api/waitlist/route.ts` — count + create + email send flow
-- `src/app/api/waitlist/emails/route.ts` — API_SECRET-protected email export
-- `src/app/api/newsletter/unsubscribe/route.ts` — token decode + delete + redirect
-- `src/db/schema.ts` — `waitlist` and `newsletter_issues` tables
+- `src/app/page.tsx`, landing page waitlist form + fetch calls
+- `src/app/api/waitlist/route.ts`, count + create + email send flow
+- `src/app/api/waitlist/emails/route.ts`, API_SECRET-protected email export
+- `src/app/api/newsletter/unsubscribe/route.ts`, token decode + delete + redirect
+- `src/db/schema.ts`, `waitlist` and `newsletter_issues` tables
 
 ## Database
 - **waitlist**: `id`, unique `email`, `source`, `created_at`
 - **newsletter_issues**: latest issue queried by `sent_at` desc for auto-send
 
 ## API surface
-- `GET /api/waitlist` (public) — returns `{ count }`
-- `POST /api/waitlist` (public) — body `{ email, source? }`
+- `GET /api/waitlist` (public), returns `{ count }`
+- `POST /api/waitlist` (public), body `{ email, source? }`
   - success: `{ ok: true, position }`
   - duplicate: `{ ok: true, alreadyJoined: true }` with 409
-- `GET /api/waitlist/emails` (Bearer API_SECRET) — returns `{ emails, count }`
-- `GET|POST /api/newsletter/unsubscribe?token=...` (public) — removes email and redirects
+- `GET /api/waitlist/emails` (Bearer API_SECRET), returns `{ emails, count }`
+- `GET|POST /api/newsletter/unsubscribe?token=...` (public), removes email and redirects
 
 ## Tenant isolation
 Waitlist endpoints are intentionally public/global and not tenant-scoped. Unlike dashboard routes, they do not use tenant IDs. Data isolation here is by unique email record, not multi-tenant partitioning.

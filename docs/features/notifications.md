@@ -10,13 +10,13 @@ Mission Control sends push notifications to Telegram when tasks change state. Yo
 
 ## Setup
 
-1. **Create a Telegram bot** — open [@BotFather](https://t.me/BotFather) on Telegram, send `/newbot`, follow the prompts. BotFather gives you a token like `8525328702:AAHaHTU...`
+1. **Create a Telegram bot**: open [@BotFather](https://t.me/BotFather) on Telegram, send `/newbot`, follow the prompts. BotFather gives you a token like `8525328702:AAHaHTU...`
 
-2. **Find your chat ID** — send `/start` to [@userinfobot](https://t.me/userinfobot) on Telegram. It replies with your numeric user ID (e.g. `1556514337`).
+2. **Find your chat ID**: send `/start` to [@userinfobot](https://t.me/userinfobot) on Telegram. It replies with your numeric user ID (e.g. `1556514337`).
 
-3. **Enter both in the wizard** — go to the Connection Wizard → Step 7, paste your bot token and chat ID, and click **Save**.
+3. **Enter both in the wizard**: go to the Connection Wizard → Step 7, paste your bot token and chat ID, and click **Save**.
 
-4. **Test** — click **Send test notification**. You should receive a message in Telegram within a few seconds.
+4. **Test**: click **Send test notification**. You should receive a message in Telegram within a few seconds.
 
 ---
 
@@ -72,8 +72,8 @@ Toggle notifications off in **Settings → Notifications** or clear the bot toke
 **No test message received:**
 - Verify the bot token is correct (no extra spaces)
 - Confirm you've started a conversation with your bot (send it `/start` directly)
-- Check the chat ID is correct — user IDs are positive numbers, group IDs start with `-100`
+- Check the chat ID is correct, user IDs are positive numbers, group IDs start with `-100`
 
 **Messages stop arriving:**
 - Telegram bots can be blocked if the user blocks the bot. Unblock via Telegram settings
-- The bot token may have been revoked — generate a new one via BotFather
+- The bot token may have been revoked, generate a new one via BotFather

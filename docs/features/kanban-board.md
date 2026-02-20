@@ -4,7 +4,7 @@ title: "Kanban Board"
 
 # Kanban Board
 
-The kanban board is the core of Mission Control. It gives you and your agents a shared view of all work — what's pending, in progress, under review, and done.
+The kanban board is the core of Mission Control. It gives you and your agents a shared view of all work, what's pending, in progress, under review, and done.
 
 ---
 
@@ -41,12 +41,12 @@ Adjust limits in board settings.
 ## Task cards
 
 Each card shows:
-- **Title** — truncated to two lines; full title on hover
-- **Priority badge** — colour-coded: 🔴 Critical, 🟠 High, 🟡 Medium, ⚪ Low
-- **Goal tag** — the project goal this task belongs to
-- **Agent avatar** — which agent owns this task (if assigned)
-- **Labels** — custom colour-tagged labels
-- **Activity indicator** — pulse animation when a task was recently updated
+- **Title**: truncated to two lines; full title on hover
+- **Priority badge**: colour-coded: 🔴 Critical, 🟠 High, 🟡 Medium, ⚪ Low
+- **Goal tag**: the project goal this task belongs to
+- **Agent avatar**: which agent owns this task (if assigned)
+- **Labels**: custom colour-tagged labels
+- **Activity indicator**: pulse animation when a task was recently updated
 
 ---
 
@@ -71,7 +71,7 @@ curl -X POST https://archonhq.ai/api/tasks \
   }'
 ```
 
-Tasks created via API appear on the board immediately (no refresh needed — the board polls every 30 seconds).
+Tasks created via API appear on the board immediately (no refresh needed, the board polls every 30 seconds).
 
 ---
 
@@ -87,7 +87,7 @@ The filter bar above the board lets you narrow the view:
 | **Agent** | Any agent name |
 | **Labels** | One or more labels |
 
-Filters combine with AND logic. Active filters are shown as chips — click × on any chip to remove it.
+Filters combine with AND logic. Active filters are shown as chips, click × on any chip to remove it.
 
 ---
 
@@ -101,8 +101,8 @@ All fields are editable inline. Changes save automatically on blur.
 | Field | Notes |
 |-------|-------|
 | Title | Plain text |
-| Description | Markdown — rendered in read mode, raw in edit mode |
-| Status | Dropdown — changes reflected on board immediately |
+| Description | Markdown, rendered in read mode, raw in edit mode |
+| Status | Dropdown, changes reflected on board immediately |
 | Priority | Critical / High / Medium / Low |
 | Goal | Links to a project goal |
 | Agent | Assigns ownership |
@@ -127,13 +127,13 @@ Labels are free-form tags with colour coding. Create any label you need:
 - `blocked` (orange)
 - `sprint-1` (purple)
 
-Labels are workspace-scoped — create them once, use them on any task.
+Labels are workspace-scoped, create them once, use them on any task.
 
 ---
 
 ## Drag and drop
 
-Cards can be dragged between columns and reordered within a column. The board uses optimistic updates — the move happens visually immediately, and the API call confirms in the background.
+Cards can be dragged between columns and reordered within a column. The board uses optimistic updates, the move happens visually immediately, and the API call confirms in the background.
 
 If the API call fails (network issue, WIP limit violation), the card snaps back to its original position and a toast notification explains why.
 

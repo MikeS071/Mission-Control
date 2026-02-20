@@ -85,7 +85,7 @@ docker compose run --rm app npm run db:migrate
 
 Mission Control works behind nginx, Caddy, or Cloudflare Tunnel. The app must see HTTPS at the `NEXTAUTH_URL` level.
 
-**Recommended:** Cloudflare Tunnel — zero-config TLS, no open inbound ports:
+**Recommended:** Cloudflare Tunnel, zero-config TLS, no open inbound ports:
 
 ```bash
 cloudflared tunnel --url http://localhost:3000
@@ -142,7 +142,7 @@ Back up the PostgreSQL database:
 pg_dump mission_control > backup_$(date +%Y%m%d).sql
 ```
 
-No file system state beyond the database is required — all data lives in Postgres.
+No file system state beyond the database is required, all data lives in Postgres.
 
 ---
 

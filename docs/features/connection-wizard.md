@@ -10,17 +10,17 @@ Access it at **Settings → Connect** or navigate to `/dashboard/connect`.
 
 ---
 
-## Step 1 — Welcome
+## Step 1: Welcome
 
 An overview of what you're about to configure. No input required.
 
 ---
 
-## Step 2 — Gateway
+## Step 2: Gateway
 
-Connects Mission Control to your local OpenClaw gateway — the bridge between your agents and the cloud dashboard.
+Connects Mission Control to your local OpenClaw gateway, the bridge between your agents and the cloud dashboard.
 
-**Gateway URL** — typically `http://localhost:18789` if running locally. Enter the full URL including port.
+**Gateway URL**: typically `http://localhost:18789` if running locally. Enter the full URL including port.
 
 Mission Control sends a ping to verify the connection before you can proceed. If the ping fails:
 - Check that the gateway is running: `openclaw gateway status`
@@ -29,7 +29,7 @@ Mission Control sends a ping to verify the connection before you can proceed. If
 
 ---
 
-## Step 3 — AI Provider Keys
+## Step 3: AI Provider Keys
 
 Add API keys for the providers you want to use. At least one key is required to enable AI routing.
 
@@ -49,9 +49,9 @@ Keys are stored in AiPipe's isolated per-tenant store and never logged or expose
 
 ---
 
-## Step 4 — Smart Routing
+## Step 4: Smart Routing
 
-Enables AiPipe — the routing layer that automatically selects the best model per request.
+Enables AiPipe, the routing layer that automatically selects the best model per request.
 
 Toggle **Enable Smart Routing** to on. This:
 - Activates the AiPipe proxy for all AI calls through Mission Control
@@ -64,18 +64,18 @@ When smart routing is off, Mission Control uses a single configured model for al
 
 ---
 
-## Step 5 — AI Team
+## Step 5: AI Team
 
 Assign agents to your workspace. Each agent entry has:
-- **Name** — how this agent appears in the dashboard
-- **Role** — architect, coder, reviewer, etc. (used for display only in this step)
-- **Description** — optional notes
+- **Name**: how this agent appears in the dashboard
+- **Role**: architect, coder, reviewer, etc. (used for display only in this step)
+- **Description**: optional notes
 
-Agents don't need to be listed here to connect — any agent with a valid gateway token can connect. This step is for labelling and organising the agents you expect to use.
+Agents don't need to be listed here to connect, any agent with a valid gateway token can connect. This step is for labelling and organising the agents you expect to use.
 
 ---
 
-## Step 6 — Agent Roles
+## Step 6: Agent Roles
 
 Assigns a specific LLM model to each navi-ops agent role. AiPipe uses these assignments when a request includes a role header.
 
@@ -94,17 +94,17 @@ Default assignments (pre-filled):
 | e2e-runner | claude-sonnet-4-5 |
 | refactor-cleaner | gpt-4o (codex) |
 
-Override any assignment using the dropdown. Changes take effect immediately — no restart required.
+Override any assignment using the dropdown. Changes take effect immediately, no restart required.
 
 ---
 
-## Step 7 — Notifications
+## Step 7: Notifications
 
 Connects Telegram for push notifications when tasks change state.
 
-**Bot token** — create a bot via [@BotFather](https://t.me/BotFather) on Telegram and paste the token here.
+**Bot token**: create a bot via [@BotFather](https://t.me/BotFather) on Telegram and paste the token here.
 
-**Chat ID** — your Telegram user ID or group chat ID. Send `/start` to [@userinfobot](https://t.me/userinfobot) to find your user ID.
+**Chat ID**: your Telegram user ID or group chat ID. Send `/start` to [@userinfobot](https://t.me/userinfobot) to find your user ID.
 
 Once configured, Mission Control sends a message to your chat when:
 - A task is created
@@ -116,7 +116,7 @@ Test the connection with the **Send test notification** button before saving.
 
 ---
 
-## Step 8 — Done
+## Step 8: Done
 
 Review your configuration summary and click **Activate**. All settings are saved to your tenant profile.
 

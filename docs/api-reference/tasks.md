@@ -144,9 +144,9 @@ curl https://archonhq.ai/api/tasks/42 \
 PATCH /api/tasks/:id
 ```
 
-Partial update — send only the fields you want to change.
+Partial update, send only the fields you want to change.
 
-**Example — move to Done:**
+**Example, move to Done:**
 ```bash
 curl -X PATCH https://archonhq.ai/api/tasks/42 \
   -H "Authorization: Bearer <token>" \
@@ -154,7 +154,7 @@ curl -X PATCH https://archonhq.ai/api/tasks/42 \
   -d '{"status": "done"}'
 ```
 
-**Example — escalate priority:**
+**Example, escalate priority:**
 ```bash
 curl -X PATCH https://archonhq.ai/api/tasks/42 \
   -H "Authorization: Bearer <token>" \
@@ -162,7 +162,7 @@ curl -X PATCH https://archonhq.ai/api/tasks/42 \
   -d '{"priority": "critical", "labels": ["backend", "security", "urgent"]}'
 ```
 
-**Response: `200 OK`** — returns the full updated task object.
+**Response: `200 OK`**: returns the full updated task object.
 
 Every update is logged in the task's activity timeline with a timestamp.
 

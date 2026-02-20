@@ -8,12 +8,12 @@ AiPipe is an on-device LLM router that automatically selects the most cost-effec
 
 ## What it does
 
-- **Smart routing** — scores each request's complexity (length, code presence, keyword category, conversation depth) and picks the cheapest model that can handle it
-- **Multi-provider** — routes across OpenAI, Anthropic, xAI (Grok), OpenRouter, MiniMax, Kimi, and Gemini based on cost and capability
-- **TTFT-aware streaming** — for streaming calls, models with high time-to-first-token are penalised in selection
-- **Context window guard** — excludes models whose max context window is smaller than the request's total token count
-- **Caching** — identical requests return cached responses instantly
-- **Stats dashboard** — live view of requests routed, cost saved vs GPT-4o, cache hit rate, provider breakdown (per-tenant isolated)
+- **Smart routing**: scores each request's complexity (length, code presence, keyword category, conversation depth) and picks the cheapest model that can handle it
+- **Multi-provider**: routes across OpenAI, Anthropic, xAI (Grok), OpenRouter, MiniMax, Kimi, and Gemini based on cost and capability
+- **TTFT-aware streaming**: for streaming calls, models with high time-to-first-token are penalised in selection
+- **Context window guard**: excludes models whose max context window is smaller than the request's total token count
+- **Caching**: identical requests return cached responses instantly
+- **Stats dashboard**: live view of requests routed, cost saved vs GPT-4o, cache hit rate, provider breakdown (per-tenant isolated)
 
 ## Dashboard
 
@@ -29,7 +29,7 @@ The widget refreshes every 30 seconds automatically.
 
 ## Setup Wizard
 
-Step 4 of the connection wizard ("Enable Smart Routing") checks whether AiPipe is running and explains how it uses your existing API keys from Step 3. The step is always skippable — AiPipe is optional.
+Step 4 of the connection wizard ("Enable Smart Routing") checks whether AiPipe is running and explains how it uses your existing API keys from Step 3. The step is always skippable. AiPipe is optional.
 
 ## Using the proxy
 
@@ -52,4 +52,4 @@ Returns `{"status":"ok"}` when AiPipe is reachable, or `{"status":"unavailable"}
 
 ## Availability
 
-AiPipe is optional — if the service is not running, the health endpoint returns 503 and the dashboard widget shows an offline state with a retry button. All other dashboard features continue to work normally.
+AiPipe is optional. If the service is not running, the health endpoint returns 503 and the dashboard widget shows an offline state with a retry button. All other dashboard features continue to work normally.

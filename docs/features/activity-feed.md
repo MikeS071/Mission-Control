@@ -14,10 +14,10 @@ Each event shows relative time, exact timestamp, actor (`agentName` or `system`)
 
 ## How to use
 
-### Step 1 — Open Activity tab
+### Step 1: Open Activity tab
 Go to **Dashboard → Activity** to see the most recent events.
 
-### Step 2 — Read timeline entries
+### Step 2: Read timeline entries
 Each entry includes:
 - timestamp,
 - task context,
@@ -25,7 +25,7 @@ Each entry includes:
 - source actor badge,
 - payload text when available.
 
-### Step 3 — Inspect a single card timeline
+### Step 3: Inspect a single card timeline
 In Kanban, open a card and click **History** to load only that card’s events.
 
 ## Key concepts

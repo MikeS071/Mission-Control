@@ -4,7 +4,7 @@ title: "Introduction to Mission Control"
 
 # Introduction to Mission Control
 
-Mission Control is an AI agent coordination dashboard — a single place to manage tasks, track what your agents are doing, monitor costs, and keep work moving without constant manual intervention.
+Mission Control is an AI agent coordination dashboard. One place to manage tasks, track what your agents are doing, monitor costs, and keep work moving without constant manual intervention.
 
 It was built for engineering teams and solo founders who run AI agents as part of their workflow and need more than a chat window to stay on top of it.
 
@@ -19,7 +19,7 @@ A full kanban board with drag-and-drop, priority levels, WIP limits, custom labe
 Agents connect to Mission Control via the gateway. You can see which agents are active, what they're working on, and their cost and token usage in real time. Agents can create and update tasks directly via the API, keeping the board in sync with actual work.
 
 ### Smart LLM routing (AiPipe)
-Every AI call made through Mission Control goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower total cost — automatically, with no configuration per request. [Read the full benchmark →](/features/aipipe-routing-benchmark)
+Every AI call made through Mission Control goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower cost. No per-request configuration needed. [Read the full benchmark →](/features/aipipe-routing-benchmark)
 
 ### Notifications
 Mission Control sends Telegram notifications when tasks are created, updated, or reach a critical state. You stay informed without watching a dashboard.

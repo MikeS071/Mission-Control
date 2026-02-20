@@ -4,7 +4,7 @@ title: "How to Use Mission Control"
 
 # How to Use Mission Control
 
-A practical guide to the daily workflow — managing tasks, working with agents, monitoring costs, and keeping work moving.
+A practical guide to the daily workflow, managing tasks, working with agents, monitoring costs, and keeping work moving.
 
 ---
 
@@ -12,13 +12,13 @@ A practical guide to the daily workflow — managing tasks, working with agents,
 
 The main dashboard has four areas:
 
-**Kanban board (centre)** — your work, organised into columns: Backlog → In Progress → Review → Done. Tasks move left to right as work progresses.
+**Kanban board (centre)**: your work, organised into columns: Backlog → In Progress → Review → Done. Tasks move left to right as work progresses.
 
-**Activity feed (right panel)** — a real-time log of every task mutation, agent action, and system event. Collapse it with the arrow if you need more board space.
+**Activity feed (right panel)**: a real-time log of every task mutation, agent action, and system event. Collapse it with the arrow if you need more board space.
 
-**Agent sidebar** — shows connected agents, their current status, and session cost. Appears when agents are active.
+**Agent sidebar**: shows connected agents, their current status, and session cost. Appears when agents are active.
 
-**Top nav** — search, filters, notifications, and settings.
+**Top nav**: search, filters, notifications, and settings.
 
 ---
 
@@ -28,16 +28,16 @@ The main dashboard has four areas:
 
 Press `N` or click the **+** button in any column. Every task has:
 
-- **Title** — required
-- **Priority** — Critical, High, Medium, Low
-- **Goal** — links the task to a project goal for filtering
-- **Agent** — assigns ownership to a specific agent
-- **Labels** — free-form tags for custom filtering
-- **Description** — markdown-supported notes
+- **Title**: required
+- **Priority**: Critical, High, Medium, Low
+- **Goal**: links the task to a project goal for filtering
+- **Agent**: assigns ownership to a specific agent
+- **Labels**: free-form tags for custom filtering
+- **Description**: markdown-supported notes
 
 ### Moving tasks
 
-Drag cards between columns. The board enforces WIP limits — if a column is at capacity, it highlights and blocks the drop. Adjust WIP limits in board settings.
+Drag cards between columns. The board enforces WIP limits, if a column is at capacity, it highlights and blocks the drop. Adjust WIP limits in board settings.
 
 You can also change status from the card menu (⋯) without dragging.
 
@@ -56,7 +56,7 @@ Filters combine with AND logic. Clear all filters with the × button.
 
 Click any card to open its detail view. You'll see:
 - Full description (editable)
-- Complete activity timeline — every status change, edit, and comment with timestamps
+- Complete activity timeline, every status change, edit, and comment with timestamps
 - Assigned agent and goal
 - Creation and last-modified dates
 
@@ -80,7 +80,7 @@ The **Agents** tab includes a cost chart. Costs are reported by agents when they
 
 Shows AiPipe routing statistics:
 - Requests per provider (OpenAI, Anthropic, etc.)
-- Model distribution — what percentage of requests went to each model
+- Model distribution, what percentage of requests went to each model
 - Total cost and per-model cost breakdown
 - Success rate per provider
 - Queue depth (real-time)
@@ -121,7 +121,7 @@ The **Roadmap** tab shows your goals and the tasks attached to them. Drag tasks 
 
 ## Tips
 
-**Keep WIP tight.** The default WIP limit is 3 per column. Resist the urge to raise it — it's there to prevent context-switching overload.
+**Keep WIP tight.** The default WIP limit is 3 per column. Resist the urge to raise it, it's there to prevent context-switching overload.
 
 **Use goals for filtering.** If you're running multiple projects, assign every task to a goal. The goal filter makes it trivial to switch context between projects.
 

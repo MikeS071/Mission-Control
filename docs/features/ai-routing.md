@@ -4,7 +4,7 @@ title: "AI Smart Routing"
 
 # AI Smart Routing
 
-Mission Control routes every AI request to the right model automatically. You don't choose a model per-call — AiPipe does it for you based on the complexity of the request.
+Mission Control routes every AI request to the right model automatically. You don't pick a model per call. AiPipe scores each request on complexity and picks the cheapest model that can handle it well.
 
 ---
 
@@ -25,11 +25,11 @@ AiPipe solves this by scoring each request and routing it to the cheapest model 
 
 AiPipe scores each request on five signals:
 
-1. **Length** — longer prompts generally require more capable models
-2. **Code** — code blocks increase complexity; complex languages (Rust, Go, TypeScript) increase it further
-3. **Keywords** — "prove by induction", "architecture tradeoffs", "security vulnerability" map to high complexity; "translate", "summarise", "hello" map to low
-4. **Structure** — multi-part questions, numbered lists, and headers indicate higher complexity
-5. **Depth** — multi-turn conversations carry accumulated context and route higher
+1. **Length**: longer prompts generally require more capable models
+2. **Code**: code blocks increase complexity; complex languages (Rust, Go, TypeScript) increase it further
+3. **Keywords**: "prove by induction", "architecture tradeoffs", "security vulnerability" map to high complexity; "translate", "summarise", "hello" map to low
+4. **Structure**: multi-part questions, numbered lists, and headers indicate higher complexity
+5. **Depth**: multi-turn conversations carry accumulated context and route higher
 
 The five signals combine into a single score in `[0.05, 1.0]`. This score drives model selection.
 
@@ -37,7 +37,7 @@ The five signals combine into a single score in `[0.05, 1.0]`. This score drives
 
 ## Which model gets picked
 
-At low complexity, the cheapest capable model wins. As complexity increases, a quality-weighted formula kicks in — models with higher benchmark quality scores earn a cost discount, making them more competitive despite higher nominal prices.
+At low complexity, the cheapest capable model wins. As complexity rises, a quality-weighted formula kicks in: models with higher benchmark scores earn a cost discount, making them more competitive despite higher nominal prices.
 
 **Routing in practice:**
 

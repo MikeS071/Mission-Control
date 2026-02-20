@@ -1,8 +1,8 @@
 ---
-title: "AiPipe Integration — Technical Reference"
+title: "AiPipe Integration: Technical Reference"
 ---
 
-# AiPipe Integration — Technical Reference
+# AiPipe Integration: Technical Reference
 
 ## Architecture
 
@@ -28,12 +28,12 @@ AiPipe service               ← 127.0.0.1:8082 (systemd user service)
 | Path | Purpose |
 |------|---------|
 | `src/lib/aipipe.ts` | AiPipe HTTP client: `aipipeHealthy()`, `aipipeStats()`, `aipipeProxyChat()`, `aipipeProxyMessages()`, `estimateSavingsPercent()` |
-| `src/app/api/aipipe/health/route.ts` | GET — liveness probe |
-| `src/app/api/aipipe/stats/route.ts` | GET — runtime stats + savingsPercent |
-| `src/app/api/aipipe/proxy/chat/route.ts` | POST — OpenAI-compatible proxy |
-| `src/app/api/aipipe/proxy/messages/route.ts` | POST — Anthropic-compatible proxy |
-| `src/components/AiPipeWidget.tsx` | Client component — stats widget with 30s polling |
-| `src/app/dashboard/connect/page.tsx` | Step 4 of wizard — AiPipe health check + explanation |
+| `src/app/api/aipipe/health/route.ts` | GET, liveness probe |
+| `src/app/api/aipipe/stats/route.ts` | GET, runtime stats + savingsPercent |
+| `src/app/api/aipipe/proxy/chat/route.ts` | POST, OpenAI-compatible proxy |
+| `src/app/api/aipipe/proxy/messages/route.ts` | POST, Anthropic-compatible proxy |
+| `src/components/AiPipeWidget.tsx` | Client component, stats widget with 30s polling |
+| `src/app/dashboard/connect/page.tsx` | Step 4 of wizard, AiPipe health check + explanation |
 
 ## Environment
 
@@ -47,7 +47,7 @@ Set in `.env.local`. AiPipe must be accessible from the Next.js server process (
 
 - **Binary**: `/home/openclaw/.local/bin/aipipe` (Go, stdlib-only)
 - **Systemd unit**: `~/.config/systemd/user/aipipe.service`
-- **Env file**: `~/.config/aipipe/env` (mode 600 — contains API keys)
+- **Env file**: `~/.config/aipipe/env` (mode 600, contains API keys)
 - **Listen**: `127.0.0.1:8082` (loopback only, not public)
 - **Workers**: 8 (configurable via `AIPIPE_WORKERS`)
 
@@ -91,28 +91,28 @@ TTFT (time-to-first-token) per model is tracked via exponential moving average (
 ### GET /api/aipipe/health
 
 Auth required. Returns:
-- `200 {"status":"ok"}` — AiPipe reachable
-- `503 {"status":"unavailable"}` — AiPipe unreachable
-- `401` — unauthenticated
+- `200 {"status":"ok"}`, AiPipe reachable
+- `503 {"status":"unavailable"}`, AiPipe unreachable
+- `401`, unauthenticated
 
 ### GET /api/aipipe/stats
 
 Auth required. Returns AiPipe `/v1/stats` response plus:
-- `savingsPercent` — estimated % cost reduction vs. always using GPT-4o (blended $6.25/M tokens)
+- `savingsPercent`, estimated % cost reduction vs. always using GPT-4o (blended $6.25/M tokens)
 
 ### POST /api/aipipe/proxy/chat
 
 Auth required. Zod-validated (`ChatRequestSchema`):
-- `messages` — array of `{role: "system"|"user"|"assistant", content: string}`, 1–500 items
-- `model`, `max_tokens`, `stream`, `temperature` — optional
+- `messages`, array of `{role: "system"|"user"|"assistant", content: string}`, 1–500 items
+- `model`, `max_tokens`, `stream`, `temperature`, optional
 
 Proxies to AiPipe `/v1/chat/completions`. Streams passthrough if upstream streams.
 
 ### POST /api/aipipe/proxy/messages
 
 Auth required. Zod-validated (`MessagesRequestSchema`):
-- `messages` — array of `{role: "user"|"assistant", content: string}`, 1–500 items
-- `system`, `model`, `max_tokens`, `stream`, `temperature` — optional
+- `messages`, array of `{role: "user"|"assistant", content: string}`, 1–500 items
+- `system`, `model`, `max_tokens`, `stream`, `temperature`, optional
 
 Proxies to AiPipe `/v1/messages`.
 
