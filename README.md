@@ -1,87 +1,81 @@
-# OpenClaw Mission Control
+# Mission Control
 
-OpenClaw Mission Control is a self-hosted dashboard for running and supervising multi-agent workloads.
+**AI agent coordination dashboard with smart LLM routing.**
 
-Current implementation includes:
+Live at [archonhq.ai](https://archonhq.ai) · [Docs](https://archonhq.ai/docs) · [Roadmap](https://archonhq.ai/roadmap)
 
-- Google-authenticated dashboard shell
-- Kanban board with drag/drop, inline priority editing, and PostgreSQL persistence
-- Add/Edit/Delete task modal workflows (title, description, goal, priority, status, assigned agent)
-- Agent assignment support (`assigned_agent`) with badges on cards
-- Stats info panel on Kanban (tokens, cost, active agents, total/completed tasks) with 30s refresh
-- Status dashboard tab with gateway health/model/uptime/sessions, raw JSON panels, and token usage chart
-- Task CRUD APIs (`/api/tasks`, `/api/tasks/[id]`) + SSE updates
-- Workspace markdown file explorer/editor
+Built on [OpenClaw](https://openclaw.ai) — the AI agent operating system.
 
-The app is built with Next.js (App Router), TypeScript, Tailwind, shadcn/ui, Drizzle ORM, and PostgreSQL.
+---
 
-## Quick Start
+## What it does
 
-1. Install dependencies:
+Mission Control is the command layer for teams running AI agents. It connects to your local [OpenClaw](https://openclaw.ai) gateway and gives you:
+
+- **Kanban board** with drag-and-drop, WIP limits, per-card activity timelines, and full API access
+- **Smart LLM routing** via AiPipe — scores each request on complexity and routes to the cheapest model that can handle it. Simple tasks go to `gpt-4o-mini`, complex reasoning to Claude Sonnet. Typical saving: ~50% vs using a single frontier model
+- **Multi-provider support** — OpenAI, Anthropic, xAI, Google Gemini, OpenRouter, MiniMax, Kimi; per-tenant key isolation
+- **Agent monitoring** — see active agents, their costs, token usage, and current tasks in real time
+- **Telegram notifications** when tasks are created, updated, or reach a critical state
+- **Connection Wizard** — 8-step setup for gateway, provider keys, smart routing, agent roles, and notifications
+- **Billing** — Strategos ($39/mo) and Archon ($99/mo) via Stripe
+
+## Tech stack
+
+Next.js 16 (App Router) · TypeScript · Tailwind v4 · shadcn/ui · Drizzle ORM · PostgreSQL · Go (AiPipe)
+
+## Quick start (self-hosted)
+
+See the [self-hosting guide →](https://archonhq.ai/docs/guides/self-hosting)
 
 ```bash
+# 1. Clone and install
+git clone https://github.com/MikeS071/Mission-Control
+cd Mission-Control
 npm install
-```
 
-2. Set required environment variables in `.env.local`:
+# 2. Configure environment
+cp .env.example .env.local
+# Fill in: DATABASE_URL, GOOGLE_CLIENT_ID/SECRET, NEXTAUTH_SECRET,
+#          NEXTAUTH_URL, AIPIPE_URL, AIPIPE_ADMIN_SECRET
 
-```bash
-DATABASE_URL=postgresql://mc_user:mc_pass@localhost:5432/mission_control?sslmode=disable
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-NEXTAUTH_SECRET=generate_a_strong_secret
-GATEWAY_URL=http://127.0.0.1:18789
-WORKSPACE_PATH=/absolute/path/to/workspace
-```
-
-3. Run DB migrations:
-
-```bash
+# 3. Run DB migrations
 npm run migrate
-```
 
-4. Start the app:
-
-```bash
+# 4. Start dev server
 npm run dev
 ```
 
-5. Open:
-
-`http://localhost:3000`
-
 ## Scripts
 
-- `npm run dev` - start local Next.js dev server
-- `npm run build` - build production assets
-- `npm run start` - run production server
-- `npm run lint` - run ESLint
-- `npm run migrate` - generate + push Drizzle schema
-- `npm run dev:https` - run custom HTTPS dev server (`server.ts`)
-- `npm run start:https` - run built HTTPS server
+| Command | What it does |
+|---|---|
+| `npm run dev` | Local dev server (port 3000) |
+| `npm run build` | Production build |
+| `npm run migrate` | Run Drizzle schema migrations |
+| `npm run test` | Run unit tests |
+| `bash scripts/regression-test.sh` | Full 87-test regression suite |
+| `bash scripts/pre-release-check.sh` | Pre-merge gate (TS, Stripe, Coolify, infra) |
 
-## Repository Structure
+## Repository structure
 
-- `src/app/` - app entrypoints and API routes
-- `src/components/` - UI components (kanban, status, file editor)
-- `src/db/` - Drizzle schema + seed script
-- `src/lib/` - shared utilities and DB client
-- `Prompt - Build Mission Control.md` - build prompt/context for OpenClaw Mission Control
+```
+src/app/              Pages and API routes
+src/components/       UI components (KanbanBoard, AiPipeWidget, etc.)
+src/db/               Drizzle schema and migrations
+src/lib/              Shared utilities, DB client, AiPipe client
+docs/                 User docs (served at /docs via Fumadocs)
+  guides/             Getting started, how-to-use, self-hosting
+  features/           Feature deep-dives
+  technical/          Architecture and implementation references
+  api-reference/      REST API docs
+scripts/              Regression tests, pre-release checks
+```
 
-## Documentation
+## OpenClaw ecosystem
 
-- `docs/SETUP.md` - full local setup and environment
-- `docs/API.md` - route-by-route API reference
-- `docs/ARCHITECTURE.md` - system design and data flow
-- `docs/OPERATIONS.md` - runbook, troubleshooting, and maintenance
-- `docs/SECURITY.md` - security notes and hardening checklist
-
-## Current Scope Notes
-
-- Sessions/log feed pages are not fully implemented yet.
-- SSE stream is polling-backed (`/api/tasks/stream`, 5s interval).
-- Persistence currently covers tasks in PostgreSQL; cache/queue infrastructure is not present.
+Mission Control is part of the [OpenClaw](https://openclaw.ai) ecosystem. OpenClaw is the agent operating system that Mission Control connects to via the gateway. If you're running OpenClaw locally, the gateway is already running at `http://localhost:18789` and Mission Control will discover it automatically.
 
 ## License
 
-No license file is currently defined in this repository.
+Apache 2.0

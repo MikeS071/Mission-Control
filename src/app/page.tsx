@@ -581,7 +581,9 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="relative z-10 py-7" style={{ borderTop: '1px solid rgba(45,212,122,0.1)' }}>
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs md:flex-row md:px-10" style={{ fontFamily: 'var(--font-jetbrains, monospace)', color: '#6a7f6f' }}>
-          <p className="font-bold text-[#a3b8a8]">🧭 archonhq · Built with OpenClaw</p>
+          <p className="font-bold text-[#a3b8a8]">🧭 archonhq · Built with{' '}
+            <a href="https://openclaw.ai" target="_blank" rel="noreferrer" className="hover:text-[#2dd47a] transition">OpenClaw</a>
+          </p>
           <div className="flex gap-5">
             <Link href="https://github.com/MikeS071/Mission-Control" target="_blank" rel="noreferrer" className="transition hover:text-[#ff6b8a]">GitHub</Link>
             <Link href="/signin" className="transition hover:text-[#ff6b8a]">Sign In</Link>
@@ -591,6 +593,44 @@ export default function LandingPage() {
           <p>© 2026 archonhq.ai</p>
         </div>
       </footer>
+
+      {/* ── JSON-LD Structured Data ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Mission Control',
+            url: 'https://archonhq.ai',
+            description:
+              'AI agent coordination dashboard with smart LLM routing, kanban task management, cost tracking, and Telegram notifications.',
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'Web',
+            offers: [
+              {
+                '@type': 'Offer',
+                name: 'Strategos',
+                price: '39.00',
+                priceCurrency: 'USD',
+                billingIncrement: 'P1M',
+              },
+              {
+                '@type': 'Offer',
+                name: 'Archon',
+                price: '99.00',
+                priceCurrency: 'USD',
+                billingIncrement: 'P1M',
+              },
+            ],
+            creator: {
+              '@type': 'Organization',
+              name: 'ArchonHQ',
+              url: 'https://archonhq.ai',
+            },
+          }),
+        }}
+      />
 
     </main>
   );
