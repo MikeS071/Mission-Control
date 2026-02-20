@@ -126,7 +126,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(task ? mapTaskOutput(task) : null);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[POST /api/tasks]', message);
     return NextResponse.json({ error: `Failed to create task: ${message}` }, { status: 500 });
   }
 }

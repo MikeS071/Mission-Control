@@ -51,7 +51,5 @@ export async function POST(req: NextRequest) {
   );
 
   const data = await res.json().catch(() => ({}));
-  console.log('[webhook] Coolify deploy triggered:', data);
-
   return NextResponse.json({ triggered: true, coolify: data });
 }
