@@ -234,7 +234,7 @@ export default function LandingPage() {
           {/* Trust strip */}
           <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" style={{ fontFamily: 'var(--font-jetbrains, monospace)', color: '#6a7f6f' }}>
             <span>✅ No credit card</span>
-            <span>✅ MIT Licensed</span>
+            <span>✅ Apache 2.0 Licensed</span>
             <span>✅ Self-host always free</span>
             <span>⚡ Founding pricing locked at sign-up</span>
           </div>
