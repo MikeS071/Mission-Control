@@ -1,6 +1,10 @@
+---
+title: "AI Provider Management"
+---
+
 # AI Provider Management
 
-Connect your AI provider API keys to Archon and let the smart router pick the best model for every job — automatically.
+Connect your AI provider API keys to Archon and let the smart router pick the best model for every job, automatically.
 
 ## Supported Providers
 
@@ -20,7 +24,7 @@ All providers are optional. Add as many or as few as you need. The smart router 
 
 The easiest way is to run through the setup wizard at `/dashboard/connect`.
 
-**Step 3 — Add your AI keys:**
+**Step 3, Add your AI keys:**
 1. Paste your API key for each provider you want to use
 2. Keys can be left blank to skip a provider
 3. At least one key required to continue
@@ -41,7 +45,7 @@ Keys are saved securely in your account settings and synced to the on-device AiP
 
 Each navi-ops agent role has a pre-configured default model. You can override any role to use a different model from your connected providers.
 
-**Step 6 — Configure your AI team:**
+**Step 6, Configure your AI team:**
 
 | Role | Default | What it does |
 |---|---|---|

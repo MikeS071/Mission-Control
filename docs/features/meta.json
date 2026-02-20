@@ -1,0 +1,14 @@
+{
+  "title": "Features",
+  "pages": [
+    "kanban-board",
+    "ai-routing",
+    "aipipe-routing-benchmark",
+    "connection-wizard",
+    "notifications",
+    "billing",
+    "activity-feed",
+    "agent-stats",
+    "auth-provider"
+  ]
+}

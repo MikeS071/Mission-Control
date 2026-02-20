@@ -1,3 +1,7 @@
+---
+title: "navi-ops CLI"
+---
+
 # navi-ops CLI
 
 **Added:** 2026-02-20
@@ -10,18 +14,18 @@ The current repository integration is script-first (`scripts/pre-release-check.s
 
 ## How to use
 
-### Step 1 — Run regression gate
+### Step 1: Run regression gate
 Execute:
 `bash scripts/regression-test.sh`
 
-### Step 2 — Run pre-release gate
+### Step 2: Run pre-release gate
 Execute:
 `bash scripts/pre-release-check.sh`
 
-### Step 3 — Push with branch protections
+### Step 3: Push with branch protections
 When pushing merges to `main`, the pre-push hook blocks direct pushes and runs pre-release checks automatically.
 
-### Step 4 — Use npm helpers where needed
+### Step 4: Use npm helpers where needed
 For related workflows, package scripts provide commands like billing setup and billing test runs.
 
 ## Key concepts

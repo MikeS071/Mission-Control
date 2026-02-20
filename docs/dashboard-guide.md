@@ -1,4 +1,8 @@
-# Mission Control — Dashboard Guide
+---
+title: "Mission Control: Dashboard Guide"
+---
+
+# Mission Control: Dashboard Guide
 
 _Last updated: 2026-02-19_
 
@@ -17,9 +21,9 @@ Drag either divider to resize panes to suit your workflow.
 ## Agent Team Panel (left)
 
 Shows your primary agent (Navi by default) and any active sub-agents. Each tile displays:
-- **Name** — primary agent uses your configured `primaryAgentName`; sub-agents get fun short names (Spark, Pixel, Drift, …) assigned deterministically
-- **Status** — Active (green) / Idle (yellow) / Offline (grey) with animated activity lights
-- **Last seen** — how long ago the agent was active
+- **Name**: primary agent uses your configured `primaryAgentName`; sub-agents get fun short names (Spark, Pixel, Drift, …) assigned deterministically
+- **Status**: Active (green) / Idle (yellow) / Offline (grey) with animated activity lights
+- **Last seen**: how long ago the agent was active
 
 Configure `primaryAgentName` via Settings API (`PATCH /api/settings`).
 
@@ -33,21 +37,21 @@ Three columns: **Todo → In Progress → Done**
 - **Drag** cards between columns
 - **Click** a card to edit title, description, tags, priority, checklist
 - **Spinning bot icon** (top-right) = agent is actively working this card
-- **Priority selector** inline on the card — no need to open the edit dialog
+- **Priority selector** inline on the card, no need to open the edit dialog
 - **Checklist progress** shown as `X/Y` badge
 
 ### Blocked labels
 Two quick-toggle buttons on every card:
-- **⚠️ Blocked** — marks the card with a red glow and `BLOCKED` badge
-- **↗ Needs you** — marks with `NEEDS YOU` badge, escalates to human
+- **⚠️ Blocked**: marks the card with a red glow and `BLOCKED` badge
+- **↗ Needs you**: marks with `NEEDS YOU` badge, escalates to human
 
-Tags `blocked` / `needs-human` are stored in the existing tags field — no schema migration needed.
+Tags `blocked` / `needs-human` are stored in the existing tags field, no schema migration needed.
 
 ### Column controls
-- **▾ / ▸** — collapse / expand a column
-- **✏️** — rename the column label (saved to localStorage)
-- **⚙️** — set a WIP limit (amber warning when exceeded)
-- **+** — add a card directly into that column
+- **▾ / ▸**: collapse / expand a column
+- **✏️**: rename the column label (saved to localStorage)
+- **⚙️**: set a WIP limit (amber warning when exceeded)
+- **+**: add a card directly into that column
 
 ### Filters
 Compact filter bar above the board: search, priority, goal, agent, tag. Active filters dim hidden cards and show a count. **✕ Clear** resets all.
@@ -73,9 +77,9 @@ When `tokenLimitMonthly` is set, the Tokens tile shows `X% of limit` as a sub-la
 
 Single-agent chat with your primary agent (Navi).
 
-- **Thread sidebar** (narrow, left side of chat pane) — switch between topic threads
-- **+** at the bottom of the sidebar — start a new thread
-- **Input** is always pinned to the bottom — scrolls messages above it
+- **Thread sidebar** (narrow, left side of chat pane), switch between topic threads
+- **+** at the bottom of the sidebar, start a new thread
+- **Input** is always pinned to the bottom, scrolls messages above it
 - Title bar shows `Navi · <thread name>` so you always know context
 
 > Note: chat is currently a UI placeholder. Live gateway integration is on the roadmap.
@@ -84,8 +88,8 @@ Single-agent chat with your primary agent (Navi).
 
 ## Settings API
 
-`GET /api/settings` — fetch current tenant settings  
-`PATCH /api/settings` — update any of:
+`GET /api/settings`, fetch current tenant settings  
+`PATCH /api/settings`, update any of:
 
 ```json
 {

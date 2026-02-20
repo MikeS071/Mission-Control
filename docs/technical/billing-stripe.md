@@ -1,4 +1,8 @@
-# Stripe Billing — Technical Reference
+---
+title: "Stripe Billing: Technical Reference"
+---
+
+# Stripe Billing: Technical Reference
 
 **Added:** 2026-02-20
 **Author:** navi-ops doc-updater
@@ -12,15 +16,15 @@ Billing is implemented as authenticated Next.js API routes plus a webhook endpoi
 - Billing library: shared plan/status helpers and DB upsert/cancel logic.
 
 ## Key files
-- `src/app/dashboard/billing/BillingClient.tsx` — billing UI and calls to `/api/billing/*`
-- `src/app/dashboard/billing/page.tsx` — server page; loads initial subscription
-- `src/app/api/billing/checkout/route.ts` — creates Stripe checkout session
-- `src/app/api/billing/portal/route.ts` — creates Stripe customer portal session
-- `src/app/api/billing/status/route.ts` — returns tenant subscription snapshot
-- `src/app/api/billing/webhook/route.ts` — processes Stripe webhook events
-- `src/lib/billing.ts` — plan ranking, placeholder mode, upsert/cancel helpers
-- `src/lib/validate.ts` — `BillingCheckoutSchema`
-- `src/db/schema.ts` — `subscriptions` table
+- `src/app/dashboard/billing/BillingClient.tsx`, billing UI and calls to `/api/billing/*`
+- `src/app/dashboard/billing/page.tsx`, server page; loads initial subscription
+- `src/app/api/billing/checkout/route.ts`, creates Stripe checkout session
+- `src/app/api/billing/portal/route.ts`, creates Stripe customer portal session
+- `src/app/api/billing/status/route.ts`, returns tenant subscription snapshot
+- `src/app/api/billing/webhook/route.ts`, processes Stripe webhook events
+- `src/lib/billing.ts`, plan ranking, placeholder mode, upsert/cancel helpers
+- `src/lib/validate.ts`, `BillingCheckoutSchema`
+- `src/db/schema.ts`, `subscriptions` table
 
 ## Database
 **subscriptions** table:
@@ -34,10 +38,10 @@ Billing is implemented as authenticated Next.js API routes plus a webhook endpoi
 - timestamps
 
 ## API surface
-- `POST /api/billing/checkout` (auth) — body `{ plan }`, creates Stripe Checkout URL
-- `POST /api/billing/portal` (auth) — returns Stripe billing portal URL
-- `GET /api/billing/status` (auth) — returns `{ plan, status, seats, currentPeriodEnd }`
-- `POST /api/billing/webhook` (public) — handles:
+- `POST /api/billing/checkout` (auth), body `{ plan }`, creates Stripe Checkout URL
+- `POST /api/billing/portal` (auth), returns Stripe billing portal URL
+- `GET /api/billing/status` (auth), returns `{ plan, status, seats, currentPeriodEnd }`
+- `POST /api/billing/webhook` (public), handles:
   - `checkout.session.completed`
   - `customer.subscription.updated`
   - `customer.subscription.deleted`

@@ -1,3 +1,7 @@
+---
+title: "Security Notes"
+---
+
 # Security Notes
 
 OpenClaw Mission Control is functional for local/self-hosted usage in multi-agent workloads, but there are important hardening tasks before wider deployment.

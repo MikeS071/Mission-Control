@@ -1,4 +1,8 @@
-# navi-ops CLI — Technical Reference
+---
+title: "navi-ops CLI: Technical Reference"
+---
+
+# navi-ops CLI: Technical Reference
 
 **Added:** 2026-02-20
 **Author:** navi-ops doc-updater
@@ -13,11 +17,11 @@ The repo’s navi-ops workflow is implemented as shell-based operational command
 This acts as the CLI control plane for release readiness in this codebase.
 
 ## Key files
-- `scripts/pre-release-check.sh` — orchestrates release checks (regression, git state, TS, env checks, infra checks)
-- `scripts/regression-test.sh` — broad integration suite (build, DB, pages, auth/API behavior, billing webhook, OpenAPI checks)
-- `.git/hooks/pre-push` — blocks direct main pushes and invokes pre-release checks on main-bound merges
-- `package.json` — exposes helper commands (`stripe:setup`, `test:billing`, etc.)
-- `scripts/test-billing.sh` — targeted billing API regression checks
+- `scripts/pre-release-check.sh`, orchestrates release checks (regression, git state, TS, env checks, infra checks)
+- `scripts/regression-test.sh`, broad integration suite (build, DB, pages, auth/API behavior, billing webhook, OpenAPI checks)
+- `.git/hooks/pre-push`, blocks direct main pushes and invokes pre-release checks on main-bound merges
+- `package.json`, exposes helper commands (`stripe:setup`, `test:billing`, etc.)
+- `scripts/test-billing.sh`, targeted billing API regression checks
 
 ## Database
 No dedicated CLI table. Scripts validate DB availability and required schema (for example `tasks`, `events`, `agent_stats`, `waitlist`, `subscriptions`, `tenants`, `memberships`).

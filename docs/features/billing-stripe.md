@@ -1,3 +1,7 @@
+---
+title: "Stripe Billing"
+---
+
 # Stripe Billing
 
 **Added:** 2026-02-20
@@ -10,16 +14,16 @@ Mission Control also tracks subscription status per tenant (plan, seats, status,
 
 ## How to use
 
-### Step 1 — Open billing page
+### Step 1: Open billing page
 Go to **Dashboard → Billing**.
 
-### Step 2 — Choose a plan
+### Step 2: Choose a plan
 Select **Strategos** or **Archon** and click upgrade.
 
-### Step 3 — Complete Stripe checkout
+### Step 3: Complete Stripe checkout
 You are redirected to Stripe Checkout. After payment, you return to `/dashboard/billing`.
 
-### Step 4 — Manage an active subscription
+### Step 4: Manage an active subscription
 Use **Manage billing** to open Stripe Customer Portal.
 
 ## Key concepts

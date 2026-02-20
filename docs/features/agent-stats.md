@@ -1,3 +1,7 @@
+---
+title: "Agent Stats"
+---
+
 # Agent Stats
 
 **Added:** 2026-02-20
@@ -10,13 +14,13 @@ It helps operators understand where token spend is coming from, which agents are
 
 ## How to use
 
-### Step 1 — Record usage
+### Step 1: Record usage
 Send usage records to `POST /api/agent-stats` with `agentName` and optional token/cost values.
 
-### Step 2 — View trends in dashboard
+### Step 2: View trends in dashboard
 Open **Dashboard → Agents** to see the per-agent bar/line chart.
 
-### Step 3 — Monitor execution context in Kanban
+### Step 3: Monitor execution context in Kanban
 Kanban top tiles use summary metrics derived from agent stats (tokens, cost, saved estimate, active agents).
 
 ## Key concepts
