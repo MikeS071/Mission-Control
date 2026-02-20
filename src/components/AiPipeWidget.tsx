@@ -111,7 +111,7 @@ export function AiPipeWidget() {
         </div>
         <p className="text-xs text-gray-500">{error}</p>
         <p className="text-xs text-gray-600">
-          AiPipe runs locally at <code className="text-gray-400">127.0.0.1:8082</code>.
+          AiPipe runs locally on port 8082.
           Start it with: <code className="text-gray-400">systemctl --user start aipipe</code>
         </p>
         <button

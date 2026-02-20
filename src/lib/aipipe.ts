@@ -1,6 +1,6 @@
 /**
  * AiPipe client — thin wrapper around the local AiPipe router service.
- * AiPipe runs on AIPIPE_URL (default http://127.0.0.1:8082).
+ * AiPipe URL is read from AIPIPE_URL env var (set in .env.local).
  * All functions throw on network error; callers handle 503/unavailable.
  */
 
