@@ -55,7 +55,7 @@ export default async function DashboardPage() {
 
         {/* Logo + workspace */}
         <div className="flex flex-shrink-0 items-center gap-2 pr-6 border-r border-gray-800 mr-4">
-          <span className="text-sm font-bold tracking-tight text-white">ArchonHQ</span>
+          <span className="text-sm font-bold tracking-tight text-white">Archon<span className="text-red-500">HQ</span></span>
           <span className="text-gray-700 select-none">·</span>
           <span className="text-xs text-gray-400 max-w-[160px] truncate">{tenant?.name ?? 'Workspace'}</span>
           <Badge variant="secondary" className="ml-0.5 text-[10px] px-1.5 py-0">{planLabel}</Badge>
