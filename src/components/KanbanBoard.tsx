@@ -468,7 +468,6 @@ function ChatPane({ primaryAgentName }: { primaryAgentName: string | null }) {
             <textarea
               className="flex-1 min-w-0 rounded border border-gray-700/60 bg-gray-900 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/60 resize-none"
               placeholder={`Message ${displayName}\u2026`}
-              rows={6}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
@@ -496,7 +495,7 @@ export function KanbanBoard() {
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [leftWidth, setLeftWidth] = useState(220);
-  const [rightWidth, setRightWidth] = useState(402);
+const [rightWidth, setRightWidth] = useState(402);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
@@ -785,7 +784,7 @@ export function KanbanBoard() {
       </div>
 
       {/* 3-pane resizable layout */}
-      <div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
+<div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
 
         {/* ── Left pane: Agent Team ── */}
         <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
