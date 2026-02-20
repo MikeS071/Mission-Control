@@ -27,6 +27,7 @@ export NEXTAUTH_URL=https://dev.archonhq.ai
 
 source /home/openclaw/projects/openclaw-mission-control/scripts/build-lock.sh
 acquire_build_lock
+rm -f .next/lock  # clear stale Next.js build lock
 echo "Building dev instance..."
 npx next build > /tmp/mc-dev-build.log 2>&1
 
