@@ -5,11 +5,11 @@ AiPipe is an on-device LLM router that automatically selects the most cost-effec
 ## What it does
 
 - **Smart routing** — scores each request's complexity (length, code presence, keyword category, conversation depth) and picks the cheapest model that can handle it
-- **Multi-provider** — routes across OpenAI, Anthropic, and xAI (Grok) based on cost and capability
+- **Multi-provider** — routes across OpenAI, Anthropic, xAI (Grok), OpenRouter, MiniMax, Kimi, and Gemini based on cost and capability
 - **TTFT-aware streaming** — for streaming calls, models with high time-to-first-token are penalised in selection
 - **Context window guard** — excludes models whose max context window is smaller than the request's total token count
 - **Caching** — identical requests return cached responses instantly
-- **Stats dashboard** — live view of requests routed, cost saved vs GPT-4o, cache hit rate, provider breakdown
+- **Stats dashboard** — live view of requests routed, cost saved vs GPT-4o, cache hit rate, provider breakdown (per-tenant isolated)
 
 ## Dashboard
 
