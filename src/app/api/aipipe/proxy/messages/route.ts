@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.ok) return parsed.response;
 
   try {
-    const upstream = await aipipeProxyMessages(parsed.data);
+    const upstream = await aipipeProxyMessages(parsed.data, String(tenantId));
     const body = await upstream.arrayBuffer();
     return new NextResponse(body, {
       status: upstream.status,
