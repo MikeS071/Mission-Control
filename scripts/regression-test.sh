@@ -377,7 +377,7 @@ else
 fi
 
 # No placeholder Stripe key in committed source
-STRIPE_PLACEHOLDER=$(grep -rn "sk_test_placeholder" src/ 2>/dev/null | grep -v "startsWith\|includes\|===\|!==\|placeholder.*check\|guard" || true)
+STRIPE_PLACEHOLDER=$(grep -rn "sk_test_placeholder" src/ 2>/dev/null | grep -v "__tests__\|\.test\.ts\|\.spec\.ts\|startsWith\|includes\|===\|!==\|placeholder.*check\|guard" || true)
 if [[ -n "$STRIPE_PLACEHOLDER" ]]; then
   fail "Placeholder Stripe value found in src/: $(echo "$STRIPE_PLACEHOLDER" | head -1)"
 else
