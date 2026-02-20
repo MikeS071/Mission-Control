@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { waitlist } from '@/db/schema';
 import { sql } from 'drizzle-orm';
+import { Pool } from 'pg';
+
+const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+function emailToken(email: string): string {
+  return Buffer.from(email).toString('base64url');
+}
+
+async function getLatestNewsletterIssue(): Promise<{ subject: string; html: string } | null> {
+  try {
+    const res = await pgPool.query(
+      'SELECT subject, html FROM newsletter_issues ORDER BY sent_at DESC LIMIT 1'
+    );
+    return res.rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -75,6 +93,31 @@ export async function POST(req: NextRequest) {
     } catch (emailError) {
       console.error('waitlist welcome email error', emailError);
     }
+
+    // Send latest newsletter issue (non-blocking, fire-and-forget)
+    getLatestNewsletterIssue().then(async (issue) => {
+      if (!issue) return;
+      try {
+        const token   = emailToken(email);
+        const html    = issue.html.replaceAll('UNSUB_TOKEN_PLACEHOLDER', token);
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Mike @ ArchonHQ <hello@archonhq.ai>',
+            to: [email],
+            reply_to: 'hello@archonhq.ai',
+            subject: issue.subject,
+            html,
+          }),
+        });
+      } catch (err) {
+        console.error('waitlist newsletter send error', err);
+      }
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true, position });
   } catch (error) {
