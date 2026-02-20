@@ -1,0 +1,76 @@
+version: 1
+
+# Post-deploy smoke checks for archonhq.ai.
+# Run automatically after `navi-ops release deploy`.
+# Run manually: `navi-ops release verify` (prod) or `navi-ops release verify --dev`
+#
+# Each epic should add its own checks when new routes ship.
+
+checks:
+  # ── Core pages ────────────────────────────────────────────
+  - name: "Landing page"
+    url: /
+    expect_status: 200
+    content_contains: "Mission Control"
+
+  - name: "Roadmap page"
+    url: /roadmap
+    expect_status: 200
+    content_contains: "Roadmap"
+
+  - name: "Sign-in page"
+    url: /signin
+    expect_status: 200
+
+  # ── Docs (Fumadocs) ───────────────────────────────────────
+  - name: "Docs redirect"
+    url: /docs
+    expect_status: 307
+
+  - name: "Docs introduction"
+    url: /docs/guides/introduction
+    expect_status: 200
+    content_contains: "Mission Control"
+
+  - name: "Docs getting started"
+    url: /docs/guides/getting-started
+    expect_status: 200
+
+  - name: "Docs AI routing"
+    url: /docs/features/ai-routing
+    expect_status: 200
+
+  # ── SEO assets ───────────────────────────────────────────
+  - name: "Sitemap"
+    url: /sitemap.xml
+    expect_status: 200
+    content_contains: "<loc>"
+
+  - name: "Robots.txt"
+    url: /robots.txt
+    expect_status: 200
+    content_contains: "User-Agent"
+
+  - name: "OG image"
+    url: /opengraph-image
+    expect_status: 200
+
+  # ── API auth gates ────────────────────────────────────────
+  - name: "Tasks API (401 expected)"
+    url: /api/tasks
+    expect_status: 401
+
+  - name: "Events API (401 expected)"
+    url: /api/events
+    expect_status: 401
+
+  - name: "Gateway proxy (401 expected)"
+    url: /api/gateway
+    expect_status: 401
+
+  # ── AiPipe ───────────────────────────────────────────────
+  # 401 = route exists + auth middleware active (proxy to AiPipe is wired up).
+  # For a full AiPipe liveness check, use: curl http://127.0.0.1:8082/healthz from the host.
+  - name: "AiPipe proxy route (401 expected)"
+    url: /api/aipipe/health
+    expect_status: 401
