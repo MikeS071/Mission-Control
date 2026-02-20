@@ -107,9 +107,11 @@ export function BillingClient({
             )}
           </div>
           <div className="mb-1 flex items-baseline gap-1">
-            <span className="text-2xl font-black text-[#ff3b6f]">$59</span>
+            <span className="text-2xl font-black text-[#ff3b6f]">$39</span>
             <span className="text-sm text-[#a3b8a8]">/mo</span>
+            <span className="ml-2 rounded-full border border-[#ff3b6f]/30 bg-[#ff3b6f]/07 px-2 py-0.5 text-[10px] font-bold font-mono text-[#ff3b6f]">FOUNDING</span>
           </div>
+          <p className="mb-1 text-xs text-[#6a7f6f] line-through">$59/mo after launch</p>
           <ul className="mb-4 space-y-1 text-sm text-[#a3b8a8]">
             <li>✓ Kanban agent dashboard</li>
             <li>✓ Threaded agent chat</li>
@@ -145,9 +147,11 @@ export function BillingClient({
             )}
           </div>
           <div className="mb-1 flex items-baseline gap-1">
-            <span className="text-2xl font-black text-[#ff3b6f]">$149</span>
+            <span className="text-2xl font-black text-[#ff3b6f]">$99</span>
             <span className="text-sm text-[#a3b8a8]">/mo</span>
+            <span className="ml-2 rounded-full border border-[#ff3b6f]/30 bg-[#ff3b6f]/07 px-2 py-0.5 text-[10px] font-bold font-mono text-[#ff3b6f]">FOUNDING</span>
           </div>
+          <p className="mb-1 text-xs text-[#6a7f6f] line-through">$149/mo after launch</p>
           <ul className="mb-4 space-y-1 text-sm text-[#a3b8a8]">
             <li>✓ Everything in Strategos</li>
             <li>✓ ContentAI pipeline</li>
@@ -176,7 +180,7 @@ export function BillingClient({
       </div>
 
       <p className="text-center text-xs text-[#6a7f6f]">
-        Cancel any time.
+        Founding pricing locked in for life. Cancel any time.
       </p>
     </div>
   );
