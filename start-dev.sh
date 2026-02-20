@@ -20,7 +20,7 @@ source .env.local 2>/dev/null || true
 set +a
 
 export NODE_ENV=production
-export PORT_HTTPS=3002
+export PORT_HTTPS=3004
 export PORT_HTTP=3003
 export HTTP_BIND=0.0.0.0
 export NEXTAUTH_URL=https://dev.archonhq.ai
