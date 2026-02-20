@@ -55,7 +55,7 @@ export default function SignInPage() {
 
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
-            🧭 Mission Control
+            ArchonHQ
           </h1>
           <p className="mt-2 text-sm" style={{ color: '#6a7f6f' }}>Sign in to continue</p>
         </div>

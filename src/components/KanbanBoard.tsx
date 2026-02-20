@@ -465,15 +465,16 @@ function ChatPane({ primaryAgentName }: { primaryAgentName: string | null }) {
 
         {/* Input — always pinned to bottom */}
         <div className="px-2.5 py-2 border-t border-gray-800 flex-shrink-0 bg-gray-900/30">
-          <div className="flex gap-1.5 items-center">
-            <input
-              className="flex-1 min-w-0 rounded border border-gray-700/60 bg-gray-900 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/60"
+          <div className="flex gap-1.5 items-start">
+            <textarea
+              className="flex-1 min-w-0 rounded border border-gray-700/60 bg-gray-900 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/60 resize-none"
               placeholder={`Message ${displayName}\u2026`}
+              rows={6}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
             />
-            <button type="button" onClick={send} className="flex-shrink-0 rounded bg-indigo-700/80 hover:bg-indigo-600 p-1.5 transition-colors">
+            <button type="button" onClick={send} className="flex-shrink-0 rounded bg-indigo-700/80 hover:bg-indigo-600 p-1.5 transition-colors mt-0.5">
               <Send className="h-3 w-3 text-white" />
             </button>
           </div>
