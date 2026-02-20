@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/api/telegram',
   '/api/waitlist',
   '/api/feature-requests',
+  '/api/newsletter/unsubscribe',
+  '/unsubscribe',
 ];
 
 export default auth((req: NextAuthRequest) => {

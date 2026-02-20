@@ -22,6 +22,9 @@ async function handleUnsubscribe(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
   }
 
+  // Use NEXTAUTH_URL as base to avoid redirecting to internal proxy URL
+  const baseUrl = (process.env.NEXTAUTH_URL ?? 'https://archonhq.ai').replace(/\/$/, '')
+
   try {
     const result = await pool.query(
       'DELETE FROM waitlist WHERE email = $1 RETURNING email',
@@ -29,7 +32,7 @@ async function handleUnsubscribe(req: NextRequest) {
     )
     const status = result.rowCount === 0 ? 'already' : 'ok'
     return NextResponse.redirect(
-      new URL(`/unsubscribe?status=${status}&email=${encodeURIComponent(email)}`, req.url)
+      `${baseUrl}/unsubscribe?status=${status}&email=${encodeURIComponent(email)}`
     )
   } catch (err) {
     console.error('[unsubscribe]', err)
