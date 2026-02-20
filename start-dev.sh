@@ -27,7 +27,7 @@ source /home/openclaw/projects/openclaw-mission-control/scripts/build-lock.sh
 acquire_build_lock
 rm -f .next/lock  # clear stale Next.js build lock
 echo "Building dev instance..."
-if ! npx next build > /tmp/mc-dev-build.log 2>&1; then
+if ! NODE_OPTIONS="--max-old-space-size=3072" npx next build > /tmp/mc-dev-build.log 2>&1; then
   echo "Build failed — check /tmp/mc-dev-build.log" >&2
   tail -20 /tmp/mc-dev-build.log >&2
   exit 1
