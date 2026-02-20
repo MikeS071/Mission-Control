@@ -8,6 +8,7 @@ import { GatewayStatus } from '@/components/GatewayStatus';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { AgentCostChart } from '@/components/AgentCostChart';
 import { ProgressPanel } from '@/components/ProgressPanel';
+import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { auth } from '@/lib/auth';
@@ -69,6 +70,7 @@ export default async function DashboardPage() {
           <TabsTrigger value="agents"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Agents</TabsTrigger>
           <TabsTrigger value="files"     className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Workspace Files</TabsTrigger>
           <TabsTrigger value="progress"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Progress</TabsTrigger>
+          <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
         </TabsList>
 
         {/* Right-side controls */}
@@ -112,6 +114,7 @@ export default async function DashboardPage() {
         <TabsContent value="agents"   className="mt-0"><AgentCostChart /></TabsContent>
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
         <TabsContent value="progress" className="mt-0"><ProgressPanel /></TabsContent>
+        <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
       </div>
 
     </Tabs>
