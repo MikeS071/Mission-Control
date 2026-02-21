@@ -3,16 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { arenaStreaks } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
-
-const xpMultiplier = (days: number) => {
-  if (days >= 100) return 1.6;
-  if (days >= 60) return 1.5;
-  if (days >= 30) return 1.35;
-  if (days >= 14) return 1.2;
-  if (days >= 7) return 1.1;
-  if (days >= 3) return 1.05;
-  return 1;
-};
+import { streakDaysToMultiplier } from '@/lib/arena';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -24,7 +15,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       current_streak_days: days,
       longest_streak_days: row?.longestStreakDays ?? 0,
-      xp_multiplier: xpMultiplier(days),
+      xp_multiplier: streakDaysToMultiplier(days),
       freeze_charges: row?.freezeCharges ?? 0,
       last_qualified_on: row?.lastQualifiedOn ?? null,
     });

@@ -9,6 +9,7 @@ import { ArenaPanel } from '@/components/ArenaPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
+import { NavbarArenaProgress } from '@/components/NavbarArenaProgress';
 import { auth } from '@/lib/auth';
 import { getTenantPlan, getTenantPlanLabel } from '@/lib/billing';
 import { db } from '@/lib/db';
@@ -69,8 +70,12 @@ export default async function DashboardPage() {
           <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
         </TabsList>
 
+        <div className="ml-auto px-3">
+          <NavbarArenaProgress />
+        </div>
+
         {/* Right-side controls */}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex items-center gap-3">
           {process.env.NODE_ENV === 'development' && (
             <Link
               href="https://archonhq.ai"
