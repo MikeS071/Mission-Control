@@ -15,10 +15,10 @@
  *  6. Return { reply, messageId }
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { asc, desc, eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
+import { resolveTenantId } from '@/lib/tenant';
 
 const SYSTEM_PROMPT =
   'You are an AI assistant integrated into ArchonHQ Mission Control. ' +
@@ -29,15 +29,10 @@ const MODEL = 'gpt-4o-mini';
 const CONTEXT_MESSAGES = 10;
 
 export async function POST(req: NextRequest) {
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const tenantId = session.tenantId;
+  // ── Tenant/auth resolution ────────────────────────────────────────────────
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) {
-    return NextResponse.json({ error: 'No tenant associated with session' }, { status: 403 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // ── Validate body ─────────────────────────────────────────────────────────

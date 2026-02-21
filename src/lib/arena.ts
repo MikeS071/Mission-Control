@@ -94,7 +94,7 @@ export function xpToRank(
   const archonFull  = archonXpMet && isArchonEligible({ totalXp: xp, longestStreak, totalTasksDone, arcsCompleted });
 
   if (archonFull) {
-    const archonRank = RANKS[6];
+    const archonRank = RANKS[RANKS.length - 1]; // always the last rank (Archon)
     return { rank: archonRank, xpInRank: xp - archonRank.xpFloor, xpForNext: 0, pct: 100, archonReady: false, archonGap: null };
   }
 
