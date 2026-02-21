@@ -5,6 +5,10 @@ import { source } from '@/lib/source';
 import { db } from '@/lib/db';
 import { insights } from '@/db/schema';
 
+// Force dynamic so the sitemap is generated at request time (not build time).
+// Required because it queries Postgres — DB is not available during Docker build.
+export const dynamic = 'force-dynamic';
+
 const BASE_URL = 'https://archonhq.ai';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
