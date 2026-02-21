@@ -85,14 +85,14 @@ Default assignments (pre-filled):
 |------|--------------|
 | architect | claude-sonnet-4-5 |
 | planner | claude-sonnet-4-5 |
-| code-agent | gpt-4o (codex) |
-| tdd-guide | gpt-4o (codex) |
+| code-agent | gpt-5.3-codex |
+| tdd-guide | gpt-5.3-codex |
 | code-reviewer | claude-opus-4-5 |
 | security-reviewer | claude-sonnet-4-5 |
-| build-error-resolver | gpt-4o (codex) |
+| build-error-resolver | gpt-5.3-codex |
 | doc-updater | claude-opus-4-5 |
 | e2e-runner | claude-sonnet-4-5 |
-| refactor-cleaner | gpt-4o (codex) |
+| refactor-cleaner | gpt-5.3-codex |
 
 Override any assignment using the dropdown. Changes take effect immediately, no restart required.
 
