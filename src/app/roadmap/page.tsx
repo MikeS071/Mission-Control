@@ -26,27 +26,32 @@ const delivered = [
   'Configurable tenant settings (agent name, token budget, savings rate)',
   'Fun sub-agent names (deterministic, collision-free)',
   'Full watermelon redesign + Initiate / Strategos / Archon tiers',
-  'Coolify Docker deployment (auto-deploy on push)',
+  'AiPipe intelligent LLM router (shipped — per-tenant key vault + routing)',
+  'Subscription billing (Stripe) — plans, checkout, portal, webhook',
+  'Gamification (XP, streaks, challenges, leaderboard)',
+  'Multi-tenancy & org management',
+  'Docs site (built-in documentation with MDX)',
+  'Insights blog (AI/agent-ops articles, published at /insights)',
+  'SEO — sitemap.xml, robots.txt, OpenGraph meta tags',
+  'navi-ops CLI (Navi orchestrates deployments & ops automation)',
+  'Kamal deploy pipeline (replaced Coolify — GitHub Actions + Kamal)',
 ];
 
 const inProgress = [
-  'Goal 6: Commercialise archonhq.ai — Stripe billing & onboarding flow',
-  'Subscription billing (Stripe)',
+  'Real-time chat backend (WebSocket/SSE + message persistence)',
+  'API key encryption at rest (AES-256-GCM, retro gap in progress)',
+  'Heartbeat alerting — auto-notify when gateway goes silent',
 ];
 
 const planned = [
-  'AiPipe intelligent LLM router',
-  'Gamification (XP, streaks, challenges, leaderboard)',
-  'Multi-tenancy & org management',
-  'Per-tenant API key vault',
-  'Connect your OpenClaw instance',
-  'ContentAI — ideas-to-content pipeline (Archon)',
-  'CoderAI — autonomous coder agent (Archon)',
-  'Public blog',
-  'Email newsletter',
-  'Visual onboarding flow',
+  'Stripe live keys (switch from test mode to production)',
+  'Visual onboarding flow (wizard for new tenants)',
+  'ContentAI — ideas-to-content pipeline (Archon tier)',
+  'CoderAI — autonomous coder agent (Archon tier)',
+  'Email newsletter (Resend integration)',
   'Mobile-responsive dashboard',
-  'Audit logs + compliance exports (Archon)',
+  'Audit logs + compliance exports (Archon tier)',
+  'Per-tenant usage quotas & hard limits',
 ];
 
 export default function RoadmapPage() {
