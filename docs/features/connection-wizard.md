@@ -60,7 +60,7 @@ Toggle **Enable Smart Routing** to on. This:
 
 When smart routing is off, Mission Control uses a single configured model for all requests. When on, routing is automatic and adaptive.
 
-[Learn how routing works →](/features/ai-routing)
+[Learn how routing works →](/docs/features/ai-routing)
 
 ---
 
