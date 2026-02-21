@@ -47,7 +47,7 @@ jobs:
             echo "==> Waiting for health check on :3005"
             HEALTHY=false
             for i in $(seq 1 20); do
-              if curl -sf http://localhost:3005/api/health > /dev/null 2>&1; then
+              if curl -4sf http://127.0.0.1:3005/api/health > /dev/null 2>&1; then
                 echo "Health check passed on attempt $i"
                 HEALTHY=true
                 break
@@ -94,7 +94,7 @@ jobs:
 
             echo "==> Final health check on :3002"
             for i in $(seq 1 10); do
-              if curl -sf http://localhost:3002/api/health > /dev/null 2>&1; then
+              if curl -4sf http://127.0.0.1:3002/api/health > /dev/null 2>&1; then
                 echo "Production health check passed"
                 break
               fi
