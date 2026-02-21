@@ -1,0 +1,48 @@
+# docker-compose.dev.yml
+# Zero-install dev path for Mission Control. Brings up Postgres and the app
+# with hot reload wired in. No production secrets live here. All environment
+# values come from .env.docker-dev, which you can edit freely.
+#
+# Start with: docker compose -f docker-compose.dev.yml up
+# Stop with:  docker compose -f docker-compose.dev.yml down
+
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mission_control_dev
+      POSTGRES_USER: openclaw
+      POSTGRES_PASSWORD: devpassword
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openclaw -d mission_control_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5433:5432"
+
+  mc:
+    build:
+      context: .
+    env_file:
+      - .env.docker-dev
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: bash start-dev.sh
+    restart: unless-stopped
+
+volumes:
+  pgdata_dev:
