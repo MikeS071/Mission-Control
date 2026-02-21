@@ -284,7 +284,7 @@ export default function SignupPage() {
                 Prefer Google?{' '}
                 <button
                   type="button"
-                  onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+                  onClick={() => signIn('google', { callbackUrl: `/signup/complete?plan=${selectedPlan}` })}
                   className="text-[#ff6b8a] underline-offset-2 hover:underline"
                 >
                   Continue with Google
