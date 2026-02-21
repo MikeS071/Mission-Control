@@ -271,3 +271,11 @@ export const arenaStreakHistory = pgTable('arena_streak_history', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull(),
+  role: text('role').notNull(),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
