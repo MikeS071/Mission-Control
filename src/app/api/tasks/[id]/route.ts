@@ -8,6 +8,8 @@ import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 import { parseBody, TaskPatchSchema } from '@/lib/validate';
 
+const TASK_NOTIFICATIONS_CHAT_ID = '1556514337';
+
 const normalizeStatus = (status?: string) => {
   const value = (status || '').toLowerCase();
   if (['done', 'complete', 'completed'].includes(value)) return 'done';
@@ -97,12 +99,17 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       tenantId,
       taskId: task.id,
       agentName: 'system',
-      eventType: 'status_change',
-      payload: `Status: ${before.status} → ${task.status}`,
+      eventType: 'task_status_changed',
+      payload: JSON.stringify({
+        task_id: task.id,
+        title: task.title,
+        old_status: before.status,
+        new_status: task.status,
+      }),
     });
 
     if (task.status === 'done') void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
-    void sendTelegramMessage(`🔄 <b>${task.title}</b>: ${before.status} → ${task.status}`);
+    void sendTelegramMessage(`🔄 ${task.title}: ${before.status} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
   }
 
   return NextResponse.json(mapTaskOutput(task));

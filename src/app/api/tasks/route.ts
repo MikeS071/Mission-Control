@@ -13,6 +13,8 @@ const TaskPatchWithIdSchema = TaskPatchSchema.extend({
   id: z.number().int().positive('id must be a positive integer'),
 });
 
+const TASK_NOTIFICATIONS_CHAT_ID = '1556514337';
+
 const normalizeStatus = (status?: string) => {
   const value = (status || '').toLowerCase();
   if (['done', 'complete', 'completed'].includes(value)) return 'done';
@@ -112,12 +114,17 @@ export async function POST(req: NextRequest) {
         tenantId,
         taskId: task.id,
         agentName: 'system',
-        eventType: 'created',
-        payload: `Task created: ${task.title} (${task.goalId})`,
+        eventType: 'task_created',
+        payload: JSON.stringify({
+          task_id: task.id,
+          title: task.title,
+          old_status: null,
+          new_status: task.status,
+        }),
       });
 
       void awardXp(tenantId, XP_RULES.TASK_CREATED, 'task_created', String(task.id));
-      void sendTelegramMessage(`🆕 Goal created: <b>${task.goalId}</b> ${task.title} [${task.priority}]`);
+      void sendTelegramMessage(`📋 Task created: ${task.title} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
     }
 
     return NextResponse.json(task ? mapTaskOutput(task) : null);
@@ -164,11 +171,16 @@ export async function PATCH(req: NextRequest) {
       tenantId,
       taskId: task.id,
       agentName: 'system',
-      eventType: 'status_change',
-      payload: `Status: ${before.status} → ${task.status}`,
+      eventType: 'task_status_changed',
+      payload: JSON.stringify({
+        task_id: task.id,
+        title: task.title,
+        old_status: before.status,
+        new_status: task.status,
+      }),
     });
     if (task.status === 'done') void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
-    void sendTelegramMessage(`🔄 <b>${task.title}</b>: ${before.status} → ${task.status}`);
+    void sendTelegramMessage(`🔄 ${task.title}: ${before.status} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
   }
 
   return NextResponse.json(mapTaskOutput(task));

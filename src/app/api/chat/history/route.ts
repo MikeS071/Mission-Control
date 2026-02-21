@@ -9,19 +9,14 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { desc, eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
+import { resolveTenantId } from '@/lib/tenant';
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const tenantId = session.tenantId;
+  const tenantId = await resolveTenantId(req);
   if (!tenantId) {
-    return NextResponse.json({ error: 'No tenant associated with session' }, { status: 403 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const url = new URL(req.url);
