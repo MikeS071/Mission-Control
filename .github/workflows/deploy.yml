@@ -74,6 +74,8 @@ jobs:
               -p 3002:3000 \
               --env-file /home/openclaw/.config/archonhq/env \
               -e NODE_ENV=production \
+              -e WORKSPACE_PATH=/workspace \
+              -v /home/openclaw/.openclaw/workspace:/workspace \
               --restart unless-stopped \
               --label "traefik.enable=true" \
               --label "traefik.http.middlewares.gzip.compress=true" \

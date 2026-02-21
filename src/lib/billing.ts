@@ -11,6 +11,15 @@ const PLAN_RANK: Record<BillingPlan, number> = {
   team: 2,
 };
 
+/**
+ * Returns a human-readable display label for a plan slug.
+ * Uses title-case of the slug with a fallback to 'Free'.
+ */
+export function getTenantPlanLabel(plan: string | null | undefined): string {
+  if (!plan) return 'Free';
+  return plan.charAt(0).toUpperCase() + plan.slice(1);
+}
+
 export async function getTenantPlan(tenantId: number): Promise<BillingPlan> {
   const [subscription] = await db
     .select({ plan: subscriptions.plan })

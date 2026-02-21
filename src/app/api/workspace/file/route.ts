@@ -5,6 +5,15 @@ import { resolveTenantId } from '@/lib/tenant';
 
 const WS = process.env.WORKSPACE_PATH!;
 
+function safeResolvePath(name: string): string | null {
+  // Must end in .md
+  if (!name.endsWith('.md')) return null;
+  // Resolve full path and ensure it stays within WS
+  const resolved = path.resolve(WS, name);
+  if (!resolved.startsWith(path.resolve(WS) + path.sep) && resolved !== path.resolve(WS)) return null;
+  return resolved;
+}
+
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) {
@@ -16,9 +25,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing name parameter' }, { status: 400 });
   }
 
-  const file = path.join(WS, path.basename(name));
+  const filePath = safeResolvePath(name);
+  if (!filePath) {
+    return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+  }
+
   try {
-    const content = fs.readFileSync(file, 'utf8');
+    const content = fs.readFileSync(filePath, 'utf8');
     return new NextResponse(content);
   } catch {
     return NextResponse.json({ error: 'File not found' }, { status: 404 });
@@ -38,9 +51,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing name or content' }, { status: 400 });
   }
 
-  const file = path.join(WS, path.basename(name));
+  const filePath = safeResolvePath(name);
+  if (!filePath) {
+    return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+  }
+
   try {
-    fs.writeFileSync(file, content, 'utf8');
+    fs.writeFileSync(filePath, content, 'utf8');
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'Write failed' }, { status: 500 });
