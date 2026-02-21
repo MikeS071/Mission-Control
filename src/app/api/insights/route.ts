@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { title, slug, summary, content, publishedAt } = body as Record<string, unknown>;
+  const { title, slug, summary, content, publishedAt, imageUrl, sourceUrl } = body as Record<string, unknown>;
 
   // Validate required fields
   if (!title || typeof title !== 'string' || !title.trim()) {
@@ -88,6 +88,8 @@ export async function POST(req: NextRequest) {
         contentMd: (content as string).trim(),
         publishedAt: pubAt,
         createdAt: new Date(),
+        ...(imageUrl && typeof imageUrl === 'string' ? { imageUrl: imageUrl.trim() } : {}),
+        ...(sourceUrl && typeof sourceUrl === 'string' ? { sourceUrl: sourceUrl.trim() } : {}),
       })
       .returning();
 
