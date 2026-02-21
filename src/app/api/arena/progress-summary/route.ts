@@ -3,7 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { arenaChallenges, arenaStreaks } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
-import { MILESTONES, streakDaysToMultiplier, xpToLevel } from '@/lib/arena';
+import { MILESTONES, streakDaysToMultiplier, xpToRank, isArchonEligible } from '@/lib/arena';
 
 type MilestoneResponse = {
   id: string;
@@ -135,32 +135,69 @@ export async function GET(req: NextRequest) {
     unlockedDatesByKey = new Map<string, string>();
   }
 
-  const levelState = xpToLevel(totalXp);
+  let arcsCompleted = 0;
+  try {
+    const arcsResult = await db.execute(sql`
+      SELECT COUNT(DISTINCT p.id)::int AS total
+      FROM arena_user_progress p
+      JOIN arena_challenges c ON c.id = p.challenge_id
+      WHERE p.tenant_id = ${tenantId}
+        AND c.challenge_type = 'seasonal'
+        AND p.status = 'claimed'
+    `);
+    arcsCompleted = Number((arcsResult.rows[0] as { total?: number } | undefined)?.total ?? 0);
+  } catch {
+    arcsCompleted = 0;
+  }
+
+  const rankState = xpToRank(totalXp, {
+    longestStreak:  streak.longest,
+    totalTasksDone,
+    arcsCompleted,
+  });
+
+  const archonEligible = isArchonEligible({
+    totalXp,
+    longestStreak:  streak.longest,
+    totalTasksDone,
+    arcsCompleted,
+  });
+
   const metrics = {
-    total_tasks_done: totalTasksDone,
-    longest_streak: streak.longest,
-    deploys_count: deploysCount,
-    cost_saved_cents: costSavedCents,
+    total_tasks_done:  totalTasksDone,
+    longest_streak:    streak.longest,
+    deploys_count:     deploysCount,
+    cost_saved_cents:  costSavedCents,
+    arcs_completed:    arcsCompleted,
   } as const;
 
-  const milestones: MilestoneResponse[] = MILESTONES.map((m) => ({
-    id: m.id,
-    label: m.label,
-    icon: m.icon,
-    desc: m.desc,
-    unlocked: metrics[m.metric] >= m.threshold,
-    unlockedAt: unlockedDatesByKey.get(m.id) ?? null,
-  }));
+  const milestones: MilestoneResponse[] = MILESTONES.map((m) => {
+    const val = metrics[m.metric as keyof typeof metrics] ?? 0;
+    const unlocked = m.id === 'archon' ? archonEligible : val >= m.threshold;
+    return { id: m.id, label: m.label, icon: m.icon, desc: m.desc, unlocked, unlockedAt: unlockedDatesByKey.get(m.id) ?? null };
+  });
 
   return NextResponse.json({
     totalXp,
-    level: levelState.level,
-    xpInLevel: levelState.xpInLevel,
-    xpForNext: levelState.xpForNext,
-    levelPct: levelState.pct,
+    // Legacy level fields (kept for backwards compat)
+    level:      rankState.rank.index,
+    xpInLevel:  rankState.xpInRank,
+    xpForNext:  rankState.xpForNext,
+    levelPct:   rankState.pct,
+    // Rank fields (new)
+    rank: {
+      id:          rankState.rank.id,
+      label:       rankState.rank.label,
+      tagline:     rankState.rank.tagline,
+      color:       rankState.rank.color,
+      isApex:      rankState.rank.isApex,
+      archonReady: rankState.archonReady,
+      archonGap:   rankState.archonGap,
+    },
     streak,
     milestones,
     totalTasksDone,
-    longestStreak: streak.longest,
+    longestStreak:  streak.longest,
+    arcsCompleted,
   });
 }
