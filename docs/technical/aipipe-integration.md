@@ -10,7 +10,7 @@ title: "AiPipe Integration: Technical Reference"
 Browser/Agent
     │
     ▼
-MC API (/api/aipipe/*)       ← auth gate (resolveTenantId)
+MC API (/api/aipipe/*)       ← auth gate (resolveTenantId + X-Tenant-ID)
     │
     ▼
 src/lib/aipipe.ts            ← thin HTTP client
@@ -18,9 +18,13 @@ src/lib/aipipe.ts            ← thin HTTP client
     ▼
 AiPipe service               ← 127.0.0.1:8082 (systemd user service)
     │
-    ├─► OpenAI   /v1/chat/completions
-    ├─► Anthropic /v1/messages
-    └─► xAI      /v1/chat/completions
+    ├─► Anthropic /v1/messages      (claude-haiku, sonnet, opus)
+    ├─► OpenAI   /v1/chat/completions  (gpt-4o-mini, gpt-4.1)
+    ├─► Google   /v1/chat/completions  (gemini-2.0-flash, gemini-2.0-pro)
+    ├─► xAI      /v1/chat/completions  (grok-4, grok-4-1-fast-*)
+    ├─► OpenRouter /v1/chat/completions (unified gateway, 200+ models)
+    ├─► MiniMax  /v1/text/chatcompletion (abab6.5s-chat)
+    └─► Kimi     /v1/chat/completions   (moonshot-v1-8k, -32k)
 ```
 
 ## Files
@@ -79,12 +83,26 @@ Five-signal weighted pipeline, returns score in [0.05, 1.0]:
 
 ### Model Selection (`model/models.go`)
 
-`PickFor(PickRequest)` selects the cheapest model that:
-1. Has `MaxComplexity >= request.Complexity`
-2. Has `MaxContextWindow >= request.TotalContext` (context window guard)
-3. Has lowest `effectiveCost = baseCost * (1 + ttftPenalty)` where ttftPenalty applies only for `stream=true`
+`PickFor(PickRequest)` applies a four-stage filter + sort:
 
-TTFT (time-to-first-token) per model is tracked via exponential moving average (EMA, α=0.15) using lock-free `atomic.Int64` CAS loop.
+1. **Context window guard** — exclude models where `MaxContextWindow < request.TotalContext`
+2. **Complexity fit** — include only models where `MaxComplexity >= request.Complexity`. If none qualify, all models are candidates (fallback).
+3. **Quality gate** — filter to models with `effectiveSuccessRate >= 0.95`. If none pass, use all complexity-fit models.
+4. **Quality-adjusted cost sort** — sort remaining candidates by:
+
+```
+adjustedCost = rawCost / qualityScore ^ qualityExponent
+qualityExponent = max(0, complexity - 0.25) × 6
+```
+
+At **low complexity** (< 0.25): `qualityExponent = 0`, adjustedCost = rawCost — pure cheapest-wins.  
+At **high complexity**: quality scores exponentially discount better models' effective cost, promoting quality over price.
+
+For **streaming requests**: add `rawCost × ttftFactor` before sorting, where `ttftFactor ∈ [0, 0.30]` based on each model's observed TTFT EMA.
+
+**TTFT tracking**: per-model exponential moving average (α=0.15) stored as `atomic.Int64` (µs × 1000), updated via lock-free CAS loop.
+
+**Penalty decay**: success rate tracks per-model error rates. `429`/`5xx` add penalty (+2); `4xx` add +1. Effective success rate = `successRate - penalty × 0.02`. Penalty decays −1 every 30s via background goroutine.
 
 ## API Routes
 
@@ -137,4 +155,31 @@ baselineReqCost = totalRequests * 500 tokens * $6.25/1M
 savingsPercent  = (baselineReqCost - actualCost) / baselineReqCost * 100
 ```
 
-Clamped to [0%, 99%]. Only meaningful after a reasonable request volume.
+Clamped to [0%, 99%]. Only meaningful after a reasonable request volume (≥ ~100 requests). The $6.25/1M baseline reflects the blended cost of always using a frontier model (GPT-4o tier).
+
+## Per-Tenant Key Store
+
+AiPipe maintains a SQLite database of per-tenant API keys (`~/.config/aipipe/tenants.db`). Keys are injected via:
+
+```
+POST /v1/tenants/{id}/providers
+{ "name": "anthropic", "key": "sk-ant-..." }
+```
+
+MC syncs tenant keys automatically on wizard save (wizard step 3). The `X-Tenant-ID` header (injected by MC API) tells AiPipe which tenant's key pool to route through. Cost and token stats are tracked per tenant.
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AIPIPE_URL` | `http://127.0.0.1:8082` | AiPipe service base URL |
+| `ANTHROPIC_API_KEY` | — | Global Anthropic key (tenant keys take precedence) |
+| `OPENAI_API_KEY` | — | Global OpenAI key |
+| `GEMINI_API_KEY` | — | Google Gemini key |
+| `XAI_API_KEY` | — | xAI Grok key |
+| `OPENROUTER_API_KEY` | — | OpenRouter unified gateway key |
+| `MINIMAX_API_KEY` | — | MiniMax key |
+| `KIMI_API_KEY` | — | Kimi/Moonshot key |
+| `AIPIPE_WORKERS` | `8` | Request worker pool size |
+
+Set global keys in `~/.config/aipipe/env` (mode 600). Per-tenant keys override global keys for that tenant's requests.
