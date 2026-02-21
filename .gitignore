@@ -10,3 +10,4 @@ coverage/
 tsconfig.tsbuildinfo
 .source
 .kamal/
+tsconfig.tsbuildinfo
