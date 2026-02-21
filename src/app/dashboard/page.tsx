@@ -4,9 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { FileExplorer } from '@/components/FileExplorer';
-import { GatewayStatus } from '@/components/GatewayStatus';
-import { ActivityFeed } from '@/components/ActivityFeed';
-import { AgentCostChart } from '@/components/AgentCostChart';
+import { ActivityTab } from '@/components/ActivityTab';
 import { ProgressPanel } from '@/components/ProgressPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
@@ -64,10 +62,8 @@ export default async function DashboardPage() {
 
         {/* Navigation tabs */}
         <TabsList className="h-8 bg-transparent p-0 gap-0.5">
-          <TabsTrigger value="status"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Status</TabsTrigger>
           <TabsTrigger value="kanban"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Kanban</TabsTrigger>
           <TabsTrigger value="activity"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Activity</TabsTrigger>
-          <TabsTrigger value="agents"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Agents</TabsTrigger>
           <TabsTrigger value="files"     className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Memory</TabsTrigger>
           <TabsTrigger value="progress"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Progress</TabsTrigger>
           <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
@@ -110,10 +106,8 @@ export default async function DashboardPage() {
 
       {/* ── Tab content ── */}
       <div className="flex-1 px-4 pt-4 pb-4 min-h-0">
-        <TabsContent value="status"   className="mt-0"><GatewayStatus /></TabsContent>
         <TabsContent value="kanban"   className="mt-0"><KanbanBoard /></TabsContent>
-        <TabsContent value="activity" className="mt-0"><ActivityFeed /></TabsContent>
-        <TabsContent value="agents"   className="mt-0"><AgentCostChart /></TabsContent>
+        <TabsContent value="activity" className="mt-0"><ActivityTab /></TabsContent>
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
         <TabsContent value="progress" className="mt-0"><ProgressPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
