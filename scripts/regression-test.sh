@@ -337,13 +337,13 @@ if [[ "$BASE_URL" != "https://archonhq.ai" ]]; then
   fi
 fi
 
-# Coolify container
+# App container (archonhq — replaces Coolify-managed container post-migration)
 CONTAINER=$(docker ps --format "{{.Names}}\t{{.Status}}" 2>/dev/null \
-  | grep "w884wcw8g8co44k4cgssc8cw" | head -1 || true)
+  | grep "^archonhq" | head -1 || true)
 if [[ -n "$CONTAINER" ]]; then
-  pass "Coolify container: $CONTAINER"
+  pass "App container: $CONTAINER"
 else
-  fail "Coolify container: not running"
+  fail "App container (archonhq): not running"
 fi
 
 # Port checks
