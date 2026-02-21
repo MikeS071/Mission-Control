@@ -179,6 +179,7 @@ export const insights = pgTable('insights', {
   description: text('description').notNull(),
   contentMd: text('content_md').notNull(),
   sourceUrl: text('source_url'),
+  imageUrl: text('image_url'),
   publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -271,3 +272,11 @@ export const arenaStreakHistory = pgTable('arena_streak_history', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull(),
+  role: text('role').notNull(),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
