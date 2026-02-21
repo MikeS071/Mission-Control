@@ -1,3 +1,8 @@
+---
+title: Developer Onboarding Guide
+description: Everything you need to start working on ArchonHQ Mission Control.
+---
+
 # Developer Onboarding Guide
 
 This guide covers everything you need to work on ArchonHQ Mission Control. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
