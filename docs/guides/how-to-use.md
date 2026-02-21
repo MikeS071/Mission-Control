@@ -39,6 +39,12 @@ Press `N` or click the **+** button in any column. Every task has:
 
 Drag cards between columns. The board enforces WIP limits, if a column is at capacity, it highlights and blocks the drop. Adjust WIP limits in board settings.
 
+The four columns and their meaning:
+- **Backlog** — work not yet started; default landing zone for new tasks
+- **In Progress** — actively being worked on by an agent or human
+- **Review** — card is complete and awaiting human sign-off before closing
+- **Done** — work accepted and closed
+
 You can also change status from the card menu (⋯) without dragging.
 
 ### Filtering and search

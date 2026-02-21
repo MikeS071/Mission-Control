@@ -15,9 +15,11 @@ const TaskPatchWithIdSchema = TaskPatchSchema.extend({
 
 const normalizeStatus = (status?: string) => {
   const value = (status || '').toLowerCase();
-  if (['in progress', 'in_progress', 'assigned', 'review'].includes(value)) return 'in_progress';
   if (['done', 'complete', 'completed'].includes(value)) return 'done';
-  return 'todo';
+  if (value === 'review') return 'review';
+  if (['in progress', 'in_progress', 'assigned'].includes(value)) return 'in_progress';
+  // 'todo' and unknown values map to 'backlog' for backwards compatibility
+  return 'backlog';
 };
 
 const normalizePriority = (priority?: string) => {

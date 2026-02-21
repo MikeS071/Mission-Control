@@ -28,7 +28,9 @@ export function parseBody<T>(schema: ZodSchema<T>, body: unknown): ParseOk<T> | 
 
 // ─── Shared enums ─────────────────────────────────────────────────────────────
 
-export const TaskStatusEnum = z.enum(['todo', 'in_progress', 'in progress', 'assigned', 'review', 'done', 'complete', 'completed'] as const);
+export const TaskStatusEnum = z.enum(['backlog', 'in_progress', 'in progress', 'assigned', 'review', 'done', 'complete', 'completed',
+  'todo', // kept for backwards compatibility — normalised to 'backlog' on write
+] as const);
 export const TaskPriorityEnum = z.enum(['low', 'Low', 'medium', 'Medium', 'high', 'High', 'critical', 'Critical'] as const);
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
