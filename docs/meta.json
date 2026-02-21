@@ -1,5 +1,5 @@
 {
   "title": "Mission Control",
   "root": true,
-  "pages": ["guides", "features", "api-reference"]
+  "pages": ["guides", "features", "api-reference", "insights"]
 }
