@@ -1,6 +1,6 @@
 ---
 title: Developer Onboarding
-description: Everything a new developer needs to get productive on ArchonHQ Mission Control — setup, workflow, tools, and working with Navi.
+description: Everything a new developer needs to get productive on ArchonHQ Mission Control: setup, workflow, tools, and working with Navi.
 ---
 # Developer Onboarding Guide
 
@@ -26,7 +26,7 @@ ArchonHQ is a SaaS dashboard built on top of OpenClaw, an agentic AI runtime. Th
 
 **Postgres** runs locally on the server via a Unix socket. Connection string: `postgresql://openclaw@/mission_control?host=/var/run/postgresql`.
 
-**Traefik** handles routing and TLS inside the Coolify network. The production container connects to the `coolify` Docker network and registers with Traefik via labels.
+**Traefik** handles routing from the public internet to the app container. It runs as a separate Docker container (coolify-proxy) on the server. Coolify itself is fully decommissioned — only this Traefik container remains.
 
 ### Key Repos
 
@@ -186,8 +186,6 @@ AIPIPE_URL
 AIPIPE_ADMIN_SECRET
 ANTHROPIC_API_KEY
 DEPLOY_WEBHOOK_SECRET
-COOLIFY_API_TOKEN
-COOLIFY_APP_UUID
 ENCRYPTION_KEY
 GITHUB_PAT
 ```
@@ -281,17 +279,13 @@ It checks (in order):
 2. Git branch and unpushed commits
 3. Changed files scanned for env-specific values baked into source
 4. TypeScript errors
-5. Coolify env var audit for duplicates and required keys
+5. Legacy Coolify env audit (Coolify is decommissioned — this step produces a warning that is expected and benign on this server)
 6. `NEXTAUTH_URL` set correctly for production
 7. Active Stripe prices
 8. Production and dev returning HTTP 200
 9. Infrastructure running (Cloudflare tunnel, tls-proxy, Postgres)
 
-Run with `--fix-coolify` to automatically delete Coolify env duplicates:
-
-```bash
-bash scripts/pre-release-check.sh --fix-coolify
-```
+The `--fix-coolify` flag exists for legacy cleanup but is not needed on a fresh setup. If the audit step flags duplicates on the production server, it is safe to ignore.
 
 ### Dev Server Logs
 
@@ -327,13 +321,13 @@ tail -f /home/openclaw/.openclaw/workspace/navi-ops.log
 
 **Server fails to start:** Check `/tmp/mc-dev.log` for the first error. Usually a missing env var or port conflict. Make sure nothing is already using 3003/3004.
 
-**Auth redirect loops:** `NEXTAUTH_URL` is wrong. For dev it must be `https://dev.archonhq.ai`, not localhost.
+**Auth redirect loops:** `NEXTAUTH_URL` is wrong. For local dev use `http://localhost:3003`. For the shared dev preview server, use `https://dev.archonhq.ai`.
 
 **Database connection errors:** Postgres may not be running, or the Unix socket path is wrong. Try `psql "postgresql://openclaw@/mission_control?host=/var/run/postgresql"` directly.
 
 **TypeScript errors after pulling:** Run `npm install` first. A dependency may have updated its types.
 
-**Coolify env duplicates:** Run `bash scripts/pre-release-check.sh --fix-coolify`. Duplicate env vars in Coolify cause silent config problems.
+**Legacy note:** Coolify is decommissioned. The pre-release check still has a Coolify env audit step that produces a warning on this server. This warning is benign and expected. If you see it, ignore it.
 
 ---
 
@@ -347,7 +341,7 @@ feature/<story-id>-short-description  →  dev  →  main
 
 All feature work happens on `feature/*` branches cut from `dev`. PRs target `dev`, not main. The `dev` branch deploys to `dev.archonhq.ai` for review. `main` is production only.
 
-Never commit directly to `dev` or `main`. Always use a branch.
+Human developers always use feature branches, never commit directly to `dev` or `main`. Navi may commit directly to `dev` for Quick AUTO items as part of the sprint loop. If you are a human developer, always use a feature branch and open a PR against `dev`.
 
 ### Conventional Commits
 
