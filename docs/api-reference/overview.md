@@ -139,6 +139,6 @@ All responses are JSON. Successful responses return the resource object. Errors 
 
 ## Detailed endpoint docs
 
-- [Tasks →](/api-reference/tasks)
-- [Events →](/api-reference/events)
-- [Settings →](/api-reference/settings)
+- [Tasks →](/docs/api-reference/tasks)
+- [Events →](/docs/api-reference/overview)
+- [Settings →](/docs/api-reference/overview)

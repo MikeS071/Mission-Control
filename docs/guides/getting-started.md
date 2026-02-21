@@ -68,7 +68,7 @@ In Step 4, toggle **Enable Smart Routing**. This activates AiPipe, which automat
 
 With a single OpenAI key, AiPipe routes simple tasks to `gpt-4o-mini` and complex tasks to `gpt-4o`. With both OpenAI and Anthropic keys, it also routes high-complexity reasoning tasks to Claude Sonnet when it offers better quality per dollar.
 
-[Learn how routing works →](/features/aipipe-routing-benchmark)
+[Learn how routing works →](/docs/features/aipipe-routing-benchmark)
 
 ---
 
@@ -87,7 +87,7 @@ In Step 7 of the wizard, enter your Telegram chat ID and bot token to receive al
 - A critical task becomes blocked
 - An agent encounters an error
 
-[Set up Telegram notifications →](/features/notifications)
+[Set up Telegram notifications →](/docs/features/notifications)
 
 ---
 
@@ -99,7 +99,7 @@ Your dashboard is live. Agents connected to the gateway will appear in the Agent
 
 ## What's next
 
-- [Day-to-day workflow →](/guides/how-to-use)
-- [Kanban board features →](/features/kanban-board)
-- [AI routing deep-dive →](/features/aipipe-routing-benchmark)
-- [API reference →](/api-reference/overview)
+- [Day-to-day workflow →](/docs/guides/how-to-use)
+- [Kanban board features →](/docs/features/kanban-board)
+- [AI routing deep-dive →](/docs/features/aipipe-routing-benchmark)
+- [API reference →](/docs/api-reference/overview)

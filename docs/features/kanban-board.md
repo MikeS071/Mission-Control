@@ -147,4 +147,4 @@ Click the column header chevron to collapse a column to a slim indicator strip. 
 
 ## API access
 
-Full CRUD is available via the REST API. See [API Reference: Tasks →](/api-reference/tasks)
+Full CRUD is available via the REST API. See [API Reference: Tasks →](/docs/api-reference/tasks)

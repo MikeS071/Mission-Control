@@ -133,7 +133,7 @@ The **Roadmap** tab shows your goals and the tasks attached to them. Drag tasks 
 
 ## Next steps
 
-- [Kanban board reference →](/features/kanban-board)
-- [AiPipe routing guide →](/features/ai-routing)
-- [Set up notifications →](/features/notifications)
-- [API reference →](/api-reference/overview)
+- [Kanban board reference →](/docs/features/kanban-board)
+- [AiPipe routing guide →](/docs/features/ai-routing)
+- [Set up notifications →](/docs/features/notifications)
+- [API reference →](/docs/api-reference/overview)

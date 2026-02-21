@@ -53,7 +53,7 @@ At low complexity, the cheapest capable model wins. As complexity rises, a quali
 
 ## Supported providers
 
-AiPipe routes across all providers you've configured. Enable any provider by adding its API key in the [Connection Wizard →](/features/connection-wizard).
+AiPipe routes across all providers you've configured. Enable any provider by adding its API key in the [Connection Wizard →](/docs/features/connection-wizard).
 
 | Provider | Models | Best for |
 |----------|--------|---------|
@@ -99,4 +99,4 @@ Use this weekly to verify routing is working as expected and identify any provid
 
 ## For more detail
 
-[AiPipe Benchmark: full routing analysis with cost tables →](/features/aipipe-routing-benchmark)
+[AiPipe Benchmark: full routing analysis with cost tables →](/docs/features/aipipe-routing-benchmark)

@@ -19,7 +19,7 @@ A full kanban board with drag-and-drop, priority levels, WIP limits, custom labe
 Agents connect to Mission Control via the gateway. You can see which agents are active, what they're working on, and their cost and token usage in real time. Agents can create and update tasks directly via the API, keeping the board in sync with actual work.
 
 ### Smart LLM routing (AiPipe)
-Every AI call made through Mission Control goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower cost. No per-request configuration needed. [Read the full benchmark →](/features/aipipe-routing-benchmark)
+Every AI call made through Mission Control goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower cost. No per-request configuration needed. [Read the full benchmark →](/docs/features/aipipe-routing-benchmark)
 
 ### Notifications
 Mission Control sends Telegram notifications when tasks are created, updated, or reach a critical state. You stay informed without watching a dashboard.
@@ -47,8 +47,10 @@ Everything is open source: [github.com/MikeS071/Mission-Control](https://github.
 
 ---
 
-## Next steps
+## Start here
 
-- [Get started →](/guides/getting-started) — create your account and connect in under 10 minutes
-- [Explore the kanban board →](/features/kanban-board)
-- [Understand AI routing →](/features/aipipe-routing-benchmark)
+<Cards>
+  <Card title="Get Started" href="/docs/guides/getting-started" description="Create your account and connect in under 10 minutes." />
+  <Card title="Explore the Kanban Board" href="/docs/features/kanban-board" description="Drag-and-drop task management with WIP limits, labels, and activity timelines." />
+  <Card title="Understanding AI Routing" href="/docs/features/ai-routing" description="How AiPipe scores requests and picks the right model to cut your LLM spend." />
+</Cards>

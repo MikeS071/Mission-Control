@@ -26,7 +26,7 @@ cd Mission-Control
 cp .env.example .env.local
 ```
 
-Edit `.env.local` with your values (see [Configuration →](/guides/configuration)), then:
+Edit `.env.local` with your values (see [Configuration →](/docs/guides/self-hosting)), then:
 
 ```bash
 docker compose up -d
@@ -38,7 +38,7 @@ The dashboard is available at `http://localhost:3000`.
 
 ## Environment variables
 
-See the full reference at [Configuration →](/guides/configuration). Minimum required:
+See the full reference at [Configuration →](/docs/guides/self-hosting). Minimum required:
 
 ```bash
 # NextAuth
