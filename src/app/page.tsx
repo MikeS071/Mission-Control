@@ -13,6 +13,15 @@ type WaitlistResponse = {
   error?: string;
 };
 
+type InsightCard = {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  publishedAt: string;
+};
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const features = [
@@ -130,6 +139,14 @@ export default function LandingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [latestInsights, setLatestInsights] = useState<InsightCard[]>([]);
+
+  useEffect(() => {
+    fetch('/api/insights?limit=4')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setLatestInsights(data); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/waitlist')
@@ -172,8 +189,9 @@ export default function LandingPage() {
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 md:px-10">
           <span className="text-lg font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>🧭 archonhq</span>
           <div className="flex items-center gap-2">
-            <Link href="/docs" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Docs</Link>
+            <Link href="/insights" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Insights</Link>
             <Link href="/roadmap" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Roadmap</Link>
+            <Link href="/docs" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Docs</Link>
             <Link href="/signin" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Sign In</Link>
             <a
               href="#waitlist"
@@ -392,6 +410,51 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ══ INSIGHTS ══ */}
+        {latestInsights.length > 0 && (
+          <section className="py-24">
+            <div className="flex items-end justify-between">
+              <div>
+                <SectionLabel>Latest</SectionLabel>
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
+                  From the insights
+                </h2>
+              </div>
+              <Link href="/insights" className="mb-1 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>
+                View all →
+              </Link>
+            </div>
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {latestInsights.map(item => (
+                <Link key={item.id} href={`/insights/${item.slug}`} style={{ textDecoration: 'none' }}>
+                  <article
+                    className="group flex h-full flex-col overflow-hidden rounded-2xl transition-all hover:-translate-y-1"
+                    style={{ background: '#0d1f14', border: '1px solid rgba(45,212,122,0.12)' }}
+                  >
+                    {item.imageUrl
+                      ? <img src={item.imageUrl} alt={item.title} className="w-full object-cover" style={{ height: 140 }} />
+                      : <div className="flex items-center justify-center" style={{ height: 140, background: '#0a1a12' }}>
+                          <span style={{ fontSize: 28 }}>📝</span>
+                        </div>
+                    }
+                    <div className="flex flex-1 flex-col gap-2 p-4">
+                      <p className="text-xs uppercase tracking-widest" style={{ color: '#2dd47a', fontFamily: 'var(--font-jetbrains, monospace)' }}>
+                        {new Date(item.publishedAt).toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                      <p className="line-clamp-2 text-sm font-bold leading-snug text-white">
+                        {item.title}
+                      </p>
+                      <p className="line-clamp-2 text-xs leading-relaxed" style={{ color: '#a3b8a8' }}>
+                        {item.description}
+                      </p>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ══ PRICING ══ */}
         <section className="py-24">
           <SectionLabel>Access Levels</SectionLabel>
@@ -587,8 +650,9 @@ export default function LandingPage() {
           <div className="flex gap-5">
             <Link href="https://github.com/MikeS071/Mission-Control" target="_blank" rel="noreferrer" className="transition hover:text-[#ff6b8a]">GitHub</Link>
             <Link href="/signin" className="transition hover:text-[#ff6b8a]">Sign In</Link>
-            <Link href="/docs" className="transition hover:text-[#ff6b8a]">Docs</Link>
+            <Link href="/insights" className="transition hover:text-[#ff6b8a]">Insights</Link>
             <Link href="/roadmap" className="transition hover:text-[#ff6b8a]">Roadmap</Link>
+            <Link href="/docs" className="transition hover:text-[#ff6b8a]">Docs</Link>
           </div>
           <p>© 2026 archonhq.ai</p>
         </div>
