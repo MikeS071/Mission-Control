@@ -26,8 +26,6 @@ COPY --from=builder /app/server-docker.ts ./server-docker.ts
 COPY --from=builder /app/tsconfig.json   ./tsconfig.json
 COPY --from=builder /app/src             ./src
 
-# tsx for TypeScript server execution
-RUN npm install tsx --save-dev
-
+# tsx is already in node_modules from builder — use it directly (avoids npx auto-install delay)
 EXPOSE 3000
-CMD ["npx", "tsx", "server-docker.ts"]
+CMD ["./node_modules/.bin/tsx", "server-docker.ts"]
