@@ -190,6 +190,7 @@ export default function LandingPage() {
           <span className="text-lg font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>🧭 archonhq</span>
           <div className="flex items-center gap-2">
             <Link href="/insights" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Insights</Link>
+            <Link href="/roadmap" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Roadmap</Link>
             <Link href="/docs" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Docs</Link>
             <Link href="/roadmap" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Roadmap</Link>
             <Link href="/signin" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Sign In</Link>
@@ -655,6 +656,7 @@ export default function LandingPage() {
             <Link href="https://github.com/MikeS071/Mission-Control" target="_blank" rel="noreferrer" className="transition hover:text-[#ff6b8a]">GitHub</Link>
             <Link href="/signin" className="transition hover:text-[#ff6b8a]">Sign In</Link>
             <Link href="/insights" className="transition hover:text-[#ff6b8a]">Insights</Link>
+            <Link href="/roadmap" className="transition hover:text-[#ff6b8a]">Roadmap</Link>
             <Link href="/docs" className="transition hover:text-[#ff6b8a]">Docs</Link>
             <Link href="/roadmap" className="transition hover:text-[#ff6b8a]">Roadmap</Link>
           </div>
