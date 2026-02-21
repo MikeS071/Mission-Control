@@ -179,6 +179,7 @@ export const insights = pgTable('insights', {
   description: text('description').notNull(),
   contentMd: text('content_md').notNull(),
   sourceUrl: text('source_url'),
+  imageUrl: text('image_url'),
   publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

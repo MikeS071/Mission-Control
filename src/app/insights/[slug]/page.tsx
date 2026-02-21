@@ -43,11 +43,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: article.title,
       description: article.description,
       publishedTime: article.publishedAt?.toISOString(),
+      ...(article.imageUrl ? { images: [{ url: `${BASE_URL}${article.imageUrl}`, width: 1792, height: 1024, alt: article.title }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title: article.title,
       description: article.description,
+      ...(article.imageUrl ? { images: [`${BASE_URL}${article.imageUrl}`] } : {}),
     },
   };
 }
