@@ -62,20 +62,22 @@ type StatsSummary = {
   primaryAgentName: string | null;
 };
 
-const STATUS_COLUMNS = ['todo', 'in_progress', 'done'];
-const STATUS_LABELS: Record<string, string> = { todo: 'Todo', in_progress: 'In Progress', done: 'Done' };
+const STATUS_COLUMNS = ['backlog', 'in_progress', 'review', 'done'];
+const STATUS_LABELS: Record<string, string> = { backlog: 'Backlog', in_progress: 'In Progress', review: 'Review', done: 'Done' };
 const COLUMN_LABELS_KEY = 'mc-column-labels';
 const COLUMN_COLLAPSED_KEY = 'mc-column-collapsed';
 const WIP_LIMITS_KEY = 'mc-wip-limits';
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const emptyForm: TaskForm = { title: '', description: '', goal: '', priority: 'Medium', status: 'todo', tags: '', checklist: [] };
+const emptyForm: TaskForm = { title: '', description: '', goal: '', priority: 'Medium', status: 'backlog', tags: '', checklist: [] };
 const emptyFilters: Filters = { search: '', priority: 'All', goal: 'All', agent: 'All', tags: '' };
 
 function normalizeStatus(status: string) {
   const value = (status || '').toLowerCase();
   if (['done', 'complete', 'completed'].includes(value)) return 'done';
-  if (['in_progress', 'in progress', 'assigned', 'review'].includes(value)) return 'in_progress';
-  return 'todo';
+  if (value === 'review') return 'review';
+  if (['in_progress', 'in progress', 'assigned'].includes(value)) return 'in_progress';
+  // 'todo' maps to 'backlog' for backwards compatibility with existing records
+  return 'backlog';
 }
 
 function mapTask(t: ApiTask): Task {
@@ -503,7 +505,7 @@ const [rightWidth, setRightWidth] = useState(402);
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState('');
   const [collapsedColumns, setCollapsedColumns] = useState<Record<string, boolean>>({});
-  const [wipLimits, setWipLimits] = useState<Record<string, number | null>>({});
+  const [wipLimits, setWipLimits] = useState<Record<string, number | null>>({ review: 3 });
   const [editingWipColumn, setEditingWipColumn] = useState<string | null>(null);
   const [editingWipValue, setEditingWipValue] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -832,7 +834,7 @@ const [rightWidth, setRightWidth] = useState(402);
                           {typeof limit === 'number' && limit > 0 && <span className="text-gray-600">WIP {limit}</span>}
                         </div>
                         <div className="flex items-center gap-0.5">
-                          {(col === 'todo' || col === 'in_progress') && (
+                          {(col === 'backlog' || col === 'in_progress') && (
                             <button type="button" onClick={() => openAddForColumn(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300" aria-label={`Add ${STATUS_LABELS[col]} goal`}>
                               <Plus className="mx-auto h-3 w-3" />
                             </button>
