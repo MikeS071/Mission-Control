@@ -4,11 +4,36 @@ import { db } from '@/lib/db';
 import { tenantSettings } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 import { aipipeSyncTenantKeys } from '@/lib/aipipe';
+import { encrypt, tryDecrypt } from '@/lib/crypto';
 
 const PROVIDER_KEY_FIELDS = [
   'openaiKey', 'anthropicKey', 'xaiKey',
   'openrouterKey', 'minimaxKey', 'kimiKey', 'geminiKey',
 ] as const;
+
+/** Encrypt all LLM API key fields in a settings object before persisting. */
+function encryptKeyFields(settings: SettingsPayload): SettingsPayload {
+  const result = { ...settings };
+  for (const field of PROVIDER_KEY_FIELDS) {
+    const val = result[field as keyof SettingsPayload] as string | undefined;
+    if (val) {
+      (result as Record<string, unknown>)[field] = encrypt(val);
+    }
+  }
+  return result;
+}
+
+/** Decrypt all LLM API key fields when reading from DB (backward-compat: plaintext falls through). */
+function decryptKeyFields(settings: SettingsPayload): SettingsPayload {
+  const result = { ...settings };
+  for (const field of PROVIDER_KEY_FIELDS) {
+    const val = result[field as keyof SettingsPayload] as string | undefined;
+    if (val) {
+      (result as Record<string, unknown>)[field] = tryDecrypt(val);
+    }
+  }
+  return result;
+}
 
 type SettingsPayload = {
   anthropicKey?: string;
@@ -61,7 +86,8 @@ export async function GET(req: NextRequest) {
     .where(eq(tenantSettings.tenantId, tenantId))
     .limit(1);
 
-  return NextResponse.json({ settings: (row?.settings ?? {}) as SettingsPayload, updatedAt: row?.updatedAt ?? null });
+  const rawSettings = (row?.settings ?? {}) as SettingsPayload;
+  return NextResponse.json({ settings: decryptKeyFields(rawSettings), updatedAt: row?.updatedAt ?? null });
 }
 
 export async function POST(req: NextRequest) {
@@ -94,13 +120,18 @@ export async function POST(req: NextRequest) {
   const incoming = (body.settings ?? {}) as SettingsPayload;
   const merge = body.merge ?? true;
 
+  // Encrypt LLM API key fields before persisting to DB
+  const incomingEncrypted = encryptKeyFields(incoming);
+
   const [existing] = await db
     .select({ id: tenantSettings.id, settings: tenantSettings.settings })
     .from(tenantSettings)
     .where(eq(tenantSettings.tenantId, tenantId))
     .limit(1);
 
-  const nextSettings = merge ? { ...(existing?.settings as object | undefined), ...incoming } : incoming;
+  const nextSettings = merge
+    ? { ...(existing?.settings as object | undefined), ...incomingEncrypted }
+    : incomingEncrypted;
 
   let savedSettings: SettingsPayload;
   let savedAt: Date | null;
@@ -135,5 +166,6 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ settings: savedSettings, updatedAt: savedAt });
+  // Decrypt key fields before returning to client
+  return NextResponse.json({ settings: decryptKeyFields(savedSettings), updatedAt: savedAt });
 }
