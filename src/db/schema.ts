@@ -1,10 +1,20 @@
 import { bigint, boolean, date, integer, jsonb, numeric, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  passwordHash: text('password_hash'),
+  name: text('name'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const tenants = pgTable('tenants', {
   id: serial('id').primaryKey(),
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
   plan: text('plan').notNull().default('free'), // free|pro|team
+  ownerUserId: integer('owner_user_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

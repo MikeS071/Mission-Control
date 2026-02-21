@@ -18,8 +18,10 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
     "@hello-pangea/dnd": "^18.0.1",
+    "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.16.0",
     "@uiw/react-md-editor": "^4.0.11",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.9",
