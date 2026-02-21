@@ -172,7 +172,7 @@ export default function LandingPage() {
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 md:px-10">
           <span className="text-lg font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>🧭 archonhq</span>
           <div className="flex items-center gap-2">
-            <Link href="/docs" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Docs</Link>
+            <Link href="/docs" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Docs</Link>
             <Link href="/roadmap" className="hidden rounded-md px-4 py-2 text-sm transition hover:text-white sm:block" style={{ color: '#a3b8a8' }}>Roadmap</Link>
             <Link href="/signin" className="rounded-md px-4 py-2 text-sm transition hover:text-white" style={{ color: '#a3b8a8' }}>Sign In</Link>
             <a
