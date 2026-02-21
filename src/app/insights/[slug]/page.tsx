@@ -90,6 +90,16 @@ export default async function InsightArticlePage({ params }: { params: Promise<{
           ← Back to insights
         </Link>
 
+        {article.imageUrl && (
+          <div className="mt-8 overflow-hidden rounded-2xl" style={{ border: '1px solid rgba(45,212,122,0.12)' }}>
+            <img
+              src={article.imageUrl}
+              alt={article.title}
+              style={{ width: '100%', height: 'auto', display: 'block', maxHeight: 420, objectFit: 'cover' }}
+            />
+          </div>
+        )}
+
         <p
           className="mt-6 text-xs uppercase tracking-[0.4em]"
           style={{ color: '#2dd47a', fontFamily: 'var(--font-jetbrains, monospace)' }}
