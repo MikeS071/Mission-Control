@@ -1,3 +1,7 @@
+---
+title: Developer Onboarding
+description: Everything a new developer needs to get productive on ArchonHQ Mission Control — setup, workflow, tools, and working with Navi.
+---
 # Developer Onboarding Guide
 
 This guide covers everything you need to work on ArchonHQ Mission Control. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
