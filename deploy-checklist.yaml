@@ -18,6 +18,11 @@ checks:
     expect_status: 200
     content_contains: "Roadmap"
 
+  - name: "Insights page"
+    url: /insights
+    expect_status: 200
+    content_contains: "Mission Control Insights"
+
   - name: "Sign-in page"
     url: /signin
     expect_status: 200
