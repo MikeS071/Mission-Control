@@ -12,7 +12,7 @@ import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { auth } from '@/lib/auth';
-import { getTenantPlan } from '@/lib/billing';
+import { getTenantPlan, getTenantPlanLabel } from '@/lib/billing';
 import { db } from '@/lib/db';
 import { gatewayConnections, tenantSettings, tenants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -46,7 +46,7 @@ export default async function DashboardPage() {
   const setupComplete = (gatewayCount > 0 || settings.gateway?.connected) && hasAnyApiKey;
 
   const plan = tenantId ? await getTenantPlan(tenantId) : 'free';
-  const planLabel = plan === 'free' ? 'Free' : plan === 'pro' ? 'Pro' : 'Team';
+  const planLabel = getTenantPlanLabel(plan);
 
   return (
     <Tabs defaultValue="kanban" className="flex min-h-screen flex-col bg-gray-950 text-white">
