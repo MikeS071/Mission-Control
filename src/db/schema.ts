@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigint, boolean, date, integer, jsonb, numeric, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const tenants = pgTable('tenants', {
   id: serial('id').primaryKey(),
@@ -32,6 +32,8 @@ export const tasks = pgTable('tasks', {
   assignedAgent: text('assigned_agent'),
   tags: text('tags').default(''),
   checklist: text('checklist').default('[]'),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  estimatedCostUsd: numeric('estimated_cost_usd', { precision: 12, scale: 6 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -179,5 +181,93 @@ export const insights = pgTable('insights', {
   sourceUrl: text('source_url'),
   publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const arenaSeasons = pgTable('arena_seasons', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  seasonCode: text('season_code').notNull(),
+  name: text('name').notNull(),
+  status: text('status').notNull().default('upcoming'),
+  startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+  endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+  timezone: text('timezone').notNull().default('Australia/Melbourne'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const arenaChallenges = pgTable('arena_challenges', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  seasonId: integer('season_id').references(() => arenaSeasons.id, { onDelete: 'set null' }),
+  challengeKey: text('challenge_key').notNull(),
+  challengeType: text('challenge_type').notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  metricKey: text('metric_key').notNull(),
+  operator: text('operator').notNull().default('gte'),
+  targetValue: numeric('target_value', { precision: 14, scale: 4 }).notNull(),
+  minSampleSize: integer('min_sample_size').default(0),
+  rewardXp: integer('reward_xp').notNull(),
+  difficulty: text('difficulty').notNull(),
+  active: boolean('active').notNull().default(true),
+  resetRule: text('reset_rule').notNull(),
+  startsAt: timestamp('starts_at', { withTimezone: true }),
+  endsAt: timestamp('ends_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const arenaUserProgress = pgTable('arena_user_progress', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  challengeId: integer('challenge_id').notNull().references(() => arenaChallenges.id, { onDelete: 'cascade' }),
+  seasonId: integer('season_id').references(() => arenaSeasons.id, { onDelete: 'set null' }),
+  userEmail: text('user_email').notNull().default('system'),
+  agentName: text('agent_name'),
+  periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+  periodEnd: timestamp('period_end', { withTimezone: true }).notNull(),
+  currentValue: numeric('current_value', { precision: 14, scale: 4 }).notNull().default('0'),
+  targetValue: numeric('target_value', { precision: 14, scale: 4 }).notNull(),
+  status: text('status').notNull().default('active'),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  claimedAt: timestamp('claimed_at', { withTimezone: true }),
+  rewardXpAwarded: integer('reward_xp_awarded'),
+  streakMultiplier: numeric('streak_multiplier', { precision: 6, scale: 3 }).default('1.000'),
+  sourceSnapshot: jsonb('source_snapshot').notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const arenaStreaks = pgTable('arena_streaks', {
+  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  agentName: text('agent_name').notNull(),
+  currentStreakDays: integer('current_streak_days').notNull().default(0),
+  longestStreakDays: integer('longest_streak_days').notNull().default(0),
+  lastQualifiedOn: date('last_qualified_on'),
+  lastBrokenOn: date('last_broken_on'),
+  freezeCharges: integer('freeze_charges').notNull().default(0),
+  autoFreezeEnabled: boolean('auto_freeze_enabled').notNull().default(true),
+  freezeProgressDays: integer('freeze_progress_days').notNull().default(0),
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const arenaStreakHistory = pgTable('arena_streak_history', {
+  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  agentName: text('agent_name').notNull(),
+  localDay: date('local_day').notNull(),
+  qualified: boolean('qualified').notNull().default(false),
+  tasksCompletedCount: integer('tasks_completed_count').notNull().default(0),
+  freezeUsed: boolean('freeze_used').notNull().default(false),
+  breakOccurred: boolean('break_occurred').notNull().default(false),
+  streakAfterDay: integer('streak_after_day').notNull().default(0),
+  multiplierAfterDay: numeric('multiplier_after_day', { precision: 4, scale: 2 }).notNull().default('1.00'),
+  source: text('source').notNull().default('event+finalizer'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

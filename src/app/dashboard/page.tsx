@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { FileExplorer } from '@/components/FileExplorer';
 import { ActivityTab } from '@/components/ActivityTab';
-import { ProgressPanel } from '@/components/ProgressPanel';
+import { ArenaPanel } from '@/components/ArenaPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
@@ -109,7 +109,7 @@ export default async function DashboardPage() {
         <TabsContent value="kanban"   className="mt-0"><KanbanBoard /></TabsContent>
         <TabsContent value="activity" className="mt-0"><ActivityTab /></TabsContent>
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
-        <TabsContent value="progress" className="mt-0"><ProgressPanel /></TabsContent>
+        <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
       </div>
 
