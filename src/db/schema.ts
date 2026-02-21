@@ -169,3 +169,15 @@ export const challenges = pgTable('challenges', {
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const insights = pgTable('insights', {
+  id: serial('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  contentMd: text('content_md').notNull(),
+  sourceUrl: text('source_url'),
+  publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+

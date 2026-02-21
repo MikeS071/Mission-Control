@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS insights (
+  id SERIAL PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  content_md TEXT NOT NULL,
+  source_url TEXT,
+  published_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
