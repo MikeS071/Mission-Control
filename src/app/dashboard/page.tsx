@@ -75,14 +75,16 @@ export default async function DashboardPage() {
 
         {/* Right-side controls */}
         <div className="ml-auto flex items-center gap-3">
-          <Link
-            href="https://archonhq.ai"
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors hidden sm:block"
-          >
-            🌐 Public site
-          </Link>
+          {process.env.NODE_ENV === 'development' && (
+            <Link
+              href="https://archonhq.ai"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors hidden sm:block"
+            >
+              🌐 Public site
+            </Link>
+          )}
           <GatewayHeartbeatIndicator />
           <UserAvatarMenu email={session.user?.email} image={session.user?.image} />
         </div>
