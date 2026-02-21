@@ -7,7 +7,7 @@
 // Seven ranks. Archon is the pinnacle — XP threshold alone is not enough.
 // You must also satisfy ARCHON_CRITERIA to be elevated.
 //
-export type RankId = 'recruit' | 'operator' | 'commander' | 'tactician' | 'strategist' | 'warlord' | 'archon';
+export type RankId = 'recruit' | 'operator' | 'commander' | 'tactician' | 'strategist' | 'warlord' | 'stratos' | 'archon';
 
 export type Rank = {
   id:       RankId;
@@ -25,8 +25,9 @@ export const RANKS: Rank[] = [
   { index: 2, id: 'commander',  label: 'Commander',  tagline: 'Taking command.',                          xpFloor: 600,    color: '#34d399', isApex: false },
   { index: 3, id: 'tactician',  label: 'Tactician',  tagline: 'Thinking three moves ahead.',             xpFloor: 1_500,  color: '#a78bfa', isApex: false },
   { index: 4, id: 'strategist', label: 'Strategist', tagline: 'Playing the long game.',                  xpFloor: 4_000,  color: '#f472b6', isApex: false },
-  { index: 5, id: 'warlord',    label: 'Warlord',    tagline: 'Dominant force. Few reach this far.',     xpFloor: 10_000, color: '#fb923c', isApex: false },
-  { index: 6, id: 'archon',     label: 'Archon',     tagline: 'Ruler of all. You are the exception.',    xpFloor: 25_000, color: '#f59e0b', isApex: true  },
+  { index: 5, id: 'warlord',    label: 'Warlord',    tagline: 'Dominant force. Few reach this far.',           xpFloor: 10_000, color: '#fb923c', isApex: false },
+  { index: 6, id: 'stratos',    label: 'Stratos',    tagline: 'Above the clouds. One summit remains.',         xpFloor: 18_000, color: '#7c3aed', isApex: false },
+  { index: 7, id: 'archon',     label: 'Archon',     tagline: 'Ruler of all. You are the exception.',          xpFloor: 25_000, color: '#f59e0b', isApex: true  },
 ];
 
 // ── Archon multi-criteria gate ────────────────────────────────────────────────
@@ -145,7 +146,8 @@ export type ArenaMilestoneMetric =
   | 'longest_streak'
   | 'deploys_count'
   | 'cost_saved_cents'
-  | 'arcs_completed';
+  | 'arcs_completed'
+  | 'total_xp';
 
 export type ArenaMilestone = {
   id:        string;
@@ -171,6 +173,15 @@ export const MILESTONES: ArenaMilestone[] = [
   { id: 'first_deploy',  label: 'Deployed',      desc: 'First successful deploy',     icon: '🚀',  threshold: 1,   metric: 'deploys_count'    },
   { id: 'cost_saver',    label: 'Efficient',     desc: 'Save $1 vs baseline routing', icon: '💰',  threshold: 100, metric: 'cost_saved_cents' },
   { id: 'arc_complete',  label: 'Arc Bearer',    desc: 'Complete a 30-day season Arc',icon: '🌌',  threshold: 1,   metric: 'arcs_completed'   },
+  // Elite tier
+  {
+    id:        'stratos',
+    label:     'Stratos',
+    desc:      'Reach the Stratos rank — 18,000 XP. Above the clouds.',
+    icon:      '🌌',
+    threshold: 18_000,
+    metric:    'total_xp',
+  },
   // Apex
   {
     id:        'archon',

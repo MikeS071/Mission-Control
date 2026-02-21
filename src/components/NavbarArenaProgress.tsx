@@ -63,6 +63,7 @@ export function NavbarArenaProgress() {
 
   const rank        = summary.rank;
   const isArchon    = rank?.isApex === true;
+  const isStratos   = rank?.id === 'stratos';
   const rankLabel   = rank?.label ?? `Level ${summary.level}`;
   const rankColor   = rank?.color ?? '#6366f1';
   const rankTagline = rank?.tagline ?? '';
@@ -72,11 +73,16 @@ export function NavbarArenaProgress() {
 
   const streakTitle = `${summary.streak.current}-day streak · ${summary.streak.multiplier.toFixed(2)}× XP · 🧊 ${summary.streak.freezeCharges} freeze${summary.streak.freezeCharges !== 1 ? 's' : ''}`;
 
+  const RANK_SEQUENCE = ['recruit','operator','commander','tactician','strategist','warlord','stratos','archon'] as const;
+  const RANK_LABELS   = ['Operator','Commander','Tactician','Strategist','Warlord','Stratos','Archon'] as const;
+  const currentIdx    = rank?.id ? RANK_SEQUENCE.indexOf(rank.id as typeof RANK_SEQUENCE[number]) : -1;
+  const nextRankName  = currentIdx >= 0 && currentIdx < RANK_SEQUENCE.length - 1 ? RANK_LABELS[currentIdx] : 'next rank';
+
   const rankTitle = isArchon
     ? `Archon — Ruler of all. ${summary.totalXp.toLocaleString()} XP`
     : rank?.archonReady
     ? `${rankLabel} · ${summary.totalXp.toLocaleString()} XP — Archon XP met! Complete remaining criteria.`
-    : `${rankLabel} · ${summary.totalXp.toLocaleString()} XP · ${xpRemaining} XP to ${(() => { const idx = (rank?.id ? ['recruit','operator','commander','tactician','strategist','warlord'].indexOf(rank.id) : -1); return idx >= 0 && idx < 5 ? ['Operator','Commander','Tactician','Strategist','Warlord','Archon'][idx + 1] : 'next rank'; })()}`;
+    : `${rankLabel} · ${summary.totalXp.toLocaleString()} XP · ${xpRemaining} XP to ${nextRankName}`;
 
   const flameClass = useMemo(
     () => streakOn
@@ -107,11 +113,13 @@ export function NavbarArenaProgress() {
           'flex h-8 min-w-[84px] flex-col items-start justify-center rounded-md border px-2 text-[10px] transition-all',
           isArchon
             ? 'border-yellow-500/60 bg-yellow-950/30 text-yellow-400 shadow-[0_0_8px_rgba(245,158,11,0.35)] hover:shadow-[0_0_14px_rgba(245,158,11,0.55)]'
+            : isStratos
+            ? 'border-violet-600/60 bg-violet-950/30 text-violet-300 shadow-[0_0_6px_rgba(124,58,237,0.30)] hover:shadow-[0_0_12px_rgba(124,58,237,0.50)]'
             : rank?.archonReady
             ? 'border-amber-600/50 bg-amber-950/20 text-amber-400'
             : 'border-gray-700 bg-gray-900',
         ].join(' ')}
-        style={!isArchon && !rank?.archonReady ? { color: rankColor } : undefined}
+        style={!isArchon && !isStratos && !rank?.archonReady ? { color: rankColor } : undefined}
       >
         <span className="leading-none font-semibold">
           {isArchon ? '👑 Archon' : rankLabel}

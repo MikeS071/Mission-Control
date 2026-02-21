@@ -169,6 +169,7 @@ export async function GET(req: NextRequest) {
     deploys_count:     deploysCount,
     cost_saved_cents:  costSavedCents,
     arcs_completed:    arcsCompleted,
+    total_xp:          totalXp,
   } as const;
 
   const milestones: MilestoneResponse[] = MILESTONES.map((m) => {
