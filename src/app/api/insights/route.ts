@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
       slug: insights.slug,
       title: insights.title,
       description: insights.description,
+      imageUrl: insights.imageUrl,
       sourceUrl: insights.sourceUrl,
       publishedAt: insights.publishedAt,
       createdAt: insights.createdAt,
