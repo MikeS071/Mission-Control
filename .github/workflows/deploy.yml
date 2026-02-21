@@ -13,64 +13,98 @@ jobs:
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: openclaw
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -e
+            cd /home/openclaw/projects/openclaw-mission-control
 
-      - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/mikes071/mission-control:latest
-            ghcr.io/mikes071/mission-control:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/mikes071/mission-control:cache
-          cache-to: type=registry,ref=ghcr.io/mikes071/mission-control:cache,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
+            echo "==> Pulling latest code"
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
 
-      - name: Install Kamal
-        run: gem install kamal --no-document
+            echo "==> Building image"
+            docker build -t archonhq:new .
 
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/kamal_deploy
-          chmod 600 ~/.ssh/kamal_deploy
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+            echo "==> Starting new container on staging port for health check"
+            docker rm -f archonhq-staging 2>/dev/null || true
+            docker run -d --name archonhq-staging \
+              --network coolify \
+              -p 3005:3000 \
+              --env-file /home/openclaw/.config/archonhq/env \
+              -e NODE_ENV=production \
+              --restart no \
+              archonhq:new
 
-      - name: Deploy with Kamal
-        env:
-          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          AIPIPE_ADMIN_SECRET: ${{ secrets.AIPIPE_ADMIN_SECRET }}
-          API_SECRET: ${{ secrets.API_SECRET }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          STRIPE_PRO_PRICE_ID: ${{ secrets.STRIPE_PRO_PRICE_ID }}
-          STRIPE_TEAM_PRICE_ID: ${{ secrets.STRIPE_TEAM_PRICE_ID }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: kamal deploy --skip-push
+            echo "==> Waiting for health check on :3005"
+            HEALTHY=false
+            for i in $(seq 1 20); do
+              if curl -sf http://localhost:3005/api/health > /dev/null 2>&1; then
+                echo "Health check passed on attempt $i"
+                HEALTHY=true
+                break
+              fi
+              echo "Attempt $i/20 — waiting 5s"
+              sleep 5
+            done
+
+            if [ "$HEALTHY" != "true" ]; then
+              echo "Health check failed — aborting deploy"
+              docker rm -f archonhq-staging
+              exit 1
+            fi
+
+            echo "==> Swapping containers (brief gap ~2s on CF path)"
+            docker stop archonhq-staging
+            docker rm archonhq-staging
+            # Stop current container (Coolify name on first deploy, then "archonhq" thereafter)
+            docker stop archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
+            docker rm archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
+
+            docker run -d --name archonhq \
+              --network coolify \
+              -p 3002:3000 \
+              --env-file /home/openclaw/.config/archonhq/env \
+              -e NODE_ENV=production \
+              --restart unless-stopped \
+              --label "traefik.enable=true" \
+              --label "traefik.http.middlewares.gzip.compress=true" \
+              --label "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https" \
+              --label "traefik.http.routers.http-archonhq.entryPoints=http" \
+              --label "traefik.http.routers.http-archonhq.middlewares=redirect-to-https" \
+              --label "traefik.http.routers.http-archonhq.rule=Host(\`archonhq.ai\`) && PathPrefix(\`/\`)" \
+              --label "traefik.http.routers.http-archonhq.service=http-archonhq" \
+              --label "traefik.http.routers.https-archonhq.entryPoints=https" \
+              --label "traefik.http.routers.https-archonhq.middlewares=gzip" \
+              --label "traefik.http.routers.https-archonhq.rule=Host(\`archonhq.ai\`) && PathPrefix(\`/\`)" \
+              --label "traefik.http.routers.https-archonhq.service=https-archonhq" \
+              --label "traefik.http.routers.https-archonhq.tls=true" \
+              --label "traefik.http.routers.https-archonhq.tls.certresolver=letsencrypt" \
+              --label "traefik.http.services.http-archonhq.loadbalancer.server.port=3000" \
+              --label "traefik.http.services.https-archonhq.loadbalancer.server.port=3000" \
+              archonhq:new
+
+            echo "==> Final health check on :3002"
+            for i in $(seq 1 10); do
+              if curl -sf http://localhost:3002/api/health > /dev/null 2>&1; then
+                echo "Production health check passed"
+                break
+              fi
+              sleep 3
+            done
+
+            echo "==> Cleanup old images"
+            docker image prune -f --filter "until=24h" 2>/dev/null || true
+            docker tag archonhq:new archonhq:latest
+            docker rmi archonhq:new 2>/dev/null || true
+
+            echo "==> Deploy complete"
+            git log --oneline -1
