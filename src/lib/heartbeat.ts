@@ -7,14 +7,8 @@ const gatewayUrl = process.env.GATEWAY_URL || 'http://127.0.0.1:18789';
 // Default to tenant 1 (Mike's workspace) for the background heartbeat worker
 const DEFAULT_TENANT_ID = 1;
 
-// Alert if last successful heartbeat is older than this threshold
+// Alert if last heartbeat is older than this threshold
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
-
-// Internal URL for the alert endpoint (same process)
-const ALERT_URL =
-  process.env.NEXTAUTH_URL
-    ? `${process.env.NEXTAUTH_URL}/api/heartbeat/alert`
-    : 'http://127.0.0.1:3003/api/heartbeat/alert';
 
 async function writeHeartbeat(source: string, status: string, payload: string, checkedAt: Date) {
   try {
@@ -38,13 +32,46 @@ export async function checkGateway() {
 }
 
 /**
- * Check whether the most recent successful gateway heartbeat is stale.
- * If so, POST to /api/heartbeat/alert to send a Telegram notification.
- * Non-fatal: errors are logged but do not throw.
+ * Send a Telegram alert directly (no HTTP round-trip to self).
+ * Called when the heartbeat worker detects a stale heartbeat.
+ */
+async function sendStaleAlert(lastSeen: Date) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? '';
+  const chatId   = process.env.TELEGRAM_CHAT_ID ?? '';
+
+  if (!botToken || !chatId) {
+    console.warn('[heartbeat] TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID not set — skipping stale alert');
+    return;
+  }
+
+  const ageMin = Math.round((Date.now() - lastSeen.getTime()) / 60_000);
+  const text =
+    `⚠️ *[Mission Control Alert]*\n` +
+    `*Stale Heartbeat Detected*\n` +
+    `Last seen: ${lastSeen.toUTCString()} (${ageMin} min ago)\n\n` +
+    `Check gateway status at https://archonhq.ai/dashboard`;
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+    });
+    if (!res.ok) {
+      const err = await res.text().catch(() => '');
+      console.error('[heartbeat] Telegram alert failed:', res.status, err);
+    }
+  } catch (err) {
+    console.error('[heartbeat] Telegram alert error (non-fatal):', err);
+  }
+}
+
+/**
+ * Check whether the most recent gateway heartbeat is stale (> 5 min).
+ * If so, send a Telegram alert directly. Non-fatal.
  */
 async function checkForStaleHeartbeat() {
   try {
-    // Find the latest 'ok' heartbeat for the gateway source
     const rows = await db
       .select({ checkedAt: heartbeats.checkedAt })
       .from(heartbeats)
@@ -52,35 +79,19 @@ async function checkForStaleHeartbeat() {
       .orderBy(desc(heartbeats.checkedAt))
       .limit(1);
 
-    if (!rows.length) {
-      // No heartbeat recorded yet — not necessarily stale, skip
-      return;
-    }
+    if (!rows.length) return; // No heartbeats yet — not stale
 
     const lastCheckedAt = rows[0].checkedAt;
     if (!lastCheckedAt) return;
 
     const ageMs = Date.now() - lastCheckedAt.getTime();
-    if (ageMs < STALE_THRESHOLD_MS) return; // fresh enough
+    if (ageMs < STALE_THRESHOLD_MS) return; // Still fresh
 
     console.warn(
-      `[heartbeat] Stale gateway heartbeat detected — last seen ${Math.round(ageMs / 1000)}s ago. Sending alert.`
+      `[heartbeat] Stale gateway heartbeat — last seen ${Math.round(ageMs / 1000)}s ago. Sending Telegram alert.`
     );
 
-    const apiSecret = process.env.API_SECRET ?? '';
-    await fetch(ALERT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiSecret}`,
-      },
-      body: JSON.stringify({
-        type: 'stale_heartbeat',
-        lastSeen: lastCheckedAt.toISOString(),
-      }),
-    }).catch((err) => {
-      console.error('[heartbeat] Failed to POST alert:', err);
-    });
+    await sendStaleAlert(lastCheckedAt);
   } catch (err) {
     console.error('[heartbeat] checkForStaleHeartbeat error (non-fatal):', err);
   }
@@ -88,7 +99,7 @@ async function checkForStaleHeartbeat() {
 
 export async function runHeartbeats() {
   await checkGateway();
-  // Run stale check asynchronously — don't block the heartbeat write
+  // Stale check is async and non-blocking
   void checkForStaleHeartbeat();
 }
 
