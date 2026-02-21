@@ -18,11 +18,29 @@ function GoogleLogo() {
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePasswordSignIn = (event: FormEvent) => {
+  const handlePasswordSignIn = async (event: FormEvent) => {
     event.preventDefault();
-    setMessage('Email/password sign-in is coming soon. Use Google for now.');
+    setError('');
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || !password) {
+      setError('Enter your email and password.');
+      return;
+    }
+    setIsSubmitting(true);
+    const result = await signIn('credentials', {
+      redirect: false,
+      email: normalized,
+      password,
+    });
+    setIsSubmitting(false);
+    if (result?.error) {
+      setError('Invalid email or password.');
+      return;
+    }
+    window.location.href = '/dashboard';
   };
 
   return (
@@ -95,14 +113,20 @@ export default function SignInPage() {
 
           <button
             type="submit"
-            className="h-11 w-full rounded-xl text-sm font-semibold text-[#a3b8a8] transition hover:-translate-y-px"
+            disabled={isSubmitting}
+            className="h-11 w-full rounded-xl text-sm font-semibold text-[#a3b8a8] transition hover:-translate-y-px disabled:cursor-not-allowed"
             style={{ border: '1px solid rgba(45,212,122,0.2)', background: 'rgba(45,212,122,0.06)' }}
           >
-            Sign in
+            {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        {message && <p className="mt-3 text-center text-xs text-[#ff6b8a]">{message}</p>}
+        {error && <p className="mt-3 text-center text-xs text-[#ff6b8a]">{error}</p>}
+
+        <div className="mt-4 flex items-center justify-between text-xs" style={{ color: '#6a7f6f' }}>
+          <Link href="/forgot-password" className="transition hover:text-[#ff6b8a]">Forgot password?</Link>
+          <Link href="/signup" className="transition hover:text-[#ff6b8a]">Need an account?</Link>
+        </div>
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1" style={{ background: 'rgba(45,212,122,0.12)' }} />
