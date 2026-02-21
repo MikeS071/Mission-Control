@@ -5,10 +5,13 @@ import { resolveTenantId } from '@/lib/tenant';
 
 const WS = process.env.WORKSPACE_PATH!;
 
-function safeResolvePath(name: string): string | null {
-  // Must end in .md
-  if (!name.endsWith('.md')) return null;
-  // Resolve full path and ensure it stays within WS
+const READABLE_EXTS = new Set(['.md', '.json', '.yaml', '.yml', '.txt']);
+const WRITABLE_EXTS = new Set(['.md']); // edit only markdown; others are read-only
+
+function safeResolvePath(name: string, write = false): string | null {
+  const ext = name.slice(name.lastIndexOf('.'));
+  const allowed = write ? WRITABLE_EXTS : READABLE_EXTS;
+  if (!allowed.has(ext)) return null;
   const resolved = path.resolve(WS, name);
   if (!resolved.startsWith(path.resolve(WS) + path.sep) && resolved !== path.resolve(WS)) return null;
   return resolved;
@@ -25,7 +28,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing name parameter' }, { status: 400 });
   }
 
-  const filePath = safeResolvePath(name);
+  const filePath = safeResolvePath(name, false);
   if (!filePath) {
     return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
   }
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing name or content' }, { status: 400 });
   }
 
-  const filePath = safeResolvePath(name);
+  const filePath = safeResolvePath(name, true);
   if (!filePath) {
     return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
   }

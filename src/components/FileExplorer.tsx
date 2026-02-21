@@ -2,7 +2,13 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronDown, FileText, Folder, FolderOpen } from 'lucide-react';
+import { ChevronRight, ChevronDown, FileText, FileCode2, Folder, FolderOpen } from 'lucide-react';
+
+function fileIcon(name: string) {
+  const ext = name.slice(name.lastIndexOf('.'));
+  if (['.json', '.yaml', '.yml'].includes(ext)) return <FileCode2 size={12} className="flex-shrink-0 text-yellow-500" />;
+  return <FileText size={12} className="flex-shrink-0 text-blue-400" />;
+}
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
 
@@ -60,7 +66,7 @@ function TreeNode({ entry, selected, onSelect, depth = 0 }: TreeNodeProps) {
       }`}
       style={{ paddingLeft: `${(depth + 1) * 8}px` }}
     >
-      <FileText size={12} className="flex-shrink-0 text-blue-400" />
+      {fileIcon(entry.name)}
       <span className="truncate">{entry.name}</span>
     </button>
   );
@@ -112,8 +118,10 @@ export function FileExplorer() {
       });
   };
 
+  const isMd = (p: string) => p.endsWith('.md');
+
   const save = async () => {
-    if (!selected) return;
+    if (!selected || !isMd(selected)) return;
     await fetch('/api/workspace/file', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -150,14 +158,20 @@ export function FileExplorer() {
           <>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400 truncate">{selected}</span>
-              <Button size="sm" onClick={save}>{saved ? 'Saved ✓' : 'Save'}</Button>
+              {isMd(selected) && (
+                <Button size="sm" onClick={save}>{saved ? 'Saved ✓' : 'Save'}</Button>
+              )}
             </div>
             {contentError ? (
               <div className="text-sm text-red-400 mt-4 ml-1">{contentError}</div>
-            ) : (
+            ) : isMd(selected) ? (
               <div className="flex-1 overflow-auto" data-color-mode="dark">
                 <MDEditor value={content} onChange={v => setContent(v || '')} height="100%" />
               </div>
+            ) : (
+              <pre className="flex-1 overflow-auto bg-gray-900 text-gray-300 text-xs rounded p-3 leading-relaxed whitespace-pre-wrap break-words">
+                {content}
+              </pre>
             )}
           </>
         )}

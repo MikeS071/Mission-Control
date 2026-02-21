@@ -6,6 +6,7 @@ import { resolveTenantId } from '@/lib/tenant';
 const WS = process.env.WORKSPACE_PATH!;
 
 const SKIP_DIRS = new Set(['node_modules', '.git', '.next']);
+const ALLOWED_EXTS = new Set(['.md', '.json', '.yaml', '.yml', '.txt']);
 
 type FileEntry = {
   name: string;
@@ -33,7 +34,7 @@ function scanDir(absDir: string, relBase: string): FileEntry[] {
       if (children.length > 0) {
         result.push({ name: entry.name, path: relPath, type: 'dir', children });
       }
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+    } else if (entry.isFile() && ALLOWED_EXTS.has(path.extname(entry.name))) {
       const relPath = relBase ? `${relBase}/${entry.name}` : entry.name;
       result.push({ name: entry.name, path: relPath, type: 'file' });
     }
