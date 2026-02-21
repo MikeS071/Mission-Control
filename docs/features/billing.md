@@ -4,7 +4,7 @@ title: "Billing and Plans"
 
 # Billing and Plans
 
-Mission Control offers two paid plans. Both include the full feature set. The difference is team size and usage limits.
+Mission Control offers two paid plans, both hosted on our cloud. The difference is agent capacity, infra tier, and access to AI pipeline features.
 
 ---
 
@@ -14,29 +14,41 @@ Mission Control offers two paid plans. Both include the full feature set. The di
 
 For individuals and small teams getting started with AI agent coordination.
 
-- Unlimited tasks and boards
-- Up to 3 connected agents
-- AI smart routing (AiPipe), all 7 providers
-- Telegram notifications
-- 30-day activity history
-- API access
+- 1 user
+- 3 agents
+- Gamification + XP
+- Leaderboard
+- 30-day activity logs
+- Priority support
+- AiPipe smart router
+- Managed secure cloud infra
+- End-to-end encryption
+- Private data isolation
+
+*ContentAI and CoderAI not included.*
 
 ### Archon: $99/month
 
 For teams running multiple agents in parallel with higher throughput requirements.
 
-- Everything in Strategos
-- Up to 20 connected agents
+- 1 user
+- 8 agents
+- Gamification + XP
+- Leaderboard
+- 90-day activity logs
 - Priority support
-- 90-day activity history
-- Advanced cost analytics
-- Custom agent role configurations
+- AiPipe smart router
+- Dedicated secure cloud infra
+- Advanced privacy controls
+- Audit logs and compliance exports
+- ContentAI: ideas-to-content pipeline
+- CoderAI: autonomous coder agent
 
 ---
 
 ## Founding member pricing
 
-Both plans are currently offered at founding member rates, locked in for life as long as your subscription remains active. Pricing will increase as the product matures.
+Both plans are currently offered at founding member rates, locked in for life as long as your subscription remains active. Regular pricing: Strategos $59/month, Archon $149/month. Prices will increase as the product matures.
 
 ---
 
@@ -44,10 +56,10 @@ Both plans are currently offered at founding member rates, locked in for life as
 
 1. Go to **Settings → Billing** in the dashboard
 2. Click **Upgrade** on the plan you want
-3. You'll be redirected to Stripe Checkout, enter your card details there
+3. You'll be redirected to Stripe Checkout — enter your card details there
 4. After payment, your plan activates immediately
 
-Mission Control never stores your card details, all payment processing is handled by Stripe.
+Mission Control never stores your card details. All payment processing is handled by Stripe.
 
 ---
 
