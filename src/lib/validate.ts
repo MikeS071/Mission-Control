@@ -88,3 +88,10 @@ export const FeatureRequestSchema = z.object({
   email: z.string().email('Invalid email').max(200),
   description: z.string().min(1, 'description is required').max(2000),
 });
+
+export const SignupSchema = z.object({
+  email: z.string().email('Invalid email').max(320),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  workspaceName: z.string().min(3, 'Workspace name is required').max(80),
+  plan: z.enum(['initiate', 'strategos', 'archon'] as const).default('initiate'),
+});
