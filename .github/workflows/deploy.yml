@@ -1,30 +1,110 @@
-name: Deploy to Coolify
+name: Build & Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    name: Deploy to production
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger Coolify deploy
-        run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://archonhq.ai/api/deploy" \
-            -H "x-deploy-secret: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
-            -H "Content-Type: application/json")
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: openclaw
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -e
+            cd /home/openclaw/projects/openclaw-mission-control
 
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -n -1)
+            echo "==> Pulling latest code"
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
 
-          echo "Response: $BODY"
-          echo "HTTP status: $HTTP_CODE"
+            echo "==> Building image"
+            docker build -t archonhq:new .
 
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "❌ Deploy trigger failed (HTTP $HTTP_CODE)"
-            exit 1
-          fi
+            echo "==> Starting new container on staging port for health check"
+            docker rm -f archonhq-staging 2>/dev/null || true
+            docker run -d --name archonhq-staging \
+              --network coolify \
+              -p 3005:3000 \
+              --env-file /home/openclaw/.config/archonhq/env \
+              -e NODE_ENV=production \
+              --restart no \
+              archonhq:new
 
-          echo "✅ Coolify deploy triggered"
+            echo "==> Waiting for health check on :3005"
+            HEALTHY=false
+            for i in $(seq 1 20); do
+              if curl -sf http://localhost:3005/api/health > /dev/null 2>&1; then
+                echo "Health check passed on attempt $i"
+                HEALTHY=true
+                break
+              fi
+              echo "Attempt $i/20 — waiting 5s"
+              sleep 5
+            done
+
+            if [ "$HEALTHY" != "true" ]; then
+              echo "Health check failed — aborting deploy"
+              docker rm -f archonhq-staging
+              exit 1
+            fi
+
+            echo "==> Swapping containers (brief gap ~2s on CF path)"
+            docker stop archonhq-staging
+            docker rm archonhq-staging
+            # Stop current container (Coolify name on first deploy, then "archonhq" thereafter)
+            docker stop archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
+            docker rm archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
+
+            docker run -d --name archonhq \
+              --network coolify \
+              -p 3002:3000 \
+              --env-file /home/openclaw/.config/archonhq/env \
+              -e NODE_ENV=production \
+              --restart unless-stopped \
+              --label "traefik.enable=true" \
+              --label "traefik.http.middlewares.gzip.compress=true" \
+              --label "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https" \
+              --label "traefik.http.routers.http-archonhq.entryPoints=http" \
+              --label "traefik.http.routers.http-archonhq.middlewares=redirect-to-https" \
+              --label "traefik.http.routers.http-archonhq.rule=Host(\`archonhq.ai\`) && PathPrefix(\`/\`)" \
+              --label "traefik.http.routers.http-archonhq.service=http-archonhq" \
+              --label "traefik.http.routers.https-archonhq.entryPoints=https" \
+              --label "traefik.http.routers.https-archonhq.middlewares=gzip" \
+              --label "traefik.http.routers.https-archonhq.rule=Host(\`archonhq.ai\`) && PathPrefix(\`/\`)" \
+              --label "traefik.http.routers.https-archonhq.service=https-archonhq" \
+              --label "traefik.http.routers.https-archonhq.tls=true" \
+              --label "traefik.http.routers.https-archonhq.tls.certresolver=letsencrypt" \
+              --label "traefik.http.services.http-archonhq.loadbalancer.server.port=3000" \
+              --label "traefik.http.services.https-archonhq.loadbalancer.server.port=3000" \
+              archonhq:new
+
+            echo "==> Final health check on :3002"
+            for i in $(seq 1 10); do
+              if curl -sf http://localhost:3002/api/health > /dev/null 2>&1; then
+                echo "Production health check passed"
+                break
+              fi
+              sleep 3
+            done
+
+            echo "==> Cleanup old images"
+            docker image prune -f --filter "until=24h" 2>/dev/null || true
+            docker tag archonhq:new archonhq:latest
+            docker rmi archonhq:new 2>/dev/null || true
+
+            echo "==> Deploy complete"
+            git log --oneline -1
