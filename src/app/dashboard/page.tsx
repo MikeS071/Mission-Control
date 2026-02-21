@@ -7,6 +7,7 @@ import { FileExplorer } from '@/components/FileExplorer';
 import { ActivityTab } from '@/components/ActivityTab';
 import { ArenaPanel } from '@/components/ArenaPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
+import { ChatPanel } from '@/components/ChatPanel';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { NavbarArenaProgress } from '@/components/NavbarArenaProgress';
@@ -68,6 +69,7 @@ export default async function DashboardPage() {
           <TabsTrigger value="files"     className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Memory</TabsTrigger>
           <TabsTrigger value="progress"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Arena</TabsTrigger>
           <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
+          <TabsTrigger value="chat"      className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">💬 Chat</TabsTrigger>
         </TabsList>
 
         <div className="ml-auto px-3">
@@ -116,6 +118,7 @@ export default async function DashboardPage() {
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
         <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
+        <TabsContent value="chat"     className="mt-0 h-[calc(100vh-120px)]"><ChatPanel /></TabsContent>
       </div>
 
     </Tabs>
