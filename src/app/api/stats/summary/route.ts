@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const [taskTotalsResult, activeAgentsResult, totalCostResult, tasksDoneTodayResult, totalTokensResult, settingsRow] = await Promise.all([
+  const [taskTotalsResult, activeAgentsResult, totalCostResult, tasksDoneTodayResult, totalTokensResult, settingsRow, tasksThisWeekResult, currentStreakResult] = await Promise.all([
     db.execute(sql`
       SELECT
         COUNT(*)::int AS total_tasks,
@@ -43,6 +43,18 @@ export async function GET(req: NextRequest) {
       .from(tenantSettings)
       .where(eq(tenantSettings.tenantId, tenantId))
       .limit(1),
+    db.execute(sql`
+      SELECT COUNT(*)::int AS tasks_this_week
+      FROM tasks
+      WHERE tenant_id = ${tenantId}
+        AND status = 'done'
+        AND updated_at > NOW() - INTERVAL '7 days'
+    `),
+    db.execute(sql`
+      SELECT COALESCE(MAX(current_streak_days), 0)::int AS current_streak
+      FROM arena_streaks
+      WHERE tenant_id = ${tenantId}
+    `),
   ]);
 
   const taskTotals = taskTotalsResult.rows[0] as { total_tasks: number; done_tasks: number } | undefined;
@@ -50,6 +62,8 @@ export async function GET(req: NextRequest) {
   const totalCostRow = totalCostResult.rows[0] as { total_cost_usd: string } | undefined;
   const doneTodayRow = tasksDoneTodayResult.rows[0] as { tasks_done_today: number } | undefined;
   const totalTokensRow = totalTokensResult.rows[0] as { total_tokens: string } | undefined;
+  const tasksThisWeekRow = tasksThisWeekResult.rows[0] as { tasks_this_week: number } | undefined;
+  const currentStreakRow = currentStreakResult.rows[0] as { current_streak: number } | undefined;
   const settings = (settingsRow[0]?.settings ?? {}) as {
     savingsRatePct?: number;
     tokenLimitMonthly?: number;
@@ -88,5 +102,7 @@ export async function GET(req: NextRequest) {
     tokenLimitMonthly,
     tokenPctOfLimit,
     primaryAgentName: settings.primaryAgentName ?? null,
+    tasksThisWeek: tasksThisWeekRow?.tasks_this_week ?? 0,
+    currentStreak: currentStreakRow?.current_streak ?? 0,
   });
 }

@@ -61,6 +61,8 @@ type StatsSummary = {
   tokenLimitMonthly: number;
   tokenPctOfLimit: number | null;
   primaryAgentName: string | null;
+  tasksThisWeek: number;
+  currentStreak: number;
 };
 
 const STATUS_COLUMNS = ['backlog', 'in_progress', 'review', 'done'];
@@ -348,7 +350,7 @@ export function KanbanBoard() {
   const [newTask, setNewTask] = useState<TaskForm>(emptyForm);
   const [editTask, setEditTask] = useState<TaskForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--', saved: '--', tokenPct: '--' });
+  const [stats, setStats] = useState({ tokens: '--', cost: '--', taskSummary: '--', saved: '--', tokenPct: '--', tasksThisWeek: '--', streak: '--' });
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [leftWidth, setLeftWidth] = useState(220);
@@ -389,7 +391,6 @@ const [rightWidth, setRightWidth] = useState(402);
       const totalTokens = summary.totalTokens ?? 0;
       const totalCost = parseFloat(summary.totalCostUsd ?? '0');
       const savedCost = parseFloat(summary.savedUsd ?? '0');
-      const activeAgents = summary.activeAgents ?? 0;
       const pct = summary.pctComplete ?? 0;
       const tokenPct = summary.tokenPctOfLimit;
 
@@ -398,9 +399,10 @@ const [rightWidth, setRightWidth] = useState(402);
         tokens: formatTokens(totalTokens),
         cost: `$${totalCost.toFixed(2)}`,
         saved: `$${savedCost.toFixed(2)}`,
-        agents: String(activeAgents),
         taskSummary: `${pct}%`,
         tokenPct: typeof tokenPct === 'number' ? `${tokenPct}%` : '--',
+        tasksThisWeek: String(summary.tasksThisWeek ?? 0),
+        streak: String(summary.currentStreak ?? 0),
       });
     } catch {
       // noop
@@ -644,8 +646,8 @@ const [rightWidth, setRightWidth] = useState(402);
         <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
         <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
         <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
-        <StatsTile label="Active Agents" value={stats.agents} color="border-purple-700" />
-        <StatsTile label="% Complete" value={stats.taskSummary} color="border-orange-700" />
+        <StatsTile label="Tasks This Week" value={stats.tasksThisWeek} color="border-purple-700" />
+        <StatsTile label="Streak 🔥" value={stats.streak} sub={stats.streak !== '--' && stats.streak !== '0' ? 'days' : undefined} color="border-orange-700" />
       </div>
 
       {/* 3-pane resizable layout */}
