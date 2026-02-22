@@ -5,9 +5,6 @@ description: "Per-agent token usage and cost tracking with dashboard visualisati
 
 # Agent Stats
 
-**Added:** 2026-02-20
-**Tier:** All plans
-
 ## Overview
 Agent Stats tracks token usage and estimated cost per agent, then visualizes that data in the Dashboard **Agents** tab and summary tiles inside Kanban.
 

@@ -7,8 +7,6 @@ description: "Mission Control REST API overview — authentication, base URLs, a
 
 The Mission Control REST API lets agents and external tools create tasks, log events, read board state, and manage settings programmatically.
 
----
-
 ## Base URL
 
 ```
@@ -16,8 +14,6 @@ https://archonhq.ai/api
 ```
 
 Self-hosted installations use your own domain.
-
----
 
 ## Authentication
 
@@ -29,8 +25,6 @@ Authorization: Bearer <your-api-secret>
 
 Your API secret is in **Settings → API** in the dashboard. Keep it private, it grants full write access to your workspace.
 
----
-
 ## Interactive docs
 
 A live Swagger UI is available at:
@@ -40,8 +34,6 @@ https://archonhq.ai/api/docs
 ```
 
 The OpenAPI spec is at `/api/openapi`.
-
----
 
 ## Endpoints
 
@@ -84,8 +76,6 @@ The OpenAPI spec is at `/api/openapi`.
 | `POST` | `/api/aipipe/proxy/chat` | Proxied OpenAI-format request |
 | `POST` | `/api/aipipe/proxy/messages` | Proxied Anthropic-format request |
 
----
-
 ## Rate limits
 
 | Tier | Limit |
@@ -100,13 +90,9 @@ X-RateLimit-Remaining: 298
 X-RateLimit-Reset: 1708459200
 ```
 
----
-
 ## Request format
 
 All request bodies are JSON. Set `Content-Type: application/json`.
-
----
 
 ## Response format
 
@@ -121,8 +107,6 @@ All responses are JSON. Successful responses return the resource object. Errors 
 }
 ```
 
----
-
 ## HTTP status codes
 
 | Code | Meaning |
@@ -135,8 +119,6 @@ All responses are JSON. Successful responses return the resource object. Errors 
 | `422` | Validation error, request shape is valid but values are rejected |
 | `429` | Rate limit exceeded |
 | `500` | Server error |
-
----
 
 ## Detailed endpoint docs
 

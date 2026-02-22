@@ -9,13 +9,9 @@ The Connection Wizard configures your Mission Control workspace in 8 guided step
 
 Access it at **Settings → Connect** or navigate to `/dashboard/connect`.
 
----
-
 ## Step 1: Welcome
 
 An overview of what you're about to configure. No input required.
-
----
 
 ## Step 2: Gateway
 
@@ -27,8 +23,6 @@ Mission Control sends a ping to verify the connection before you can proceed. If
 - Check that the gateway is running: `openclaw gateway status`
 - Ensure the URL is reachable from the browser (same machine or network)
 - Check firewall rules if running on a remote server
-
----
 
 ## Step 3: AI Provider Keys
 
@@ -48,8 +42,6 @@ Keys are stored in AiPipe's isolated per-tenant store and never logged or expose
 
 **Recommendation:** start with OpenAI + Anthropic. This gives AiPipe two providers to route between, unlocking the full cheap-vs-quality routing profile. Add Gemini for the cheapest possible tier on simple tasks.
 
----
-
 ## Step 4: Smart Routing
 
 Enables AiPipe, the routing layer that automatically selects the best model per request.
@@ -63,8 +55,6 @@ When smart routing is off, Mission Control uses a single configured model for al
 
 [Learn how routing works →](/docs/features/ai-routing)
 
----
-
 ## Step 5: AI Team
 
 Assign agents to your workspace. Each agent entry has:
@@ -73,8 +63,6 @@ Assign agents to your workspace. Each agent entry has:
 - **Description**: optional notes
 
 Agents don't need to be listed here to connect, any agent with a valid gateway token can connect. This step is for labelling and organising the agents you expect to use.
-
----
 
 ## Step 6: Agent Roles
 
@@ -97,8 +85,6 @@ Default assignments (pre-filled):
 
 Override any assignment using the dropdown. Changes take effect immediately, no restart required.
 
----
-
 ## Step 7: Notifications
 
 Connects Telegram for push notifications when tasks change state.
@@ -115,15 +101,11 @@ Once configured, Mission Control sends a message to your chat when:
 
 Test the connection with the **Send test notification** button before saving.
 
----
-
 ## Step 8: Done
 
 Review your configuration summary and click **Activate**. All settings are saved to your tenant profile.
 
 You can return to the wizard at any time to update keys, change models, or reconfigure notifications. Changes to provider keys in Step 3 automatically sync to AiPipe within 60 seconds.
-
----
 
 ## Updating settings later
 

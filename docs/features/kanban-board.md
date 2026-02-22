@@ -7,8 +7,6 @@ description: "Kanban task board with drag-and-drop columns, agent triggers, and 
 
 The kanban board is the core of Mission Control. It gives you and your agents a shared view of all work, what's pending, in progress, under review, and done.
 
----
-
 ## Columns and statuses
 
 Tasks flow left to right through four columns:
@@ -21,8 +19,6 @@ Tasks flow left to right through four columns:
 | **Done** | Completed and accepted |
 
 Drag cards between columns or use the card menu (⋯ → Move to…).
-
----
 
 ## WIP limits
 
@@ -37,8 +33,6 @@ WIP limits are intentional friction. They prevent the board from becoming a dump
 
 Adjust limits in board settings.
 
----
-
 ## Task cards
 
 Each card shows:
@@ -48,8 +42,6 @@ Each card shows:
 - **Agent avatar**: which agent owns this task (if assigned)
 - **Labels**: custom colour-tagged labels
 - **Activity indicator**: pulse animation when a task was recently updated
-
----
 
 ## Creating tasks
 
@@ -74,8 +66,6 @@ curl -X POST https://archonhq.ai/api/tasks \
 
 Tasks created via API appear on the board immediately (no refresh needed, the board polls every 30 seconds).
 
----
-
 ## Filtering
 
 The filter bar above the board lets you narrow the view:
@@ -89,8 +79,6 @@ The filter bar above the board lets you narrow the view:
 | **Labels** | One or more labels |
 
 Filters combine with AND logic. Active filters are shown as chips, click × on any chip to remove it.
-
----
 
 ## Task detail
 
@@ -118,8 +106,6 @@ Below the fields, a full chronological log of every event on this card:
 
 The timeline is append-only and cannot be edited.
 
----
-
 ## Labels
 
 Labels are free-form tags with colour coding. Create any label you need:
@@ -130,21 +116,15 @@ Labels are free-form tags with colour coding. Create any label you need:
 
 Labels are workspace-scoped, create them once, use them on any task.
 
----
-
 ## Drag and drop
 
 Cards can be dragged between columns and reordered within a column. The board uses optimistic updates, the move happens visually immediately, and the API call confirms in the background.
 
 If the API call fails (network issue, WIP limit violation), the card snaps back to its original position and a toast notification explains why.
 
----
-
 ## Collapsing columns
 
 Click the column header chevron to collapse a column to a slim indicator strip. Useful when you want to hide Done or focus on In Progress only. Collapse state persists in your browser.
-
----
 
 ## API access
 

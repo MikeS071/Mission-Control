@@ -11,8 +11,6 @@ This document explains how AiPipe routing works, shows benchmark results against
 
 > **Benchmark date:** February 2026 (re-run 22 Feb 2026). Baseline: `claude-sonnet-4-6` (Anthropic direct). AiPipe auto-routes across all configured providers. Four iterations, 12 requests per path, run live against production APIs.
 
----
-
 ## The Problem: One Model Fits Nobody
 
 When you hard-code a single LLM into your application, you face an impossible tradeoff:
@@ -21,8 +19,6 @@ When you hard-code a single LLM into your application, you face an impossible tr
 - **Use a frontier model everywhere** — excellent quality, but 15–30× more expensive than necessary for simple prompts
 
 Neither is right. A "What time is it in Tokyo?" query does not need Claude Sonnet. A security architecture review does not belong on gpt-4o-mini. AiPipe resolves this by scoring each request and routing it to the model with the best quality-adjusted cost for that specific task.
-
----
 
 ## How AiPipe Routing Works
 
@@ -88,8 +84,6 @@ Quality scores are calibrated from independent benchmarks including LMSYS Chatbo
 
 > **On Codex-tier models (gpt-5.1-codex, gpt-5.2-codex):** Available via OpenClaw's OAuth Codex provider, not standard API keys. Not included in AiPipe's default model pool; can be added as a custom provider.
 
----
-
 ## Benchmark Results
 
 ### Methodology
@@ -151,8 +145,6 @@ The 2,082ms AiPipe average reflects a **75% cache hit rate** across four identic
 
 Output volumes are comparable — AiPipe savings come from model selection and caching, not from cutting response quality or length.
 
----
-
 ## Reading the Results
 
 ### Improved routing since previous benchmark
@@ -178,8 +170,6 @@ In a real workload, many queries repeat: the same user asking the same question,
 
 gpt-4o-mini is not selected for complexity 0.55 queries anymore — claude-sonnet-4-6 is. The output quality improvement is real. There was no quality degradation on simple tasks (prompts 1 and 2), and the medium-complexity response is substantially better with claude-sonnet-4-6.
 
----
-
 ## Real-World Cost Savings
 
 ### Realistic mixed workload (10,000 requests/day)
@@ -203,8 +193,6 @@ AiPipe costs ~72% less than always-Sonnet in a realistic mixed workload. Add cac
 | 75% simple / 25% complex | ~50% |
 | 85% simple / 15% complex | ~58% |
 | 95% simple / 5% complex | ~68% |
-
----
 
 ## Additional Features
 
@@ -232,8 +220,6 @@ DELETE /v1/tenants/{id}/providers/{name}  — remove a key
 GET  /v1/tenants/{id}/stats          — per-tenant token and cost stats
 ```
 
----
-
 ## Supported Providers
 
 AiPipe supports eight providers out of the box. Each is enabled by setting the corresponding environment variable:
@@ -251,8 +237,6 @@ AiPipe supports eight providers out of the box. Each is enabled by setting the c
 Providers without a configured key are automatically excluded from routing. AiPipe starts with whatever keys you have and expands as you add more.
 
 > **Note on OpenAI Codex models (gpt-5.1-codex, gpt-5.2-codex):** Available via OpenClaw's OAuth Codex provider, not standard `OPENAI_API_KEY`. Not in AiPipe's default pool; add as a custom provider if you have Codex API access.
-
----
 
 ## Getting Started
 
@@ -286,8 +270,6 @@ GET http://localhost:8082/v1/stats
 
 Returns: per-provider request counts, token usage, total cost, cache hits, latency percentiles (p50/p95/p99), and per-model quality tracking with penalty scores.
 
----
-
 ## Why Not Just Use the Cheapest Model Always?
 
 | Task | gpt-4o-mini | claude-sonnet-4-6 / grok-4 |
@@ -299,8 +281,6 @@ Returns: per-provider request counts, token usage, total cost, cache hits, laten
 | Security vulnerability analysis | ❌ Pattern-matches only | ✅ Reasons about context |
 
 Routing to cheap models for everything is not neutral — it produces subtly wrong answers on the tasks where correctness matters most. AiPipe uses the cheap model only when the cheap model is correct.
-
----
 
 ## Summary
 
@@ -317,7 +297,5 @@ Routing to cheap models for everything is not neutral — it produces subtly wro
 | Config required | None | API keys only |
 
 AiPipe is not an abstraction layer that trades control for convenience. It is a routing layer that gives you better outcomes: lower cost on simple tasks, higher quality on complex ones, near-zero cost on repeated queries. No changes to your application code required.
-
----
 
 *AiPipe is built into Mission Control and available as a standalone Go binary. Source: [github.com/MikeS071/AiPipe](https://github.com/MikeS071/AiPipe)*

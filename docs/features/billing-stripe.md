@@ -5,9 +5,6 @@ description: "Stripe Checkout and Customer Portal integration for Strategos and 
 
 # Stripe Billing
 
-**Added:** 2026-02-20
-**Tier:** Strategos / Archon upgrades (with Initiate base plan)
-
 ## Overview
 Stripe Billing handles paid plan upgrades from the free Initiate tier to Strategos or Archon. Users can launch checkout from the billing page, complete a Stripe subscription, and later open the Stripe customer portal to manage billing.
 

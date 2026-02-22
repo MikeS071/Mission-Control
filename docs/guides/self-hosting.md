@@ -7,8 +7,6 @@ description: "Deploy Mission Control on your own server with Docker, Coolify, an
 
 Run Mission Control on your own infrastructure. Requires Docker, PostgreSQL, and a Node.js environment.
 
----
-
 ## Requirements
 
 - Docker and Docker Compose
@@ -16,8 +14,6 @@ Run Mission Control on your own infrastructure. Requires Docker, PostgreSQL, and
 - A domain with HTTPS (required for NextAuth cookie security)
 - Google OAuth credentials for sign-in
 - Minimum 1 GB RAM, 1 vCPU
-
----
 
 ## Quick start with Docker Compose
 
@@ -34,8 +30,6 @@ docker compose up -d
 ```
 
 The dashboard is available at `http://localhost:3000`.
-
----
 
 ## Environment variables
 
@@ -57,8 +51,6 @@ DATABASE_URL=postgresql://user:password@host:5432/mission_control
 API_SECRET=<32+ char random string>
 ```
 
----
-
 ## Database setup
 
 Create the database and run migrations:
@@ -71,16 +63,12 @@ psql -U postgres -c "CREATE DATABASE mission_control;"
 docker compose run --rm app npm run db:migrate
 ```
 
----
-
 ## Google OAuth setup
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials
 2. Create an OAuth 2.0 client ID (Web application)
 3. Add authorised redirect URI: `https://your-domain.com/api/auth/callback/google`
 4. Copy client ID and secret to `.env.local`
-
----
 
 ## Running behind a reverse proxy
 
@@ -93,8 +81,6 @@ cloudflared tunnel --url http://localhost:3000
 ```
 
 Point the tunnel to `https://your-domain.com` in the Cloudflare dashboard.
-
----
 
 ## AiPipe (optional)
 
@@ -121,8 +107,6 @@ systemctl --user start aipipe
 
 Set `AIPIPE_URL=http://127.0.0.1:8082` in your `.env.local` to connect.
 
----
-
 ## Updating
 
 ```bash
@@ -133,8 +117,6 @@ docker compose up -d --build
 
 Migrations run automatically on startup.
 
----
-
 ## Backup
 
 Back up the PostgreSQL database:
@@ -144,8 +126,6 @@ pg_dump mission_control > backup_$(date +%Y%m%d).sql
 ```
 
 No file system state beyond the database is required, all data lives in Postgres.
-
----
 
 ## Troubleshooting
 

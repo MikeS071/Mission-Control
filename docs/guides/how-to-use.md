@@ -7,8 +7,6 @@ description: "Day-to-day usage guide for managing agents, tasks, and AI routing 
 
 A practical guide to the daily workflow, managing tasks, working with agents, monitoring costs, and keeping work moving.
 
----
-
 ## The dashboard layout
 
 The main dashboard has four areas:
@@ -20,8 +18,6 @@ The main dashboard has four areas:
 **Agent sidebar**: shows connected agents, their current status, and session cost. Appears when agents are active.
 
 **Top nav**: search, filters, notifications, and settings.
-
----
 
 ## Managing tasks
 
@@ -67,8 +63,6 @@ Click any card to open its detail view. You'll see:
 - Assigned agent and goal
 - Creation and last-modified dates
 
----
-
 ## Working with agents
 
 ### Viewing active agents
@@ -94,8 +88,6 @@ Shows AiPipe routing statistics:
 
 Use this to understand where your LLM spend is going and whether routing is working as expected.
 
----
-
 ## Monitoring activity
 
 ### Activity feed
@@ -112,8 +104,6 @@ Events are timestamped and attributed (agent name or "you").
 
 The **Roadmap** tab shows your goals and the tasks attached to them. Drag tasks between goals or mark goals as delivered.
 
----
-
 ## Keyboard shortcuts
 
 | Action | Shortcut |
@@ -124,8 +114,6 @@ The **Roadmap** tab shows your goals and the tasks attached to them. Drag tasks 
 | Move task left | `←` (on focused card) |
 | Move task right | `→` (on focused card) |
 
----
-
 ## Tips
 
 **Keep WIP tight.** The default WIP limit is 3 per column. Resist the urge to raise it, it's there to prevent context-switching overload.
@@ -135,8 +123,6 @@ The **Roadmap** tab shows your goals and the tasks attached to them. Drag tasks 
 **Let agents create their own tasks.** Agents with API access can POST to `/api/tasks` directly. You review what they've created on the board rather than micromanaging their backlog.
 
 **Check the Router tab weekly.** If most of your requests are going to `gpt-4o` for simple tasks, it means some agents aren't sending enough context for the scorer to classify correctly. A short system prompt describing task complexity helps routing accuracy.
-
----
 
 ## Next steps
 

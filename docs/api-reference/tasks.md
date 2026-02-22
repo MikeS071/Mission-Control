@@ -7,8 +7,6 @@ description: "Tasks API reference — create, update, list, and delete task reso
 
 Create, read, update, and delete tasks on the Mission Control board.
 
----
-
 ## Task object
 
 ```json
@@ -41,8 +39,6 @@ Create, read, update, and delete tasks on the Mission Control board.
 | `createdAt` | ISO 8601 | Read-only |
 | `updatedAt` | ISO 8601 | Read-only |
 
----
-
 ## List tasks
 
 ```
@@ -74,8 +70,6 @@ curl https://archonhq.ai/api/tasks?status=in_progress&priority=high \
   { "id": 38, "title": "...", "status": "in_progress", ... }
 ]
 ```
-
----
 
 ## Create a task
 
@@ -114,8 +108,6 @@ Only `title` is required. All other fields default to:
 
 A Telegram notification is sent to your configured chat on task creation.
 
----
-
 ## Get a task
 
 ```
@@ -136,8 +128,6 @@ curl https://archonhq.ai/api/tasks/42 \
   ...
 }
 ```
-
----
 
 ## Update a task
 
@@ -167,8 +157,6 @@ curl -X PATCH https://archonhq.ai/api/tasks/42 \
 
 Every update is logged in the task's activity timeline with a timestamp.
 
----
-
 ## Delete a task
 
 ```
@@ -187,8 +175,6 @@ curl -X DELETE https://archonhq.ai/api/tasks/42 \
 ```
 
 Deletion is permanent. The activity log entry for the deletion is retained for audit purposes.
-
----
 
 ## Agent usage pattern
 

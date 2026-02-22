@@ -5,7 +5,6 @@ description: "Waitlist schema, email delivery, unsubscribe tokens, and admin exp
 
 # Waitlist: Technical Reference
 
-**Added:** 2026-02-20
 **Author:** navi-ops doc-updater
 
 ## Architecture

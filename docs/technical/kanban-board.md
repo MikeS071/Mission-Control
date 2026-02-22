@@ -5,7 +5,6 @@ description: "Task schema, drag-and-drop state, API routes, and agent trigger in
 
 # Kanban Board: Technical Reference
 
-**Added:** 2026-02-20
 **Author:** navi-ops doc-updater
 
 ## Architecture

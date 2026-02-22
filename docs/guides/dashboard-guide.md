@@ -17,8 +17,6 @@ The dashboard is a 3-pane resizable layout:
 
 Drag either divider to resize panes to suit your workflow.
 
----
-
 ## Agent Team Panel (left)
 
 Shows your primary agent (Navi by default) and any active sub-agents. Each tile displays:
@@ -27,8 +25,6 @@ Shows your primary agent (Navi by default) and any active sub-agents. Each tile 
 - **Last seen**: how long ago the agent was active
 
 Configure `primaryAgentName` via Settings API (`PATCH /api/settings`).
-
----
 
 ## Kanban Board (middle)
 
@@ -57,8 +53,6 @@ Tags `blocked` / `needs-human` are stored in the existing tags field, no schema 
 ### Filters
 Compact filter bar above the board: search, priority, goal, agent, tag. Active filters dim hidden cards and show a count. **✕ Clear** resets all.
 
----
-
 ## Stat Tiles (top)
 
 | Tile | Source |
@@ -72,8 +66,6 @@ Compact filter bar above the board: search, priority, goal, agent, tag. Active f
 Configure `savingsRatePct` and `tokenLimitMonthly` via Settings API.  
 When `tokenLimitMonthly` is set, the Tokens tile shows `X% of limit` as a sub-label.
 
----
-
 ## Chat Pane (right)
 
 Single-agent chat with your primary agent (Navi).
@@ -84,8 +76,6 @@ Single-agent chat with your primary agent (Navi).
 - Title bar shows `Navi · <thread name>` so you always know context
 
 > Chat connects to the OpenClaw gateway via real-time SSE. Messages are stored per tenant and displayed chronologically.
-
----
 
 ## Settings API
 
@@ -101,8 +91,6 @@ Single-agent chat with your primary agent (Navi).
 ```
 
 All fields optional; partial updates supported.
-
----
 
 ## Gateway Indicator
 

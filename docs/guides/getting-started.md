@@ -7,13 +7,9 @@ description: "Get up and running with Mission Control in under 5 minutes."
 
 Get Mission Control running in under 10 minutes.
 
----
-
 ## 1. Create your account
 
 Go to [archonhq.ai](https://archonhq.ai) and sign in with Google. Your account is created automatically on first sign-in.
-
----
 
 ## 2. Run the Connection Wizard
 
@@ -34,8 +30,6 @@ The wizard walks you through 8 steps:
 
 You can skip steps and return later. The wizard saves progress as you go.
 
----
-
 ## 3. Connect the gateway
 
 The gateway is a lightweight process that runs on your machine (or server) and relays agent activity to the Mission Control dashboard.
@@ -48,8 +42,6 @@ openclaw gateway status
 
 In Step 2 of the wizard, enter your gateway URL (typically `http://localhost:18789`). Mission Control will verify the connection before proceeding.
 
----
-
 ## 4. Add at least one AI provider key
 
 In Step 3 of the wizard, add an API key for at least one provider:
@@ -61,8 +53,6 @@ In Step 3 of the wizard, add an API key for at least one provider:
 
 Keys are stored per-tenant and never shared between accounts.
 
----
-
 ## 5. Enable smart routing
 
 In Step 4, toggle **Enable Smart Routing**. This activates AiPipe, which automatically routes each request to the most cost-effective model capable of handling it.
@@ -71,15 +61,11 @@ With a single OpenAI key, AiPipe routes simple tasks to `gpt-4o-mini` and comple
 
 [Learn how routing works →](/docs/features/aipipe-routing-benchmark)
 
----
-
 ## 6. Create your first task
 
 Click the **+** button on the kanban board or use the keyboard shortcut `N`. Give the task a title, set a priority, and optionally assign it to an agent or goal.
 
 The task appears in the **Backlog** column. Drag it to **In Progress** when work starts.
-
----
 
 ## 7. Set up notifications (optional)
 
@@ -90,13 +76,9 @@ In Step 7 of the wizard, enter your Telegram chat ID and bot token to receive al
 
 [Set up Telegram notifications →](/docs/features/notifications)
 
----
-
 ## You're done
 
 Your dashboard is live. Agents connected to the gateway will appear in the Agents tab. Tasks they create via the API show up on the board automatically.
-
----
 
 ## What's next
 

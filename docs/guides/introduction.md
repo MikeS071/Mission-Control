@@ -9,8 +9,6 @@ Mission Control is an AI agent coordination dashboard. One place to manage tasks
 
 It was built for engineering teams and solo founders who run AI agents as part of their workflow and need more than a chat window to stay on top of it.
 
----
-
 ## What it does
 
 ### Task and project management
@@ -28,8 +26,6 @@ Mission Control sends Telegram notifications when tasks are created, updated, or
 ### Billing and plans
 Two tiers: Strategos ($39/mo) for individuals and small teams, Archon ($99/mo) for larger teams. Stripe-powered, cancel any time.
 
----
-
 ## Who it's for
 
 **AI-first engineering teams** running coding agents, research agents, or workflow automation and needing a central coordination layer.
@@ -38,15 +34,11 @@ Two tiers: Strategos ($39/mo) for individuals and small teams, Archon ($99/mo) f
 
 **Teams evaluating AI spend** who want to understand where their LLM costs are going and apply smart routing to reduce waste.
 
----
-
 ## How it's built
 
 Mission Control is a Next.js 16 application backed by PostgreSQL. The AI routing proxy (AiPipe) is a Go binary that runs alongside the dashboard. The gateway connects your local AI agents to the cloud dashboard over a secure tunnel.
 
 Everything is open source: [github.com/MikeS071/Mission-Control](https://github.com/MikeS071/Mission-Control)
-
----
 
 ## Start here
 

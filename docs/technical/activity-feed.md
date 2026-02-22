@@ -5,7 +5,6 @@ description: "Database schema, API routes, and event type reference for the Acti
 
 # Activity Feed: Technical Reference
 
-**Added:** 2026-02-20
 **Author:** navi-ops doc-updater
 
 ## Architecture
