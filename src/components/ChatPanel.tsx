@@ -40,6 +40,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const initialScrollDone = useRef(false);
 
   // ── Load history on mount ─────────────────────────────────────────────────
   useEffect(() => {
@@ -107,7 +109,15 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
   // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesRef.current;
+    if (!el) return;
+    // Instant on first load (avoids page-level scroll side-effects), smooth after
+    if (!initialScrollDone.current) {
+      el.scrollTop = el.scrollHeight;
+      initialScrollDone.current = true;
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [messages, loading]);
 
   // ── Send message ──────────────────────────────────────────────────────────
@@ -183,7 +193,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       </div>
 
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0">
         {historyLoading && (
           <div className="text-center text-gray-500 text-sm py-8">
             Loading conversation…
