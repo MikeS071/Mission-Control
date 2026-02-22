@@ -5,9 +5,6 @@ description: "Chronological audit log of system and task events, available as a 
 
 # Activity Feed
 
-**Added:** 2026-02-20
-**Tier:** All plans
-
 ## Overview
 Activity Feed gives a chronological view of system and task activity so teams can audit what changed and when. It is available as a dedicated dashboard tab and also appears as per-card history inside the Kanban board.
 

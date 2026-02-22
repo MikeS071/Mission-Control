@@ -7,8 +7,6 @@ description: "Automatic LLM routing that selects the cheapest capable model per 
 
 Mission Control routes every AI request to the right model automatically. You don't pick a model per call. AiPipe scores each request on complexity and picks the cheapest model that can handle it well.
 
----
-
 ## Why routing matters
 
 Most teams pick one LLM and use it for everything. The problem:
@@ -19,8 +17,6 @@ Most teams pick one LLM and use it for everything. The problem:
 AiPipe solves this by scoring each request and routing it to the cheapest model that can handle it at sufficient quality.
 
 **Result:** typical users save ~50% on LLM costs with no change to their workflow and no quality reduction on tasks that matter.
-
----
 
 ## How routing decisions are made
 
@@ -33,8 +29,6 @@ AiPipe scores each request on five signals:
 5. **Depth**: multi-turn conversations carry accumulated context and route higher
 
 The five signals combine into a single score in `[0.05, 1.0]`. This score drives model selection.
-
----
 
 ## Which model gets picked
 
@@ -50,8 +44,6 @@ At low complexity, the cheapest capable model wins. As complexity rises, a quali
 | 0.68–0.90 | Architecture analysis, complex reasoning | claude-sonnet-4-5 |
 | 0.80–1.00 | Formal proofs, security audits, research | claude-sonnet-4-5 or claude-opus |
 
----
-
 ## Supported providers
 
 AiPipe routes across all providers you've configured. Enable any provider by adding its API key in the [Connection Wizard →](/docs/features/connection-wizard).
@@ -66,25 +58,17 @@ AiPipe routes across all providers you've configured. Enable any provider by add
 | MiniMax | abab6.5s | Cost-competitive for medium tasks |
 | Kimi (Moonshot) | v1-8k, v1-32k | Long-context tasks at low cost |
 
----
-
 ## Per-tenant isolation
 
 Each tenant's API keys are stored separately. Your OpenAI key is never used for another tenant's requests. Cost is tracked per tenant so you can see exactly what you're spending.
-
----
 
 ## Caching
 
 Non-streaming responses are cached by provider + model + normalised prompt. Identical requests return in under 5ms at zero API cost. The cache uses LRU eviction with a configurable TTL (default: 5 minutes).
 
----
-
 ## Reliability and fallback
 
 Each model carries a success rate and penalty score. If a provider starts returning errors (rate limits, server errors), its effective score drops and traffic is shifted away automatically. Penalties decay every 30 seconds once the provider recovers.
-
----
 
 ## Monitoring routing in the dashboard
 
@@ -95,8 +79,6 @@ The **Router** tab shows:
 - Queue depth and queue capacity
 
 Use this weekly to verify routing is working as expected and identify any providers with elevated error rates.
-
----
 
 ## For more detail
 

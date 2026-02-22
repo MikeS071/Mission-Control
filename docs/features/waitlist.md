@@ -5,9 +5,6 @@ description: "Early-access waitlist with automatic position tracking, welcome em
 
 # Waitlist
 
-**Added:** 2026-02-20
-**Tier:** Public
-
 ## Overview
 The Waitlist feature captures early-access signups from the landing page, tracks position count, sends a welcome email, and optionally sends the latest newsletter issue automatically after signup.
 

@@ -5,7 +5,6 @@ description: "Schema, API routes, and aggregation logic for per-agent token usag
 
 # Agent Stats: Technical Reference
 
-**Added:** 2026-02-20
 **Author:** navi-ops doc-updater
 
 ## Architecture

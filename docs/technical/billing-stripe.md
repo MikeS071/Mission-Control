@@ -5,7 +5,6 @@ description: "Stripe Checkout, Customer Portal, webhook signature verification, 
 
 # Stripe Billing: Technical Reference
 
-**Added:** 2026-02-20
 **Author:** navi-ops doc-updater
 
 ## Architecture

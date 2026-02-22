@@ -7,8 +7,6 @@ description: Everything you need to start working on ArchonHQ Mission Control.
 
 This guide covers everything you need to work on ArchonHQ Mission Control. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
 
----
-
 ## 1. System Overview
 
 ArchonHQ is a SaaS dashboard built on top of OpenClaw, an agentic AI runtime. The product gives teams a browser UI to manage AI agents, sprints, billing, and deployments. The backend is Next.js with Drizzle ORM against Postgres.
@@ -42,8 +40,6 @@ ArchonHQ is a SaaS dashboard built on top of OpenClaw, an agentic AI runtime. Th
 - Dev local HTTP: `http://127.0.0.1:3003`
 - Dev local HTTPS: `https://<tailscale-host>:3004`
 - Container health: `http://127.0.0.1:3002/api/health`
-
----
 
 ## 2. Working with Navi
 
@@ -84,8 +80,6 @@ To preview what the loop would do without executing: `navi-ops run --dry-run`
 ### Getting Your Own Navi Clone
 
 See Section 10.
-
----
 
 ## 3. Sprint and Feature Request Workflow
 
@@ -135,8 +129,6 @@ Mike reviews `dev.archonhq.ai`, then says "merge to main" in Telegram. Navi runs
 Everything lives in `workflow/sprint.json`. The sprint ID is the ISO week (e.g. `2026-W08`). Epics have phases, statuses, and items. Items have types, dependencies, `autoMergeToDev` flags, `docsRequired` flags, and `docSlug` values.
 
 Mike approves three things and only three things: the Monday sprint plan, the production release (dev to main), and items that come back with CONFIDENCE_SCORE below 95.
-
----
 
 ## 4. Development Setup
 
@@ -229,8 +221,6 @@ kill $(cat /tmp/mc-dev.pid)
 ```
 
 Do not use `pkill -f next`. It will kill the exec shell. Always use the PID file.
-
----
 
 ## 5. Build, Test, and Debug
 
@@ -336,8 +326,6 @@ tail -f /home/openclaw/.openclaw/workspace/navi-ops.log
 
 **Coolify env duplicates:** Run `bash scripts/pre-release-check.sh --fix-coolify`. Duplicate env vars in Coolify cause silent config problems.
 
----
-
 ## 6. Git Workflow
 
 ### Branch Model
@@ -405,8 +393,6 @@ git push --no-verify
 ### PRs and Review
 
 Open PRs against `dev`. The `code-reviewer` agent reviews automatically as part of the sprint workflow. For security-sensitive changes (auth, tenancy, file handling, input validation), the `security-reviewer` also runs.
-
----
 
 ## 7. Deploy and Monitor
 
@@ -477,8 +463,6 @@ If you get a CRITICAL alert, check the tls-proxy and cloudflared processes first
 | tls-proxy | `/tmp/tls-proxy.log` |
 | navi-ops loop | `/home/openclaw/.openclaw/workspace/navi-ops.log` |
 | OpenClaw gateway | `openclaw gateway status` then check its log path |
-
----
 
 ## 8. DevOps Tools Reference
 
@@ -572,8 +556,6 @@ These sub-agents are dispatched by the autonomous loop or manually via `openclaw
 
 Agent role definitions live in `/home/openclaw/.openclaw/workspace/workflow/agents/*.md`.
 
----
-
 ## 9. Hard Rules
 
 These are non-negotiable. They exist because someone (or some agent) learned the hard way.
@@ -595,8 +577,6 @@ These are non-negotiable. They exist because someone (or some agent) learned the
 **One hypothesis at a time.** When debugging, change one thing, verify, then move to the next. Do not stack speculative changes.
 
 **Max 2 research note emails per day** to the work email address. Cron handles these. Do not send extras during heartbeats or ad-hoc sessions.
-
----
 
 ## 10. Getting Your Own Navi Clone
 

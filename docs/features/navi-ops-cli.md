@@ -5,9 +5,6 @@ description: "Operational CLI surface for release gating, regression checks, and
 
 # navi-ops CLI
 
-**Added:** 2026-02-20
-**Tier:** Internal operator workflow
-
 ## Overview
 In Mission Control, the operational CLI workflow is represented by the release/check scripts and Git hook safeguards used for dev→main promotion. This provides a repeatable command-line path for status checks, regression gates, and release safety checks.
 
