@@ -663,11 +663,11 @@ const [rightWidth, setRightWidth] = useState(402);
           {/* Compact filter bar */}
           <div className="flex-shrink-0 border-b border-gray-800 bg-gray-900/30 px-3 py-2">
             <div className="flex flex-wrap gap-1.5 items-center">
-              <input autoComplete="off" className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-36" placeholder="Search…" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
+              <input autoComplete="off" suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-36" placeholder="Search…" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
               <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.priority} onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}><option value="All">Priority</option>{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}</select>
               <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.goal} onChange={(e) => setFilters((prev) => ({ ...prev, goal: e.target.value }))}>{filterGoalOptions.map((g) => <option key={g} value={g}>{g === 'All' ? 'Goal' : g}</option>)}</select>
               <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.agent} onChange={(e) => setFilters((prev) => ({ ...prev, agent: e.target.value }))}>{agentOptions.map((a) => <option key={a} value={a}>{a === 'All' ? 'Agent' : a}</option>)}</select>
-              <input autoComplete="off" className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-24" placeholder="Tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
+              <input autoComplete="off" suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-24" placeholder="Tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
               {hasActiveFilters && <button type="button" onClick={() => setFilters(emptyFilters)} className="text-[10px] text-gray-500 hover:text-gray-300 px-1">✕ Clear</button>}
               {hasActiveFilters && hiddenCount > 0 && <span className="text-[10px] text-gray-600">{hiddenCount} hidden</span>}
             </div>
