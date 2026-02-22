@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
-import { provisionedInstances, tenants } from '@/db/schema';
+import { provisionedInstances, tenants, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { sendProvisioningEmail } from '@/lib/emails';
 
 const DO_API_BASE = 'https://api.digitalocean.com/v2';
 const DO_API_KEY = process.env.DIGITALOCEAN_API_KEY;
@@ -194,6 +195,37 @@ export async function pollAndUpdateInstance(instanceId: number): Promise<void> {
           .where(eq(provisionedInstances.id, instanceId));
 
         console.log(`Instance ${instanceId} is ready with IP ${vpsStatus.ip}`);
+
+        // Send onboarding email
+        try {
+          const [tenant] = await db
+            .select()
+            .from(tenants)
+            .where(eq(tenants.id, instance.tenantId))
+            .limit(1);
+
+          if (tenant?.ownerUserId) {
+            const [user] = await db
+              .select({ email: users.email })
+              .from(users)
+              .where(eq(users.id, tenant.ownerUserId))
+              .limit(1);
+
+            if (user?.email) {
+              await sendProvisioningEmail({
+                tenantEmail: user.email,
+                plan: instance.plan as 'strategos' | 'archon',
+                vpsIp: vpsStatus.ip,
+                tenantName: tenant.name,
+              });
+              console.log(`Onboarding email sent to ${user.email}`);
+            }
+          }
+        } catch (emailError) {
+          console.error(`Failed to send onboarding email for instance ${instanceId}:`, emailError);
+          // Don't fail the whole operation if email fails
+        }
+
         return;
       }
 
