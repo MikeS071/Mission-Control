@@ -1,4 +1,4 @@
-import { bigint, boolean, date, integer, jsonb, numeric, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigint, boolean, date, integer, jsonb, numeric, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -282,6 +282,21 @@ export const arenaStreakHistory = pgTable('arena_streak_history', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const arenaReactions = pgTable('arena_reactions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  fromTenantId: bigint('from_tenant_id', { mode: 'number' }).notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  toTenantId: bigint('to_tenant_id', { mode: 'number' }).notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  reactionType: text('reaction_type').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const arenaReactionCounters = pgTable('arena_reaction_counters', {
+  toTenantId: bigint('to_tenant_id', { mode: 'number' }).primaryKey().references(() => tenants.id, { onDelete: 'cascade' }),
+  tributeCount: integer('tribute_count').notNull().default(0),
+  respectCount: integer('respect_count').notNull().default(0),
+  hypeCount: integer('hype_count').notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const chatMessages = pgTable('chat_messages', {
   id: serial('id').primaryKey(),

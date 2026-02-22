@@ -163,3 +163,24 @@
     @apply bg-background text-foreground;
   }
 }
+@keyframes arena-reaction-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes arena-reaction-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-32px);
+  }
+}
