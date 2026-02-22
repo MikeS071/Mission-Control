@@ -6,7 +6,7 @@ description: "Operational CLI surface for release gating, regression checks, and
 # navi-ops CLI
 
 ## What this does
-In Mission Control, the operational CLI workflow is represented by the release/check scripts and Git hook safeguards used for dev→main promotion. This provides a repeatable command-line path for status checks, regression gates, and release safety checks.
+In ArchonHQ, the operational CLI workflow is represented by the release/check scripts and Git hook safeguards used for dev→main promotion. This provides a repeatable command-line path for status checks, regression gates, and release safety checks.
 
 In this repository, the integration is script-first (`scripts/pre-release-check.sh`, `scripts/regression-test.sh`) and hook-enforced (`.git/hooks/pre-push`) rather than a standalone binary stored in this repo.
 

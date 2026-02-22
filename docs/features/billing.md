@@ -5,7 +5,7 @@ description: "Plan overview — Initiate, Strategos, and Archon tiers with featu
 
 # Billing and Plans
 
-Mission Control offers two paid plans, both hosted on our cloud. The difference is agent capacity, infra tier, and access to AI pipeline features.
+ArchonHQ offers two paid plans, both hosted on our cloud. The difference is agent capacity, infra tier, and access to AI pipeline features.
 
 ## Plans
 
@@ -54,7 +54,7 @@ Both plans are currently offered at founding member rates, locked in for life as
 3. You'll be redirected to Stripe Checkout — enter your card details there
 4. After payment, your plan activates immediately
 
-Mission Control never stores your card details. All payment processing is handled by Stripe.
+ArchonHQ never stores your card details. All payment processing is handled by Stripe.
 
 ## Changing plans
 
@@ -70,7 +70,7 @@ Stripe sends invoices to your email address automatically after each charge. You
 
 ## LLM costs are separate
 
-The subscription fee covers Mission Control hosting and features. AI API costs (OpenAI, Anthropic, etc.) are billed directly to your provider accounts via the keys you configured in the wizard. Mission Control does not mark up or pass through API costs.
+The subscription fee covers ArchonHQ hosting and features. AI API costs (OpenAI, Anthropic, etc.) are billed directly to your provider accounts via the keys you configured in the wizard. ArchonHQ does not mark up or pass through API costs.
 
 Use the **Router** tab to monitor your AI spend.
 

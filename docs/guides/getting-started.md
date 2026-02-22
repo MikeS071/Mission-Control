@@ -1,11 +1,11 @@
 ---
 title: "Getting Started"
-description: "Get up and running with Mission Control in under 5 minutes."
+description: "Get up and running with ArchonHQ in under 5 minutes."
 ---
 
 # Getting Started
 
-Get Mission Control running in under 10 minutes.
+Get ArchonHQ running in under 10 minutes.
 
 ## 1. Create your account
 
@@ -32,7 +32,7 @@ You can skip steps and return later. The wizard saves progress as you go.
 
 ## 3. Connect the gateway
 
-The gateway is a lightweight process that runs on your machine (or server) and relays agent activity to the Mission Control dashboard.
+The gateway is a lightweight process that runs on your machine (or server) and relays agent activity to the ArchonHQ dashboard.
 
 If you're using OpenClaw, the gateway is already running. Check its status:
 
@@ -40,7 +40,7 @@ If you're using OpenClaw, the gateway is already running. Check its status:
 openclaw gateway status
 ```
 
-In Step 2 of the wizard, enter your gateway URL (typically `http://localhost:18789`). Mission Control will verify the connection before proceeding.
+In Step 2 of the wizard, enter your gateway URL (typically `http://localhost:18789`). ArchonHQ will verify the connection before proceeding.
 
 ## 4. Add at least one AI provider key
 

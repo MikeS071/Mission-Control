@@ -1,5 +1,5 @@
 {
-  "title": "Mission Control",
+  "title": "ArchonHQ",
   "root": true,
   "pages": ["guides", "features", "technical", "api-reference"]
 }

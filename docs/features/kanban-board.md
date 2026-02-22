@@ -5,7 +5,7 @@ description: "Kanban task board with drag-and-drop columns, agent triggers, and 
 
 # Kanban Board
 
-The kanban board is the core of Mission Control. It gives you and your agents a shared view of all work, what's pending, in progress, under review, and done.
+The kanban board is the core of ArchonHQ. It gives you and your agents a shared view of all work, what's pending, in progress, under review, and done.
 
 ## Columns and statuses
 

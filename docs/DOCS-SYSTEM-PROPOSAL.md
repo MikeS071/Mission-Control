@@ -2,7 +2,7 @@
 title: "Docs System Proposal"
 ---
 
-# Mission Control Docs System: Proposal
+# ArchonHQ Docs System: Proposal
 
 ## Recommendation: Mintlify (fast path) → Fumadocs (long term)
 
@@ -90,7 +90,7 @@ Nice UI but lacks MDX, has limited customisation, and the GitHub sync workflow i
 
 ```json
 {
-  "name": "Mission Control",
+  "name": "ArchonHQ",
   "logo": { "light": "/public/logo.png", "dark": "/public/logo-dark.png" },
   "favicon": "/public/favicon.ico",
   "colors": { "primary": "#6366f1", "light": "#818cf8", "dark": "#4f46e5" },

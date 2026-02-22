@@ -1,11 +1,11 @@
 ---
 title: "API Reference"
-description: "Mission Control REST API overview — authentication, base URLs, and error format."
+description: "ArchonHQ REST API overview — authentication, base URLs, and error format."
 ---
 
 # API Reference
 
-The Mission Control REST API lets agents and external tools create tasks, log events, read board state, and manage settings programmatically.
+The ArchonHQ REST API lets agents and external tools create tasks, log events, read board state, and manage settings programmatically.
 
 ## Base URL
 

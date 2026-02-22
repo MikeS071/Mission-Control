@@ -34,7 +34,7 @@ Step 4 of the connection wizard ("Enable Smart Routing") checks whether AiPipe i
 
 ## Using the proxy
 
-Your agents can route through AiPipe via the Mission Control API:
+Your agents can route through AiPipe via the ArchonHQ API:
 
 ```
 POST /api/aipipe/proxy/chat      # OpenAI-compatible
