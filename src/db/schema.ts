@@ -301,3 +301,19 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   used: boolean('used').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
+
+export const provisionedInstances = pgTable('provisioned_instances', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  dropletId: bigint('droplet_id', { mode: 'number' }),
+  dropletIp: text('droplet_ip'),
+  status: text('status').notNull().default('pending'), // pending|creating|configuring|ready|failed
+  errorMessage: text('error_message'),
+  plan: text('plan').notNull(),
+  isTrial: boolean('is_trial').default(false),
+  ttlExpiresAt: timestamp('ttl_expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
