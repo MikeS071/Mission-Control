@@ -2,11 +2,15 @@
   "title": "Technical Reference",
   "pages": [
     "aipipe-integration",
+    "ai-routing",
     "kanban-board",
     "navi-ops-cli",
+    "connection-wizard",
+    "notifications",
     "activity-feed",
     "agent-stats",
     "auth-provider",
+    "billing",
     "billing-stripe",
     "waitlist"
   ]

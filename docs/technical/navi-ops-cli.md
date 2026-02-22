@@ -1,5 +1,6 @@
 ---
 title: "navi-ops CLI: Technical Reference"
+description: "Release gate scripts, pre-push hook, regression tests, and environment validation."
 ---
 
 # navi-ops CLI: Technical Reference

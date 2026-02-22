@@ -1,5 +1,6 @@
 ---
 title: "Kanban Board: Technical Reference"
+description: "Task schema, drag-and-drop state, API routes, and agent trigger integration."
 ---
 
 # Kanban Board: Technical Reference

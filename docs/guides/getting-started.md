@@ -1,5 +1,6 @@
 ---
 title: "Getting Started"
+description: "Get up and running with Mission Control in under 5 minutes."
 ---
 
 # Getting Started

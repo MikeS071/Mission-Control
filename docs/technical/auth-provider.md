@@ -1,5 +1,6 @@
 ---
 title: "Technical: AI Provider Auth & Per-Tenant Routing"
+description: "NextAuth configuration, credentials provider, Google OAuth, and session handling."
 ---
 
 # Technical: AI Provider Auth & Per-Tenant Routing

@@ -1,5 +1,6 @@
 ---
 title: "AiPipe Integration: Technical Reference"
+description: "AiPipe HTTP client, proxy routes, per-tenant key store, and Go service configuration."
 ---
 
 # AiPipe Integration: Technical Reference

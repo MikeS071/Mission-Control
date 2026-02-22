@@ -1,5 +1,6 @@
 ---
 title: "Activity Feed"
+description: "Chronological audit log of system and task events, available as a dashboard tab and per-card history."
 ---
 
 # Activity Feed

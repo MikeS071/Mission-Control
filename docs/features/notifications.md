@@ -1,5 +1,6 @@
 ---
 title: "Notifications"
+description: "Telegram push notifications for task state changes, triggered automatically from the Kanban board."
 ---
 
 # Notifications

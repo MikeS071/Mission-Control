@@ -1,5 +1,6 @@
 ---
 title: "Agent Stats: Technical Reference"
+description: "Schema, API routes, and aggregation logic for per-agent token usage and cost tracking."
 ---
 
 # Agent Stats: Technical Reference

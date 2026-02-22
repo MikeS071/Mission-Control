@@ -1,5 +1,6 @@
 ---
 title: "Tasks API"
+description: "Tasks API reference — create, update, list, and delete task resources."
 ---
 
 # Tasks API

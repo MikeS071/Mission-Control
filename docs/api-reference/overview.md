@@ -1,5 +1,6 @@
 ---
 title: "API Reference"
+description: "Mission Control REST API overview — authentication, base URLs, and error format."
 ---
 
 # API Reference

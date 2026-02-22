@@ -1,5 +1,6 @@
 ---
 title: "AI Smart Routing"
+description: "Automatic LLM routing that selects the cheapest capable model per request using complexity scoring."
 ---
 
 # AI Smart Routing

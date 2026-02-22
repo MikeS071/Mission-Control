@@ -1,5 +1,6 @@
 ---
 title: "AiPipe Integration"
+description: "AiPipe smart router integration — multi-provider routing, caching, and TTFT-aware streaming."
 ---
 
 # AiPipe Integration

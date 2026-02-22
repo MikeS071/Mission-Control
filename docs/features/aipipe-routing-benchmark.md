@@ -1,5 +1,6 @@
 ---
 title: "AiPipe Smart Routing: Benchmark & Guide"
+description: "Live benchmark comparing AiPipe auto-routing against direct provider calls for cost and latency."
 ---
 
 # AiPipe Smart Routing: Benchmark & Guide

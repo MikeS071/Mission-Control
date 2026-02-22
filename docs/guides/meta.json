@@ -1,4 +1,11 @@
 {
   "title": "Guides",
-  "pages": ["introduction", "getting-started", "how-to-use", "self-hosting", "developer-onboarding"]
+  "pages": [
+    "introduction",
+    "getting-started",
+    "how-to-use",
+    "self-hosting",
+    "developer-onboarding",
+    "dashboard-guide"
+  ]
 }

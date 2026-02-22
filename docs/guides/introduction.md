@@ -1,5 +1,6 @@
 ---
 title: "Introduction to Mission Control"
+description: "What Mission Control is, who it's for, and how it fits into an agentic AI workflow."
 ---
 
 # Introduction to Mission Control

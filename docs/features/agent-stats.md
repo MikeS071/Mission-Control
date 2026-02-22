@@ -1,5 +1,6 @@
 ---
 title: "Agent Stats"
+description: "Per-agent token usage and cost tracking with dashboard visualisation and Kanban summary tiles."
 ---
 
 # Agent Stats
