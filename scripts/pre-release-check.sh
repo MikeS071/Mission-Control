@@ -233,12 +233,8 @@ else
   red "https://archonhq.ai → $PROD_CODE"
 fi
 
-DEV_CODE=$(curl -sk -o /dev/null -w "%{http_code}" https://dev.archonhq.ai 2>/dev/null || echo "000")
-if [[ "$DEV_CODE" == "200" ]]; then
-  green "https://dev.archonhq.ai → $DEV_CODE"
-else
-  red "https://dev.archonhq.ai → $DEV_CODE"
-fi
+# dev.archonhq.ai removed — Coolify decommissioned 2026-02-22; single prod environment via Docker + Traefik
+yellow "https://dev.archonhq.ai — skipped (Coolify decommissioned; no separate dev URL)"
 
 echo ""
 
