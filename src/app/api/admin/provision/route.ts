@@ -19,15 +19,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Admin check: tenant ID must be 1 (for now)
-    // TODO: Add proper is_admin field check
-    const [userTenant] = await db
-      .select()
-      .from(tenants)
-      .where(eq(tenants.ownerUserId, session.user.id as any))
-      .limit(1);
-
-    if (!userTenant || userTenant.id !== 1) {
+    // Admin check: tenant ID must be 1
+    if ((session as any).tenantId !== 1) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

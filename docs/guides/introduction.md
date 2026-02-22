@@ -1,11 +1,11 @@
 ---
-title: "Introduction to Mission Control"
-description: "What Mission Control is, who it's for, and how it fits into an agentic AI workflow."
+title: "Introduction to ArchonHQ"
+description: "What ArchonHQ is, who it's for, and how it fits into an agentic AI workflow."
 ---
 
-# Introduction to Mission Control
+# Introduction to ArchonHQ
 
-Mission Control is an AI agent coordination dashboard. One place to manage tasks, track what your agents are doing, monitor costs, and keep work moving without constant manual intervention.
+ArchonHQ is an AI agent coordination dashboard. One place to manage tasks, track what your agents are doing, monitor costs, and keep work moving without constant manual intervention.
 
 It was built for engineering teams and solo founders who run AI agents as part of their workflow and need more than a chat window to stay on top of it.
 
@@ -15,13 +15,13 @@ It was built for engineering teams and solo founders who run AI agents as part o
 A full kanban board with drag-and-drop, priority levels, WIP limits, custom labels, and per-card activity timelines. Every status change, comment, and transition is logged automatically so you always have a complete audit trail.
 
 ### AI agent coordination
-Agents connect to Mission Control via the gateway. You can see which agents are active, what they're working on, and their cost and token usage in real time. Agents can create and update tasks directly via the API, keeping the board in sync with actual work.
+Agents connect to ArchonHQ via the gateway. You can see which agents are active, what they're working on, and their cost and token usage in real time. Agents can create and update tasks directly via the API, keeping the board in sync with actual work.
 
 ### Smart LLM routing (AiPipe)
-Every AI call made through Mission Control goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower cost. No per-request configuration needed. [Read the full benchmark →](/docs/features/aipipe-routing-benchmark)
+Every AI call made through ArchonHQ goes through AiPipe, a smart routing layer that selects the right model for each request. Simple queries go to cheap fast models. Complex reasoning goes to frontier models. You get better outcomes at lower cost. No per-request configuration needed. [Read the full benchmark →](/docs/features/aipipe-routing-benchmark)
 
 ### Notifications
-Mission Control sends Telegram notifications when tasks are created, updated, or reach a critical state. You stay informed without watching a dashboard.
+ArchonHQ sends Telegram notifications when tasks are created, updated, or reach a critical state. You stay informed without watching a dashboard.
 
 ### Billing and plans
 Two tiers: Strategos ($39/mo) for individuals and small teams, Archon ($99/mo) for larger teams. Stripe-powered, cancel any time.
@@ -36,7 +36,7 @@ Two tiers: Strategos ($39/mo) for individuals and small teams, Archon ($99/mo) f
 
 ## How it's built
 
-Mission Control is a Next.js 16 application backed by PostgreSQL. The AI routing proxy (AiPipe) is a Go binary that runs alongside the dashboard. The gateway connects your local AI agents to the cloud dashboard over a secure tunnel.
+ArchonHQ is a Next.js 16 application backed by PostgreSQL. The AI routing proxy (AiPipe) is a Go binary that runs alongside the dashboard. The gateway connects your local AI agents to the cloud dashboard over a secure tunnel.
 
 Everything is open source: [github.com/MikeS071/Mission-Control](https://github.com/MikeS071/Mission-Control)
 

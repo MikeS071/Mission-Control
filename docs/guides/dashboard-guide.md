@@ -1,9 +1,9 @@
 ---
-title: "Mission Control: Dashboard Guide"
-description: "Tour of the Mission Control dashboard — all tabs, panels, and features explained."
+title: "ArchonHQ: Dashboard Guide"
+description: "Tour of the ArchonHQ dashboard — all tabs, panels, and features explained."
 ---
 
-# Mission Control: Dashboard Guide
+# ArchonHQ: Dashboard Guide
 
 _Last updated: 2026-02-19_
 

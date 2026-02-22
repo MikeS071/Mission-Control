@@ -1,8 +1,8 @@
 ---
-title: "Mission Control: Dashboard Guide"
+title: "ArchonHQ: Dashboard Guide"
 ---
 
-# Mission Control: Dashboard Guide
+# ArchonHQ: Dashboard Guide
 
 _Last updated: 2026-02-19_
 

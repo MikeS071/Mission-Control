@@ -4,7 +4,7 @@ title: "Setup Guide"
 
 # Setup Guide
 
-This guide gets OpenClaw Mission Control running locally in a reproducible way for multi-agent workloads.
+This guide gets ArchonHQ running locally in a reproducible way for multi-agent workloads.
 
 ## Prerequisites
 

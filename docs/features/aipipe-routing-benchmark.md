@@ -7,7 +7,7 @@ description: "Live benchmark comparing AiPipe auto-routing against direct provid
 
 **Stop paying for a Ferrari when you need a bicycle.** Most applications send every LLM request to the same model regardless of complexity. A greeting gets the same treatment as a mathematical proof. AiPipe fixes that by routing each request to the right model automatically — cheapest for simple tasks, highest quality for complex ones.
 
-Here is how AiPipe routing works, what the latest benchmark shows, and what you get when you connect it to Mission Control.
+Here is how AiPipe routing works, what the latest benchmark shows, and what you get when you connect it to ArchonHQ.
 
 > **Benchmark date:** February 2026 (re-run 22 Feb 2026). Baseline: `claude-sonnet-4-6` (Anthropic direct). AiPipe auto-routes across all configured providers. Four iterations, 12 requests per path, run live against production APIs.
 
@@ -185,7 +185,7 @@ In production, simple requests dominate. A typical AI SaaS workload mixes status
 
 AiPipe costs ~72% less than always-Sonnet in a realistic mixed workload. Add caching and the savings compound: any repeated request (heartbeats, status checks, templated queries) costs $0 after the first run.
 
-### Typical Mission Control user
+### Typical ArchonHQ user
 
 | Workload split | Saving vs always-Sonnet |
 |---|---|
@@ -240,7 +240,7 @@ Providers without a configured key are automatically excluded from routing. AiPi
 
 ## Getting Started
 
-### 1. Connect AiPipe in Mission Control
+### 1. Connect AiPipe in ArchonHQ
 
 Open the Connection Wizard (Settings → Connect → AI Routing) and complete step 3 (AI Provider Keys) and step 4 (Enable Smart Routing). AiPipe starts routing immediately once a key is saved.
 
@@ -298,4 +298,4 @@ Routing to cheap models for everything is not neutral — it produces subtly wro
 
 AiPipe is not an abstraction layer that trades control for convenience. It is a routing layer that gives you better outcomes: lower cost on simple tasks, higher quality on complex ones, near-zero cost on repeated queries. No changes to your application code required.
 
-*AiPipe is built into Mission Control and available as a standalone Go binary. Source: [github.com/MikeS071/AiPipe](https://github.com/MikeS071/AiPipe)*
+*AiPipe is built into ArchonHQ and available as a standalone Go binary. Source: [github.com/MikeS071/AiPipe](https://github.com/MikeS071/AiPipe)*

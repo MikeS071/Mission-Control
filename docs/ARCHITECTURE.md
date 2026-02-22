@@ -6,7 +6,7 @@ title: "Architecture"
 
 ## Overview
 
-OpenClaw Mission Control is a Next.js app with server-side API routes and a Postgres-backed task model, built for multi-agent workloads.
+ArchonHQ is a Next.js app with server-side API routes and a Postgres-backed task model, built for multi-agent workloads.
 
 Major runtime pieces:
 

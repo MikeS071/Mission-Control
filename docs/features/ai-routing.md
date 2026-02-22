@@ -5,7 +5,7 @@ description: "Automatic LLM routing that selects the cheapest capable model per 
 
 # AI Smart Routing
 
-Mission Control routes every AI request to the right model automatically. You don't pick a model per call. AiPipe scores each request on complexity and picks the cheapest model that can handle it well.
+ArchonHQ routes every AI request to the right model automatically. You don't pick a model per call. AiPipe scores each request on complexity and picks the cheapest model that can handle it well.
 
 ## Why routing matters
 

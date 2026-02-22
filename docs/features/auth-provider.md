@@ -1,6 +1,6 @@
 ---
 title: "AI Provider Management"
-description: "Authentication providers — Google OAuth and credentials-based sign-in for Mission Control."
+description: "Authentication providers — Google OAuth and credentials-based sign-in for ArchonHQ."
 ---
 
 # AI Provider Management

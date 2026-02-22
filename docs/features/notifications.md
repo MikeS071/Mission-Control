@@ -5,7 +5,7 @@ description: "Telegram push notifications for task state changes, triggered auto
 
 # Notifications
 
-Mission Control sends push notifications to Telegram when tasks change state. You stay informed without watching the dashboard.
+ArchonHQ sends push notifications to Telegram when tasks change state. You stay informed without watching the dashboard.
 
 ## Setup
 
