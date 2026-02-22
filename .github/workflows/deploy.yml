@@ -63,11 +63,9 @@ jobs:
             fi
 
             echo "==> Swapping containers (brief gap ~2s on CF path)"
-            docker stop archonhq-staging
-            docker rm archonhq-staging
-            # Stop current container (Coolify name on first deploy, then "archonhq" thereafter)
-            docker stop archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
-            docker rm archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
+            docker rm -f archonhq-staging 2>/dev/null || true
+            # Force-remove current container (handles --restart unless-stopped race)
+            docker rm -f archonhq w884wcw8g8co44k4cgssc8cw-003615745043 2>/dev/null || true
 
             docker run -d --name archonhq \
               --network coolify \
