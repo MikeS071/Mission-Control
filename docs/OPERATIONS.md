@@ -4,7 +4,7 @@ title: "Operations Runbook"
 
 # Operations Runbook
 
-This runbook applies to OpenClaw Mission Control for multi-agent workloads.
+This runbook applies to ArchonHQ for multi-agent workloads.
 
 ## Day-to-Day Commands
 

@@ -1,11 +1,11 @@
 ---
 title: Developer Onboarding Guide
-description: Everything you need to start working on ArchonHQ Mission Control.
+description: Everything you need to start working on ArchonHQ.
 ---
 
 # Developer Onboarding Guide
 
-You can use this guide to start working on ArchonHQ Mission Control quickly. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
+You can use this guide to start working on ArchonHQ quickly. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
 
 ## 1. System Overview
 
@@ -13,7 +13,7 @@ ArchonHQ is a SaaS dashboard built on top of OpenClaw, an agentic AI runtime. Th
 
 ### Component Map
 
-**Mission Control (this repo)** is the web application. It runs as a Docker container on the production server, exposed via Traefik reverse proxy. The dev instance runs as a raw Node process on separate ports.
+**ArchonHQ (this repo)** is the web application. It runs as a Docker container on the production server, exposed via Traefik reverse proxy. The dev instance runs as a raw Node process on separate ports.
 
 **OpenClaw** is the AI gateway. It handles agent orchestration, cron scheduling, message routing, and the Telegram bot. Navi (described below) runs inside OpenClaw.
 
@@ -639,7 +639,7 @@ Test it:
 openclaw agent --agent main -m "Say hello"
 ```
 
-### Connect to Mission Control Dashboard
+### Connect to ArchonHQ Dashboard
 
 Once your OpenClaw gateway is running, you can connect it to an ArchonHQ dashboard in BYO (Bring Your Own) mode. In the dashboard, go to Settings and select "Connect your own OpenClaw instance". You will need your gateway URL and API secret.
 

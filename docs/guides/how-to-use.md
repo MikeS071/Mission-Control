@@ -1,9 +1,9 @@
 ---
-title: "How to Use Mission Control"
-description: "Day-to-day usage guide for managing agents, tasks, and AI routing in Mission Control."
+title: "How to Use ArchonHQ"
+description: "Day-to-day usage guide for managing agents, tasks, and AI routing in ArchonHQ."
 ---
 
-# How to Use Mission Control
+# How to Use ArchonHQ
 
 A practical guide to the daily workflow, managing tasks, working with agents, monitoring costs, and keeping work moving.
 

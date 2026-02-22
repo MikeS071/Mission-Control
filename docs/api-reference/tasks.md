@@ -5,7 +5,7 @@ description: "Tasks API reference — create, update, list, and delete task reso
 
 # Tasks API
 
-Create, read, update, and delete tasks on the Mission Control board.
+Create, read, update, and delete tasks on the ArchonHQ board.
 
 ## Task object
 

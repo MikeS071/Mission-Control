@@ -1,11 +1,11 @@
 ---
-title: "Self-Hosting Mission Control"
-description: "Deploy Mission Control on your own server with Docker, Coolify, and a Cloudflare tunnel."
+title: "Self-Hosting ArchonHQ"
+description: "Deploy ArchonHQ on your own server with Docker, Coolify, and a Cloudflare tunnel."
 ---
 
-# Self-Hosting Mission Control
+# Self-Hosting ArchonHQ
 
-Run Mission Control on your own infrastructure. Requires Docker, PostgreSQL, and a Node.js environment.
+Run ArchonHQ on your own infrastructure. Requires Docker, PostgreSQL, and a Node.js environment.
 
 ## Requirements
 
@@ -47,7 +47,7 @@ GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
 # Database
 DATABASE_URL=postgresql://user:password@host:5432/mission_control
 
-# Mission Control API secret (used by agents)
+# ArchonHQ API secret (used by agents)
 API_SECRET=<32+ char random string>
 ```
 
@@ -72,7 +72,7 @@ docker compose run --rm app npm run db:migrate
 
 ## Running behind a reverse proxy
 
-Mission Control works behind nginx, Caddy, or Cloudflare Tunnel. The app must see HTTPS at the `NEXTAUTH_URL` level.
+ArchonHQ works behind nginx, Caddy, or Cloudflare Tunnel. The app must see HTTPS at the `NEXTAUTH_URL` level.
 
 **Recommended:** Cloudflare Tunnel, zero-config TLS, no open inbound ports:
 

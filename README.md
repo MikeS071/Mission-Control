@@ -1,4 +1,4 @@
-# Mission Control
+# ArchonHQ
 
 **AI agent coordination dashboard with smart LLM routing.**
 
@@ -10,7 +10,7 @@ Built on [OpenClaw](https://openclaw.ai) — the AI agent operating system.
 
 ## What it does
 
-Mission Control is the command layer for teams running AI agents. It connects to your local [OpenClaw](https://openclaw.ai) gateway and gives you:
+ArchonHQ is the command layer for teams running AI agents. It connects to your local [OpenClaw](https://openclaw.ai) gateway and gives you:
 
 - **Kanban board** with drag-and-drop, WIP limits, per-card activity timelines, and full API access
 - **Smart LLM routing** via AiPipe — scores each request on complexity and routes to the cheapest model that can handle it. Simple tasks go to `gpt-4o-mini`, complex reasoning to Claude Sonnet. Typical saving: ~50% vs using a single frontier model
@@ -74,7 +74,7 @@ scripts/              Regression tests, pre-release checks
 
 ## OpenClaw ecosystem
 
-Mission Control is part of the [OpenClaw](https://openclaw.ai) ecosystem. OpenClaw is the agent operating system that Mission Control connects to via the gateway. If you're running OpenClaw locally, the gateway is already running at `http://localhost:18789` and Mission Control will discover it automatically.
+ArchonHQ is part of the [OpenClaw](https://openclaw.ai) ecosystem. OpenClaw is the agent operating system that ArchonHQ connects to via the gateway. If you're running OpenClaw locally, the gateway is already running at `http://localhost:18789` and ArchonHQ will discover it automatically.
 
 ## License
 

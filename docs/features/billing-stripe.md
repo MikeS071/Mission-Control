@@ -8,7 +8,7 @@ description: "Stripe Checkout and Customer Portal integration for Strategos and 
 ## What this does
 Stripe Billing handles paid plan upgrades from the free Initiate tier to Strategos or Archon. Users can launch checkout from the billing page, complete a Stripe subscription, and later open the Stripe customer portal to manage billing.
 
-Mission Control also tracks subscription status per tenant (plan, seats, status, period end) and syncs updates through the Stripe webhook endpoint.
+ArchonHQ also tracks subscription status per tenant (plan, seats, status, period end) and syncs updates through the Stripe webhook endpoint.
 
 ## How to use
 

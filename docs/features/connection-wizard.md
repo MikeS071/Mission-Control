@@ -5,7 +5,7 @@ description: "8-step guided wizard to connect your OpenClaw gateway, AI provider
 
 # Connection Wizard
 
-The Connection Wizard configures your Mission Control workspace in 8 guided steps. It handles everything from gateway connection to AI provider keys to agent role assignment.
+The Connection Wizard configures your ArchonHQ workspace in 8 guided steps. It handles everything from gateway connection to AI provider keys to agent role assignment.
 
 Access it at **Settings → Connect** or navigate to `/dashboard/connect`.
 
@@ -15,11 +15,11 @@ An overview of what you're about to configure. No input required.
 
 ## Step 2: Gateway
 
-Connects Mission Control to your local OpenClaw gateway, the bridge between your agents and the cloud dashboard.
+Connects ArchonHQ to your local OpenClaw gateway, the bridge between your agents and the cloud dashboard.
 
 **Gateway URL**: typically `http://localhost:18789` if running locally. Enter the full URL including port.
 
-Mission Control sends a ping to verify the connection before you can proceed. If the ping fails:
+ArchonHQ sends a ping to verify the connection before you can proceed. If the ping fails:
 - Check that the gateway is running: `openclaw gateway status`
 - Ensure the URL is reachable from the browser (same machine or network)
 - Check firewall rules if running on a remote server
@@ -47,11 +47,11 @@ Keys are stored in AiPipe's isolated per-tenant store and never logged or expose
 Enables AiPipe, the routing layer that automatically selects the best model per request.
 
 Toggle **Enable Smart Routing** to on. This:
-- Activates the AiPipe proxy for all AI calls through Mission Control
+- Activates the AiPipe proxy for all AI calls through ArchonHQ
 - Syncs your provider keys from Step 3 to AiPipe's routing store
 - Enables per-tenant cost tracking
 
-When smart routing is off, Mission Control uses a single configured model for all requests. When on, routing is automatic and adaptive.
+When smart routing is off, ArchonHQ uses a single configured model for all requests. When on, routing is automatic and adaptive.
 
 [Learn how routing works →](/docs/features/ai-routing)
 
@@ -93,7 +93,7 @@ Connects Telegram for push notifications when tasks change state.
 
 **Chat ID**: your Telegram user ID or group chat ID. Send `/start` to [@userinfobot](https://t.me/userinfobot) to find your user ID.
 
-Once configured, Mission Control sends a message to your chat when:
+Once configured, ArchonHQ sends a message to your chat when:
 - A task is created
 - A task moves to Review or Done
 - A task is deleted
