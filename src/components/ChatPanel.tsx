@@ -93,9 +93,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         }
       };
 
-      eventSource.onerror = (err) => {
-        console.error('[ChatPanel] SSE error:', err);
-        eventSource?.close();
+      eventSource.onerror = () => {
+        // Stream closed or timed out — EventSource will auto-reconnect
       };
     } catch (err) {
       console.error('[ChatPanel] Failed to connect to SSE stream:', err);
