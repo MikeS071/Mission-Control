@@ -115,11 +115,13 @@ export default async function DashboardPage() {
 
       {/* ── Tab content ── */}
       <div className="flex-1 px-4 pt-4 pb-4 min-h-0">
-        <TabsContent value="kanban"   className="mt-0"><KanbanBoard /></TabsContent>
+        <TabsContent value="kanban" className="mt-0 flex h-full">
+          <div className="flex-1 min-w-0"><KanbanBoard /></div>
+          <div className="w-[320px] flex-shrink-0 border-l border-gray-800 flex flex-col"><ChatPanel /></div>
+        </TabsContent>
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
         <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
-        <TabsContent value="chat"     className="mt-0 h-[calc(100vh-120px)]"><ChatPanel /></TabsContent>
         {isAdmin && (
           <TabsContent value="admin-provision" className="mt-0"><ProvisioningPanel /></TabsContent>
         )}
