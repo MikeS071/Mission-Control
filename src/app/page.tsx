@@ -84,7 +84,9 @@ const features = [
 const pricing = [
   {
     name: 'Initiate',
-    label: 'Self-hosted · Run on your own machine',
+    label: 'Free forever — BYO OpenClaw gateway',
+    tagline: 'Free forever — BYO OpenClaw gateway',
+    description: 'Connect your own OpenClaw, get Mission Control cloud, 1 user, 1 agent.',
     price: '$0',
     period: '/mo',
     items: ['1 user', '1 agent', 'Gamification + XP', 'Leaderboard', '7-day logs', 'Community support'],
@@ -95,7 +97,9 @@ const pricing = [
   },
   {
     name: 'Strategos',
-    label: '☁️ Our Cloud · Fully managed · 3 agents',
+    label: 'Hosted OpenClaw included',
+    tagline: 'Hosted OpenClaw included',
+    description: 'We provision and manage your OpenClaw gateway. 3 agents, AiPipe router, priority support.',
     price: '$39',
     regularPrice: '$59',
     period: '/mo',
@@ -108,7 +112,9 @@ const pricing = [
   },
   {
     name: 'Archon',
-    label: '☁️ Our Cloud · Dedicated infra · 8 agents',
+    label: 'Dedicated + everything included',
+    tagline: 'Dedicated + everything included',
+    description: 'Dedicated provisioned OpenClaw, 8 agents, ContentAI, CoderAI, white-glove support.',
     price: '$99',
     regularPrice: '$149',
     period: '/mo',
@@ -484,7 +490,12 @@ export default function LandingPage() {
                   <span className="absolute right-5 top-5 rounded-full px-2.5 py-1 text-[10px] font-bold font-mono tracking-wider" style={{ border: '1px solid rgba(255,59,111,0.4)', background: 'rgba(255,59,111,0.1)', color: '#ff3b6f' }}>FOUNDING</span>
                 )}
                 <h3 className="text-xl font-bold text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.name}</h3>
-                <p className="mt-0.5 text-[11px]" style={{ color: '#6a7f6f', fontFamily: 'var(--font-jetbrains, monospace)' }}>{tier.label}</p>
+                {'tagline' in tier && tier.tagline && (
+                  <p className="mt-1 text-[11px]" style={{ color: '#ff6b8a', fontFamily: 'var(--font-jetbrains, monospace)' }}>{tier.tagline}</p>
+                )}
+                {'description' in tier && tier.description && (
+                  <p className="mt-2 text-xs" style={{ color: '#a3b8a8' }}>{tier.description}</p>
+                )}
                 <div className="mt-4 flex items-end gap-1">
                   <span className="text-4xl font-extrabold tracking-tight text-[#f1f5f0]" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>{tier.price}</span>
                   <span className="mb-1 text-sm" style={{ color: '#6a7f6f' }}>{tier.period}</span>
