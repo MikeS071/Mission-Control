@@ -3,12 +3,16 @@
   "pages": [
     "kanban-board",
     "ai-routing",
+    "aipipe-integration",
     "aipipe-routing-benchmark",
     "connection-wizard",
+    "navi-ops-cli",
     "notifications",
     "billing",
+    "billing-stripe",
     "activity-feed",
     "agent-stats",
-    "auth-provider"
+    "auth-provider",
+    "waitlist"
   ]
 }
