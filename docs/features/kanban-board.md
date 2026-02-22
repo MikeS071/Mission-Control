@@ -1,5 +1,6 @@
 ---
 title: "Kanban Board"
+description: "Kanban task board with drag-and-drop columns, agent triggers, and real-time status updates."
 ---
 
 # Kanban Board

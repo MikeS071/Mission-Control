@@ -1,5 +1,6 @@
 ---
 title: "Stripe Billing: Technical Reference"
+description: "Stripe Checkout, Customer Portal, webhook signature verification, and subscription state."
 ---
 
 # Stripe Billing: Technical Reference

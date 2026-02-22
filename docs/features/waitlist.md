@@ -1,5 +1,6 @@
 ---
 title: "Waitlist"
+description: "Early-access waitlist with automatic position tracking, welcome emails, and admin export."
 ---
 
 # Waitlist

@@ -1,5 +1,6 @@
 ---
 title: "Connection Wizard"
+description: "8-step guided wizard to connect your OpenClaw gateway, AI providers, and configure agents."
 ---
 
 # Connection Wizard

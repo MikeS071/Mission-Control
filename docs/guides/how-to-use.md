@@ -1,5 +1,6 @@
 ---
 title: "How to Use Mission Control"
+description: "Day-to-day usage guide for managing agents, tasks, and AI routing in Mission Control."
 ---
 
 # How to Use Mission Control

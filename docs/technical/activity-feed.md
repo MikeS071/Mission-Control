@@ -1,5 +1,6 @@
 ---
 title: "Activity Feed: Technical Reference"
+description: "Database schema, API routes, and event type reference for the Activity Feed."
 ---
 
 # Activity Feed: Technical Reference

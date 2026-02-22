@@ -1,5 +1,6 @@
 ---
 title: "Mission Control: Dashboard Guide"
+description: "Tour of the Mission Control dashboard — all tabs, panels, and features explained."
 ---
 
 # Mission Control: Dashboard Guide

@@ -1,5 +1,6 @@
 ---
 title: "Stripe Billing"
+description: "Stripe Checkout and Customer Portal integration for Strategos and Archon plan upgrades."
 ---
 
 # Stripe Billing

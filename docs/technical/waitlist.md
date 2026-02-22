@@ -1,5 +1,6 @@
 ---
 title: "Waitlist: Technical Reference"
+description: "Waitlist schema, email delivery, unsubscribe tokens, and admin export endpoint."
 ---
 
 # Waitlist: Technical Reference

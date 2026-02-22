@@ -49,11 +49,11 @@ ArchonHQ is a SaaS dashboard built on top of OpenClaw, an agentic AI runtime. Th
 
 Navi is the DevOps brain of this project. It is not a chatbot you prompt occasionally. It is an autonomous agent that reads `sprint.json` every 30 minutes, classifies work items, dispatches sub-agents for safe work, and pings Telegram when it needs a decision.
 
-The primary interface is Telegram (chat ID `1556514337`). Most operational communication happens there, not in Slack or email.
+The primary interface is Telegram (chat ID configured in your OpenClaw workspace). Most operational communication happens there, not in Slack or email.
 
 ### What Navi Actually Does
 
-Every 30 minutes, `navi-ops run` fires via OpenClaw cron (ID `276cc314`). The loop is:
+Every 30 minutes, `navi-ops run` fires via OpenClaw cron. The loop is:
 
 1. Load `workflow/sprint.json`
 2. Classify every item as AUTO, NEEDS_USER, or BLOCKED

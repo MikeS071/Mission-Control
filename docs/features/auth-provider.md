@@ -1,5 +1,6 @@
 ---
 title: "AI Provider Management"
+description: "Authentication providers — Google OAuth and credentials-based sign-in for Mission Control."
 ---
 
 # AI Provider Management

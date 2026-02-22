@@ -1,5 +1,6 @@
 ---
 title: "Billing and Plans"
+description: "Plan overview — Initiate, Strategos, and Archon tiers with feature breakdown and billing details."
 ---
 
 # Billing and Plans

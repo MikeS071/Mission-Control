@@ -1,5 +1,6 @@
 ---
 title: "navi-ops CLI"
+description: "Operational CLI surface for release gating, regression checks, and dev→main promotion."
 ---
 
 # navi-ops CLI

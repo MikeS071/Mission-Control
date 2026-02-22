@@ -1,5 +1,6 @@
 ---
 title: "Self-Hosting Mission Control"
+description: "Deploy Mission Control on your own server with Docker, Coolify, and a Cloudflare tunnel."
 ---
 
 # Self-Hosting Mission Control
