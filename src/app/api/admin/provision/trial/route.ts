@@ -21,13 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Admin check: tenant ID must be 1
-    const [userTenant] = await db
-      .select()
-      .from(tenants)
-      .where(eq(tenants.ownerUserId, session.user.id as any))
-      .limit(1);
-
-    if (!userTenant || userTenant.id !== 1) {
+    if ((session as any).tenantId !== 1) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
