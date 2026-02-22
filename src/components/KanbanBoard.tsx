@@ -630,9 +630,9 @@ const [rightWidth, setRightWidth] = useState(402);
   const saveWipLimit = (column: string) => { const parsed = Number(editingWipValue); setWipLimits((prev) => ({ ...prev, [column]: Number.isFinite(parsed) && parsed > 0 ? parsed : null })); setEditingWipColumn(null); };
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col h-full gap-2">
       {/* Stats tiles */}
-      <div className="flex gap-3 overflow-x-auto pb-0.5">
+      <div className="flex-shrink-0 flex gap-3 overflow-x-auto pb-0.5">
         <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
         <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
         <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
@@ -641,7 +641,7 @@ const [rightWidth, setRightWidth] = useState(402);
       </div>
 
       {/* 3-pane resizable layout */}
-<div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
+<div className="flex flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-800">
 
         {/* ── Left pane: Agent Team ── */}
         <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
