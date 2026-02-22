@@ -32,7 +32,7 @@ function nextLocalId(): number {
   return localIdCounter--;
 }
 
-export function ChatPanel() {
+export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -180,8 +180,7 @@ export function ChatPanel() {
     >
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-gray-800 flex items-center gap-2">
-        <span className="text-sm font-semibold text-white">AI Assistant</span>
-        <span className="ml-auto text-xs text-gray-500">gpt-4o-mini · AiPipe</span>
+        <span className="text-sm font-semibold text-white">{agentName ?? 'AI Assistant'}</span>
       </div>
 
       {/* Message list */}
