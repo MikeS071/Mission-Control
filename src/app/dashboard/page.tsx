@@ -8,6 +8,7 @@ import { ActivityTab } from '@/components/ActivityTab';
 import { ArenaPanel } from '@/components/ArenaPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { ChatPanel } from '@/components/ChatPanel';
+import { ProvisioningPanel } from '@/components/ProvisioningPanel';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { NavbarArenaProgress } from '@/components/NavbarArenaProgress';
@@ -47,6 +48,7 @@ export default async function DashboardPage() {
 
   const plan = tenantId ? await getTenantPlan(tenantId) : 'free';
   const planLabel = getTenantPlanLabel(plan);
+  const isAdmin = tenantId === 1; // Admin tenant check
 
   return (
     <Tabs defaultValue="kanban" className="flex min-h-screen flex-col bg-gray-950 text-white">
@@ -70,6 +72,9 @@ export default async function DashboardPage() {
           <TabsTrigger value="progress"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Arena</TabsTrigger>
           <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
           <TabsTrigger value="chat"      className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">💬 Chat</TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="admin-provision" className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">🔧 Admin</TabsTrigger>
+          )}
         </TabsList>
 
         <div className="ml-auto px-3">
@@ -119,6 +124,9 @@ export default async function DashboardPage() {
         <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
         <TabsContent value="chat"     className="mt-0 h-[calc(100vh-120px)]"><ChatPanel /></TabsContent>
+        {isAdmin && (
+          <TabsContent value="admin-provision" className="mt-0"><ProvisioningPanel /></TabsContent>
+        )}
       </div>
 
     </Tabs>

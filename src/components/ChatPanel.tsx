@@ -73,6 +73,39 @@ export function ChatPanel() {
     return () => { cancelled = true; };
   }, []);
 
+  // ── Connect to SSE stream for real-time updates ────────────────────────────
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+
+    try {
+      eventSource = new EventSource('/api/chat/stream');
+
+      eventSource.onmessage = (event) => {
+        try {
+          const msg: ChatMessage = JSON.parse(event.data);
+          setMessages((prev) => {
+            // Avoid duplicates
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        } catch (err) {
+          console.error('[ChatPanel] Failed to parse SSE message:', err);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error('[ChatPanel] SSE error:', err);
+        eventSource?.close();
+      };
+    } catch (err) {
+      console.error('[ChatPanel] Failed to connect to SSE stream:', err);
+    }
+
+    return () => {
+      eventSource?.close();
+    };
+  }, []);
+
   // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

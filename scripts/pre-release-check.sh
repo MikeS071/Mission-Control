@@ -35,7 +35,7 @@ echo ""
 
 # ── 0. Regression test suite (mandatory first gate) ──────────────────────────
 echo "── 0. Regression Suite"
-REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" 2>&1)
+REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" --base http://localhost:3002 2>&1)
 REGR_EXIT=$?
 REGR_SUMMARY=$(echo "$REGR_OUT" | grep "Results:")
 if [[ "$REGR_EXIT" -eq 0 ]]; then
@@ -233,12 +233,8 @@ else
   red "https://archonhq.ai → $PROD_CODE"
 fi
 
-DEV_CODE=$(curl -sk -o /dev/null -w "%{http_code}" https://dev.archonhq.ai 2>/dev/null || echo "000")
-if [[ "$DEV_CODE" == "200" ]]; then
-  green "https://dev.archonhq.ai → $DEV_CODE"
-else
-  red "https://dev.archonhq.ai → $DEV_CODE"
-fi
+# dev.archonhq.ai removed — Coolify decommissioned 2026-02-22; single prod environment via Docker + Traefik
+yellow "https://dev.archonhq.ai — skipped (Coolify decommissioned; no separate dev URL)"
 
 echo ""
 

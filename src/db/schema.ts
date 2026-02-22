@@ -290,3 +290,42 @@ export const chatMessages = pgTable('chat_messages', {
   content: text('content').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const provisionedInstances = pgTable('provisioned_instances', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  dropletId: bigint('droplet_id', { mode: 'number' }),
+  dropletIp: text('droplet_ip'),
+  status: text('status').notNull().default('pending'), // pending|creating|configuring|ready|failed
+  errorMessage: text('error_message'),
+  plan: text('plan').notNull(),
+  isTrial: boolean('is_trial').default(false),
+  ttlExpiresAt: timestamp('ttl_expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const kanbanTriggers = pgTable('kanban_triggers', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  taskId: integer('task_id').notNull(),
+  taskTitle: text('task_title').notNull(),
+  taskDescription: text('task_description'),
+  action: text('action').notNull(),
+  triggeredAt: timestamp('triggered_at').notNull().defaultNow(),
+});
