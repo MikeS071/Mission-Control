@@ -7,6 +7,7 @@ import { getTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 import { parseBody, TaskPatchSchema } from '@/lib/validate';
+import { fireKanbanTrigger } from '@/lib/kanbanTrigger';
 
 const TASK_NOTIFICATIONS_CHAT_ID = '1556514337';
 
@@ -110,6 +111,11 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
     if (task.status === 'done') void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
     void sendTelegramMessage(`🔄 ${task.title}: ${before.status} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
+
+    // Fire kanban trigger if moved to in_progress from another status
+    if (task.status === 'in_progress' && before.status !== 'in_progress') {
+      void fireKanbanTrigger(tenantId, task.id, task.title, task.description ?? null, 'moved_to_in_progress');
+    }
   }
 
   return NextResponse.json(mapTaskOutput(task));

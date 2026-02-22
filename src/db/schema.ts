@@ -290,3 +290,15 @@ export const chatMessages = pgTable('chat_messages', {
   content: text('content').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const kanbanTriggers = pgTable('kanban_triggers', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  taskId: integer('task_id').notNull(),
+  taskTitle: text('task_title').notNull(),
+  taskDescription: text('task_description'),
+  action: text('action').notNull(),
+  triggeredAt: timestamp('triggered_at').notNull().defaultNow(),
+});

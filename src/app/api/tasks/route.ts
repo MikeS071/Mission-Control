@@ -8,6 +8,7 @@ import { resolveTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 import { parseBody, TaskCreateSchema, TaskPatchSchema } from '@/lib/validate';
+import { fireKanbanTrigger } from '@/lib/kanbanTrigger';
 
 const TaskPatchWithIdSchema = TaskPatchSchema.extend({
   id: z.number().int().positive('id must be a positive integer'),
@@ -125,6 +126,11 @@ export async function POST(req: NextRequest) {
 
       void awardXp(tenantId, XP_RULES.TASK_CREATED, 'task_created', String(task.id));
       void sendTelegramMessage(`📋 Task created: ${task.title} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
+
+      // Fire kanban trigger if status is NOT done or backlog
+      if (task.status !== 'done' && task.status !== 'backlog') {
+        void fireKanbanTrigger(tenantId, task.id, task.title, task.description ?? null, 'created');
+      }
     }
 
     return NextResponse.json(task ? mapTaskOutput(task) : null);
