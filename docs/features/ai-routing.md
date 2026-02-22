@@ -16,7 +16,7 @@ Most teams pick one LLM and use it for everything. The problem:
 
 AiPipe solves this by scoring each request and routing it to the cheapest model that can handle it at sufficient quality.
 
-**Result:** typical users save ~50% on LLM costs with no change to their workflow and no quality reduction on tasks that matter.
+**Result:** you typically save ~50% on LLM costs without changing your workflow or giving up quality on important tasks.
 
 ## How routing decisions are made
 

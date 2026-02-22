@@ -5,7 +5,7 @@ description: "AiPipe HTTP client, proxy routes, per-tenant key store, and Go ser
 
 # AiPipe Integration: Technical Reference
 
-## Architecture
+## How it works
 
 ```
 Browser/Agent
@@ -28,7 +28,7 @@ AiPipe service               ← 127.0.0.1:8082 (systemd user service)
     └─► Kimi     /v1/chat/completions   (moonshot-v1-8k, -32k)
 ```
 
-## Files
+## Key files
 
 | Path | Purpose |
 |------|---------|
@@ -105,7 +105,7 @@ For **streaming requests**: add `rawCost × ttftFactor` before sorting, where `t
 
 **Penalty decay**: success rate tracks per-model error rates. `429`/`5xx` add penalty (+2); `4xx` add +1. Effective success rate = `successRate - penalty × 0.02`. Penalty decays −1 every 30s via background goroutine.
 
-## API Routes
+## API endpoints
 
 ### GET /api/aipipe/health
 

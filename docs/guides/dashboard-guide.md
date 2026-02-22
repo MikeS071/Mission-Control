@@ -7,7 +7,7 @@ description: "Tour of the Mission Control dashboard — all tabs, panels, and fe
 
 _Last updated: 2026-02-19_
 
-## Overview
+## What this does
 
 The dashboard is a 3-pane resizable layout:
 

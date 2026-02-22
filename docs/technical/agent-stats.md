@@ -7,7 +7,7 @@ description: "Schema, API routes, and aggregation logic for per-agent token usag
 
 **Author:** navi-ops doc-updater
 
-## Architecture
+## How it works
 Agent usage is write-once event data in `agent_stats`, exposed through two read paths:
 
 - `/api/agent-stats` for latest stat per agent (chart source)
@@ -27,7 +27,7 @@ UI consumers:
 - `src/db/schema.ts`, `agent_stats` table
 - `src/lib/validate.ts`, `AgentStatCreateSchema`
 
-## Database
+## Database details
 **agent_stats**:
 - `tenant_id`
 - `agent_name`
@@ -37,7 +37,7 @@ UI consumers:
 
 Related reads also use `tasks` and `tenant_settings` in `/api/stats/summary`.
 
-## API surface
+## API endpoints
 - `GET /api/agent-stats` (auth), SQL `DISTINCT ON (agent_name)` latest rows
 - `POST /api/agent-stats` (auth), body `{ agentName, tokens?, costUsd? }`
 - `GET /api/stats/summary` (auth), aggregate completion/cost/token/agent stats
@@ -54,7 +54,7 @@ All agent-stats routes require tenant resolution via `resolveTenantId(req)` and 
   - ≤60m: idle
   - otherwise: inactive
 
-## Extension points
+## Ways to extend this
 - Store normalized numeric cost type (numeric) instead of text at insert boundary.
 - Add historical time-bucket endpoints for trend charts.
 - Add per-model or per-workflow dimensions to `agent_stats`.

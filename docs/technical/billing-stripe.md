@@ -7,7 +7,7 @@ description: "Stripe Checkout, Customer Portal, webhook signature verification, 
 
 **Author:** navi-ops doc-updater
 
-## Architecture
+## How it works
 Billing is implemented as authenticated Next.js API routes plus a webhook endpoint:
 
 - Client: `BillingClient.tsx` calls checkout/portal APIs.
@@ -26,7 +26,7 @@ Billing is implemented as authenticated Next.js API routes plus a webhook endpoi
 - `src/lib/validate.ts`, `BillingCheckoutSchema`
 - `src/db/schema.ts`, `subscriptions` table
 
-## Database
+## Database details
 **subscriptions** table:
 - `tenant_id` (unique FK)
 - `stripe_customer_id`
@@ -37,7 +37,7 @@ Billing is implemented as authenticated Next.js API routes plus a webhook endpoi
 - `current_period_end`
 - timestamps
 
-## API surface
+## API endpoints
 - `POST /api/billing/checkout` (auth), body `{ plan }`, creates Stripe Checkout URL
 - `POST /api/billing/portal` (auth), returns Stripe billing portal URL
 - `GET /api/billing/status` (auth), returns `{ plan, status, seats, currentPeriodEnd }`
@@ -55,7 +55,7 @@ Authenticated billing routes resolve tenant via `getTenantId(req)` and read/writ
 - Webhook signature validation is enforced unless webhook secret is placeholder/missing.
 - Team seats are normalized using `getTeamSeatCount()` and minimum constraints in webhook handler.
 
-## Extension points
+## Ways to extend this
 - Add yearly billing and explicit seat selection UX.
 - Track billing audit events in a dedicated table.
 - Harden plan-key mapping to remove dual naming between marketing labels and internal enums.

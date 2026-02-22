@@ -7,7 +7,7 @@ description: "Database schema, API routes, and event type reference for the Acti
 
 **Author:** navi-ops doc-updater
 
-## Architecture
+## How it works
 The activity feature is split between:
 1) a global feed in `ActivityFeed.tsx`, and
 2) per-card history in `KanbanBoard.tsx`.
@@ -23,11 +23,11 @@ Both consume `GET /api/events`, optionally filtered by `taskId`. Events are crea
 - `src/app/api/tasks/[id]/route.ts`, writes `status_change` and `deleted` events
 - `src/db/schema.ts`, `events` and `tasks` tables
 
-## Database
+## Database details
 - **events** table: `id`, `tenant_id`, `task_id`, `agent_name`, `event_type`, `payload`, `created_at`
 - Optional join to **tasks** for `taskTitle` in API responses
 
-## API surface
+## API endpoints
 - `GET /api/events?limit=<1..100>&taskId=<id?>`, tenant-scoped event feed
 - `POST /api/events`, create event (`taskId?`, `agentName?`, `eventType`, `payload?`)
 
@@ -41,7 +41,7 @@ Auth: required (tenant resolved via request/session headers).
 - Feed query left-joins `tasks` to include current task title.
 - `EventTimeline` formats both relative time and locale timestamp on render.
 
-## Extension points
+## Ways to extend this
 - Add server-side pagination/cursors for long histories.
 - Standardize `eventType` to an enum for stricter analytics.
 - Add structured JSON payload support (currently text) for richer timeline rendering.

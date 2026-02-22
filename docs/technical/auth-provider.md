@@ -5,7 +5,7 @@ description: "NextAuth configuration, credentials provider, Google OAuth, and se
 
 # Technical: AI Provider Auth & Per-Tenant Routing
 
-## Architecture Overview
+## How it is structured
 
 Provider API keys are stored in two places:
 1. **MC Database**: `tenantSettings.settings` JSON column (per-tenant, Postgres)

@@ -5,7 +5,7 @@ description: "Telegram notification delivery, event triggers, and API reference.
 
 # Notifications: Technical Reference
 
-## Files
+## Key files
 
 | Path | Purpose |
 |------|---------|
@@ -23,7 +23,7 @@ description: "Telegram notification delivery, event triggers, and API reference.
 
 Both are set in `.env.local`. In production, inject via Coolify environment.
 
-## Send Function
+## How sending works
 
 ```typescript
 // src/lib/telegram.ts
@@ -35,7 +35,7 @@ export async function sendTelegramMessage(text: string): Promise<void>
 - Non-blocking — errors are logged, never thrown to callers
 - Fire-and-forget from task API routes
 
-## Notification Triggers
+## What sends a notification
 
 | Event | Condition | Message format |
 |-------|-----------|----------------|
@@ -45,15 +45,15 @@ export async function sendTelegramMessage(text: string): Promise<void>
 | Kanban trigger | Card created or moved to In Progress | `📋 [Kanban Trigger]: {title}` |
 | Test notification | POST /api/notifications/test | Test message with timestamp |
 
-## HTML Formatting Rules
+## HTML formatting rules
 
 Telegram's HTML parse mode supports: `<b>`, `<i>`, `<code>`, `<pre>`, `<a href>`. Do **not** use Markdown (`**bold**`) — Telegram's legacy Markdown v1 parser will reject it with HTTP 400.
 
-## Rate Limits
+## Rate limits
 
 Telegram allows ~30 messages/second per bot. For bulk operations (e.g. provisioning status), batch updates into a single message or add a delay between sends.
 
-## Testing
+## Test it
 
 ```bash
 curl -X POST http://localhost:3003/api/notifications/test \

@@ -5,7 +5,7 @@ description: Everything you need to start working on ArchonHQ Mission Control.
 
 # Developer Onboarding Guide
 
-This guide covers everything you need to work on ArchonHQ Mission Control. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
+You can use this guide to start working on ArchonHQ Mission Control quickly. It assumes you can read a terminal and have done software development before. Skip to whatever section you need.
 
 ## 1. System Overview
 
@@ -187,7 +187,7 @@ GITHUB_PAT
 
 For local dev, `NEXTAUTH_URL` should be `https://dev.archonhq.ai`. Never set it to a localhost URL in `.env.local` since the pre-release check will flag that as an env leak.
 
-### Database Setup
+### Database details Setup
 
 The database runs as the local `openclaw` Postgres user via Unix socket:
 

@@ -51,7 +51,7 @@ DATABASE_URL=postgresql://user:password@host:5432/mission_control
 API_SECRET=<32+ char random string>
 ```
 
-## Database setup
+## Database details setup
 
 Create the database and run migrations:
 
