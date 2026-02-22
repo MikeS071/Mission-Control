@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   const isAdmin = tenantId === 1; // Admin tenant check
 
   return (
-    <Tabs defaultValue="kanban" className="flex h-screen overflow-hidden flex-col bg-gray-950 text-white">
+    <Tabs defaultValue="kanban" className="flex h-full flex-col bg-gray-950 text-white">
 
       {/* ── Unified top navbar ── */}
       <nav className="sticky top-0 z-50 flex h-14 flex-shrink-0 items-center gap-0 border-b border-gray-800 bg-gray-900/95 px-4 backdrop-blur">
