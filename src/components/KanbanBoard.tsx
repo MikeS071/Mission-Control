@@ -630,7 +630,7 @@ const [rightWidth, setRightWidth] = useState(402);
   const saveWipLimit = (column: string) => { const parsed = Number(editingWipValue); setWipLimits((prev) => ({ ...prev, [column]: Number.isFinite(parsed) && parsed > 0 ? parsed : null })); setEditingWipColumn(null); };
 
   return (
-    <div className="flex flex-col gap-2 h-[calc(100vh-88px)]">
+    <div className="flex flex-col gap-2 h-full">
       {/* Stats tiles */}
       <div className="flex gap-3 overflow-x-auto pb-0.5 flex-shrink-0">
         <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
