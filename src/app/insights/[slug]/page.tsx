@@ -9,6 +9,7 @@ import { insights } from '@/db/schema';
 import { renderMarkdown } from '@/lib/markdown';
 
 const BASE_URL = 'https://archonhq.ai';
+const absUrl = (url: string) => (url.startsWith('http') ? url : `${BASE_URL}${url}`);
 export const dynamic = 'force-dynamic';
 
 const dateFormatter = new Intl.DateTimeFormat('en-AU', {
@@ -43,13 +44,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: article.title,
       description: article.description,
       publishedTime: article.publishedAt?.toISOString(),
-      ...(article.imageUrl ? { images: [{ url: `${BASE_URL}${article.imageUrl}`, width: 1792, height: 1024, alt: article.title }] } : {}),
+      ...(article.imageUrl ? { images: [{ url: absUrl(article.imageUrl), width: 1792, height: 1024, alt: article.title }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title: article.title,
       description: article.description,
-      ...(article.imageUrl ? { images: [`${BASE_URL}${article.imageUrl}`] } : {}),
+      ...(article.imageUrl ? { images: [absUrl(article.imageUrl)] } : {}),
     },
   };
 }
