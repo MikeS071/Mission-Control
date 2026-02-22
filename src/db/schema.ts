@@ -317,3 +317,15 @@ export const provisionedInstances = pgTable('provisioned_instances', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
+
+export const kanbanTriggers = pgTable('kanban_triggers', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  taskId: integer('task_id').notNull(),
+  taskTitle: text('task_title').notNull(),
+  taskDescription: text('task_description'),
+  action: text('action').notNull(),
+  triggeredAt: timestamp('triggered_at').notNull().defaultNow(),
+});
