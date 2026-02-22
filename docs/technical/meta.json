@@ -1,0 +1,13 @@
+{
+  "title": "Technical Reference",
+  "pages": [
+    "aipipe-integration",
+    "kanban-board",
+    "navi-ops-cli",
+    "activity-feed",
+    "agent-stats",
+    "auth-provider",
+    "billing-stripe",
+    "waitlist"
+  ]
+}
