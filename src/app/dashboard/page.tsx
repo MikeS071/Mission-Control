@@ -114,29 +114,14 @@ export default async function DashboardPage() {
       )}
 
       {/* ── Tab content ── */}
-      <div className="flex-1 min-h-0">
-        {/* Mission Control — 3-pane layout */}
-        <TabsContent value="kanban" className="mt-0 h-full">
-          <div className="flex h-full overflow-hidden">
-            {/* Activity pane — left placeholder */}
-            <div className="w-[280px] flex-shrink-0 border-r border-gray-800 overflow-y-auto bg-gray-900/50">
-              <div className="p-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</div>
-            </div>
-            {/* Kanban — center */}
-            <div className="flex-1 min-w-0 overflow-auto p-4">
-              <KanbanBoard />
-            </div>
-            {/* Chat pane — right */}
-            <div className="w-[320px] flex-shrink-0 border-l border-gray-800 flex flex-col">
-              <ChatPanel />
-            </div>
-          </div>
-        </TabsContent>
-        <TabsContent value="files"    className="mt-0 p-4"><FileExplorer /></TabsContent>
-        <TabsContent value="progress" className="mt-0 p-4"><ArenaPanel /></TabsContent>
-        <TabsContent value="router"   className="mt-0 p-4"><AiPipeWidget /></TabsContent>
+      <div className="flex-1 px-4 pt-4 pb-4 min-h-0">
+        <TabsContent value="kanban"   className="mt-0"><KanbanBoard /></TabsContent>
+        <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
+        <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
+        <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
+        <TabsContent value="chat"     className="mt-0 h-[calc(100vh-120px)]"><ChatPanel /></TabsContent>
         {isAdmin && (
-          <TabsContent value="admin-provision" className="mt-0 p-4"><ProvisioningPanel /></TabsContent>
+          <TabsContent value="admin-provision" className="mt-0"><ProvisioningPanel /></TabsContent>
         )}
       </div>
 
