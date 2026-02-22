@@ -6,13 +6,14 @@ import { users, passwordResetTokens } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { Resend } from 'resend';
 
+export const dynamic = 'force-dynamic';
+
 const requestSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(req: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const body = await req.json();
     const result = requestSchema.safeParse(body);
