@@ -7,7 +7,7 @@ description: "Release gate scripts, pre-push hook, regression tests, and environ
 
 **Author:** navi-ops doc-updater
 
-## Architecture
+## How it works
 The repo’s navi-ops workflow is implemented as shell-based operational commands and Git hooks:
 
 - Regression suite (`scripts/regression-test.sh`)
@@ -23,7 +23,7 @@ This acts as the CLI control plane for release readiness in this codebase.
 - `package.json`, exposes helper commands (`stripe:setup`, `test:billing`, etc.)
 - `scripts/test-billing.sh`, targeted billing API regression checks
 
-## Database
+## Database details
 No dedicated CLI table. Scripts validate DB availability and required schema (for example `tasks`, `events`, `agent_stats`, `waitlist`, `subscriptions`, `tenants`, `memberships`).
 
 ## API / command surface
@@ -44,7 +44,7 @@ The CLI scripts do not bypass API tenant controls. Their API probes verify expec
 - `regression-test.sh` checks endpoint classes: public, auth-protected, webhook behavior, and content integrity.
 - Pre-push hook enforces merge-only main promotion and aborts push if pre-release checks fail.
 
-## Extension points
+## Ways to extend this
 - Consolidate shell scripts into a versioned Node CLI binary for portable install.
 - Emit machine-readable JSON reports for CI dashboards.
 - Standardize command names to align one-to-one with `status`, `plan`, `release`, `run` verbs if/when a dedicated `navi-ops` binary is introduced.

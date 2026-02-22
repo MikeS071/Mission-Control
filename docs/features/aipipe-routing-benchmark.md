@@ -7,7 +7,7 @@ description: "Live benchmark comparing AiPipe auto-routing against direct provid
 
 **Stop paying for a Ferrari when you need a bicycle.** Most applications send every LLM request to the same model regardless of complexity. A greeting gets the same treatment as a mathematical proof. AiPipe fixes that by routing each request to the right model automatically — cheapest for simple tasks, highest quality for complex ones.
 
-This document explains how AiPipe routing works, shows benchmark results against the latest available models, and walks through what you get by connecting it to Mission Control.
+Here is how AiPipe routing works, what the latest benchmark shows, and what you get when you connect it to Mission Control.
 
 > **Benchmark date:** February 2026 (re-run 22 Feb 2026). Baseline: `claude-sonnet-4-6` (Anthropic direct). AiPipe auto-routes across all configured providers. Four iterations, 12 requests per path, run live against production APIs.
 

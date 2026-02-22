@@ -73,7 +73,7 @@ Once your keys are connected and requests flow through AiPipe, the **⚡ Router*
 - Total requests routed
 - Cost per provider and model
 - Estimated savings vs routing everything to GPT-4o
-- Your personal stats (isolated from other users)
+- Your personal stats (isolated from other accounts)
 
 ## Privacy
 

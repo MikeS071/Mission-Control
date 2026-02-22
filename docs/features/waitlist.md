@@ -5,7 +5,7 @@ description: "Early-access waitlist with automatic position tracking, welcome em
 
 # Waitlist
 
-## Overview
+## What this does
 The Waitlist feature captures early-access signups from the landing page, tracks position count, sends a welcome email, and optionally sends the latest newsletter issue automatically after signup.
 
 It also supports unsubscribe links via a tokenized endpoint and an admin-protected endpoint to export waitlist emails.
@@ -24,13 +24,13 @@ If a newsletter issue exists in the database, the latest issue is sent automatic
 ### Step 4: Unsubscribe (if needed)
 Use the unsubscribe link token in emails; this removes the address from waitlist storage.
 
-## Key concepts
+## Keep in mind
 - **Position count**: Signup number based on current row count.
 - **Duplicate join handling**: Existing emails return `alreadyJoined` (409).
 - **Unsubscribe token**: Base64url-encoded email used for one-click unsubscribe endpoint.
 - **Admin export auth**: Waitlist email export requires `Authorization: Bearer <API_SECRET>`.
 
-## Limitations
+## Current limits
 - Unsubscribe token is reversible encoding, not cryptographic signing.
 - Email delivery errors are treated as non-fatal (signup still succeeds).
 - Waitlist stores unique email only; advanced profile fields are not collected.

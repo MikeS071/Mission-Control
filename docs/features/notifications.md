@@ -64,5 +64,5 @@ Toggle notifications off in **Settings → Notifications** or clear the bot toke
 - Check the chat ID is correct, user IDs are positive numbers, group IDs start with `-100`
 
 **Messages stop arriving:**
-- Telegram bots can be blocked if the user blocks the bot. Unblock via Telegram settings
+- Telegram bots stop delivering if you block the bot. Unblock it in Telegram settings
 - The bot token may have been revoked, generate a new one via BotFather

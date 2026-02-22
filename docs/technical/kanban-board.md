@@ -7,7 +7,7 @@ description: "Task schema, drag-and-drop state, API routes, and agent trigger in
 
 **Author:** navi-ops doc-updater
 
-## Architecture
+## How it works
 The Kanban board is a client component (`KanbanBoard.tsx`) rendered in the Dashboard Kanban tab. It reads and mutates task state through tenant-scoped API routes:
 
 - `GET/POST/PATCH/DELETE /api/tasks`
@@ -29,13 +29,13 @@ Data flow:
 - `src/lib/validate.ts`, `TaskCreateSchema` / `TaskPatchSchema` input validation
 - `src/db/schema.ts`, `tasks` and `events` table definitions
 
-## Database
+## Database details
 - **tasks**: `tenant_id`, `title`, `description`, `status`, `priority`, `goal`, `goal_id`, `assigned_agent`, `tags`, `checklist`, timestamps
 - **events**: `tenant_id`, `task_id`, `agent_name`, `event_type`, `payload`, `created_at`
 
 Checklist data is stored as serialized text on `tasks.checklist` and transformed via `parseChecklist/stringifyChecklist`.
 
-## API surface
+## API endpoints
 - `GET /api/tasks` (auth required), tenant task list ordered by `created_at`
 - `POST /api/tasks` (auth required), create task; normalizes status/priority, auto-generates `goalId`
 - `PATCH /api/tasks` (auth required), update task by body `{ id, ...patch }`
@@ -55,7 +55,7 @@ All Kanban routes scope queries by `tenantId` from `resolveTenantId()`/`getTenan
 - Status transitions write event records and may trigger Telegram notifications and XP updates.
 - Board preferences (labels, collapsed columns, WIP limits) are not server-persisted.
 
-## Extension points
+## Ways to extend this
 - Persist board presentation settings in `tenant_settings` instead of localStorage.
 - Add server-side WIP enforcement by rejecting moves/updates over limit.
 - Add optimistic update rollback telemetry for failed PATCH/DELETE calls.

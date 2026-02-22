@@ -5,7 +5,7 @@ description: "Stripe Checkout and Customer Portal integration for Strategos and 
 
 # Stripe Billing
 
-## Overview
+## What this does
 Stripe Billing handles paid plan upgrades from the free Initiate tier to Strategos or Archon. Users can launch checkout from the billing page, complete a Stripe subscription, and later open the Stripe customer portal to manage billing.
 
 Mission Control also tracks subscription status per tenant (plan, seats, status, period end) and syncs updates through the Stripe webhook endpoint.
@@ -24,13 +24,13 @@ You are redirected to Stripe Checkout. After payment, you return to `/dashboard/
 ### Step 4: Manage an active subscription
 Use **Manage billing** to open Stripe Customer Portal.
 
-## Key concepts
+## Keep in mind
 - **Initiate / Strategos / Archon**: Product plan labels in UI.
 - **Pro / Team**: Internal plan keys used in API and DB (`pro`, `team`, `free`).
 - **Placeholder mode**: If Stripe keys are placeholders/missing, checkout/portal return mock URLs for non-production flows.
 - **Webhook sync**: Subscription lifecycle updates are applied from Stripe events.
 
-## Limitations
+## Current limits
 - Checkout currently uses a single quantity per plan in the checkout route.
 - Team seat quantity logic is enforced in webhook processing and helper methods; seat UX is minimal in current billing UI.
 - In placeholder mode, no real Stripe transaction occurs.

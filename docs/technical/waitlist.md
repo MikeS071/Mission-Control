@@ -7,7 +7,7 @@ description: "Waitlist schema, email delivery, unsubscribe tokens, and admin exp
 
 **Author:** navi-ops doc-updater
 
-## Architecture
+## How it works
 The waitlist is a public API flow wired into landing-page UI:
 
 1. `POST /api/waitlist` validates and inserts unique email.
@@ -23,11 +23,11 @@ The waitlist is a public API flow wired into landing-page UI:
 - `src/app/api/newsletter/unsubscribe/route.ts`, token decode + delete + redirect
 - `src/db/schema.ts`, `waitlist` and `newsletter_issues` tables
 
-## Database
+## Database details
 - **waitlist**: `id`, unique `email`, `source`, `created_at`
 - **newsletter_issues**: latest issue queried by `sent_at` desc for auto-send
 
-## API surface
+## API endpoints
 - `GET /api/waitlist` (public), returns `{ count }`
 - `POST /api/waitlist` (public), body `{ email, source? }`
   - success: `{ ok: true, position }`
@@ -44,7 +44,7 @@ Waitlist endpoints are intentionally public/global and not tenant-scoped. Unlike
 - Unsubscribe uses base64url decode and validates decoded string contains `@`.
 - Redirect base URL prefers `NEXTAUTH_URL` to avoid internal proxy URLs.
 
-## Extension points
+## Ways to extend this
 - Replace reversible unsubscribe token with signed, expiring token.
 - Add double opt-in status and consent metadata.
 - Track email delivery outcomes for audit and retries.

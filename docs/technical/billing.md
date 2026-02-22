@@ -7,7 +7,7 @@ description: "Stripe integration, subscription lifecycle, webhook handling, and 
 
 See [Stripe Billing](./billing-stripe) for the Stripe-specific implementation details, webhook events, and checkout flow.
 
-## Plans and Internal Keys
+## Plans and internal keys
 
 | UI Label | Internal Key | Description |
 |----------|-------------|-------------|
@@ -17,7 +17,7 @@ See [Stripe Billing](./billing-stripe) for the Stripe-specific implementation de
 
 Plans are stored in `tenants.plan` as the internal key (`free`, `pro`, `team`).
 
-## Database Schema (billing-relevant columns)
+## Database details Schema (billing-relevant columns)
 
 ```sql
 -- tenants table (billing fields)
@@ -30,7 +30,7 @@ sub_status          text,   -- 'active' | 'canceled' | 'past_due' | ...
 sub_period_end      timestamp,
 ```
 
-## API Routes
+## API endpoints
 
 | Route | Method | Purpose |
 |-------|--------|---------|

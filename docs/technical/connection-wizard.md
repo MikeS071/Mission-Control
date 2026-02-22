@@ -5,7 +5,7 @@ description: "Implementation details for the 8-step connection wizard, state per
 
 # Connection Wizard: Technical Reference
 
-## Files
+## Key files
 
 | Path | Purpose |
 |------|---------|
@@ -15,7 +15,7 @@ description: "Implementation details for the 8-step connection wizard, state per
 | `src/app/api/wizard/state/route.ts` | GET/POST — persist + retrieve wizard completion state |
 | `src/app/api/aipipe/proxy/chat/route.ts` | POST — AiPipe proxy wired in Step 4 |
 
-## State Persistence
+## How state is stored
 
 Wizard completion state is stored per-tenant in the database. The `wizard_state` column in the `tenants` table tracks which steps are complete as a JSON bitmask or step index. Step skips are allowed for Steps 4–8.
 
@@ -28,7 +28,7 @@ Wizard completion state is stored per-tenant in the database. The `wizard_state`
 }
 ```
 
-## Gateway Ping
+## How gateway checks work
 
 `POST /api/gateway/ping` — forwards a health-check to the user-supplied gateway URL.
 
@@ -45,14 +45,14 @@ Wizard completion state is stored per-tenant in the database. The `wizard_state`
 
 The ping endpoint does not store the URL; it only validates reachability. URL is stored client-side until wizard submission.
 
-## Provider Key Management
+## How provider keys are handled
 
 Step 3 posts keys to `POST /api/aipipe/proxy` → AiPipe `/v1/tenants/{id}/providers`. Keys are:
 - Stored in AiPipe's SQLite per-tenant key store
 - Never written to the MC database or logs
 - Scoped per tenant: other tenants cannot access your keys
 
-## Agent Role Assignment (Step 6)
+## How Step 6 stores agent roles
 
 Agent roles are stored in the `agent_roles` table:
 
@@ -68,7 +68,7 @@ CREATE TABLE agent_roles (
 
 Roles are surfaced in the Kanban board header tiles and agent stats view.
 
-## Wizard Steps Overview
+## Wizard steps at a glance
 
 | Step | ID | Component | Skippable | Stores |
 |------|----|-----------|-----------|----|
