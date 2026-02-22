@@ -298,11 +298,58 @@ export const arenaReactionCounters = pgTable('arena_reaction_counters', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ── Chat threads ─────────────────────────────────────────────────────────────
+export const chatThreads = pgTable('chat_threads', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  title: text('title').notNull().default('New thread'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const chatMessages = pgTable('chat_messages', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull(),
   role: text('role').notNull(),
   content: text('content').notNull(),
+  threadId: integer('thread_id').references(() => chatThreads.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Activity feed ─────────────────────────────────────────────────────────────
+export const activityQueue = pgTable('activity_queue', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  eventType: text('event_type').notNull(),
+  payloadJson: jsonb('payload_json').notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  processed: boolean('processed').notNull().default(false),
+});
+
+export const activityEvents = pgTable('activity_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  eventType: text('event_type').notNull(),
+  displayName: text('display_name').notNull(),
+  description: text('description').notNull().default(''),
+  icon: text('icon').notNull().default('⚡'),
+  payloadJson: jsonb('payload_json').notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const activityReactions = pgTable('activity_reactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  eventId: uuid('event_id').notNull().references(() => activityEvents.id, { onDelete: 'cascade' }),
+  fromTenantId: integer('from_tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  reactionType: text('reaction_type').notNull(), // 'hype' | 'respect' | 'tribute'
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const activityComments = pgTable('activity_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  eventId: uuid('event_id').notNull().references(() => activityEvents.id, { onDelete: 'cascade' }),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  body: text('body').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
