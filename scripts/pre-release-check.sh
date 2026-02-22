@@ -35,7 +35,7 @@ echo ""
 
 # ── 0. Regression test suite (mandatory first gate) ──────────────────────────
 echo "── 0. Regression Suite"
-REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" 2>&1)
+REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" --base http://localhost:3002 2>&1)
 REGR_EXIT=$?
 REGR_SUMMARY=$(echo "$REGR_OUT" | grep "Results:")
 if [[ "$REGR_EXIT" -eq 0 ]]; then
