@@ -1,8 +1,9 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, Suspense, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 function GoogleLogo() {
   return (
@@ -15,7 +16,9 @@ function GoogleLogo() {
   );
 }
 
-export default function SignInPage() {
+function SignInPageInner() {
+  const searchParams = useSearchParams();
+  const message = searchParams.get('message');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -77,6 +80,12 @@ export default function SignInPage() {
           </h1>
           <p className="mt-2 text-sm" style={{ color: '#6a7f6f' }}>Sign in to continue</p>
         </div>
+
+        {message === 'password-reset' && (
+          <div className="mb-4 rounded-xl border border-[#2dd47a]/30 bg-[#2dd47a]/10 p-3 text-sm text-[#2dd47a] text-center">
+            Password successfully reset! Please sign in with your new password.
+          </div>
+        )}
 
         <form className="space-y-4" onSubmit={handlePasswordSignIn}>
           <div className="space-y-2">
@@ -144,5 +153,13 @@ export default function SignInPage() {
         </button>
       </div>
     </main>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInPageInner />
+    </Suspense>
   );
 }
