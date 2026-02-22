@@ -11,13 +11,19 @@ const PLAN_RANK: Record<BillingPlan, number> = {
   team: 2,
 };
 
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Initiate',
+  pro: 'Strategos',
+  team: 'Archon',
+};
+
 /**
  * Returns a human-readable display label for a plan slug.
- * Uses title-case of the slug with a fallback to 'Free'.
+ * free → Initiate, pro → Strategos, team → Archon
  */
 export function getTenantPlanLabel(plan: string | null | undefined): string {
-  if (!plan) return 'Free';
-  return plan.charAt(0).toUpperCase() + plan.slice(1);
+  if (!plan) return 'Initiate';
+  return PLAN_LABELS[plan] ?? 'Initiate';
 }
 
 export async function getTenantPlan(tenantId: number): Promise<BillingPlan> {
