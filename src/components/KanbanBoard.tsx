@@ -641,7 +641,7 @@ const [rightWidth, setRightWidth] = useState(402);
       </div>
 
       {/* 3-pane resizable layout */}
-<div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
+<div className="flex h-[calc(100vh-232px)] rounded-lg overflow-hidden border border-gray-800">
 
         {/* ── Left pane: Agent Team ── */}
         <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
@@ -802,7 +802,7 @@ const [rightWidth, setRightWidth] = useState(402);
 
         {/* ── Right pane: Chat ── */}
         <div style={{ width: rightWidth, minWidth: 280, maxWidth: 700 }} className="flex-shrink-0 overflow-hidden h-full">
-          <ChatPanel />
+          <ChatPanel agentName={primaryAgentName ?? 'Navi'} />
         </div>
 
       </div>{/* end 3-pane */}
