@@ -246,6 +246,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         <input
           ref={inputRef}
           type="text"
+          autoComplete="off"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
