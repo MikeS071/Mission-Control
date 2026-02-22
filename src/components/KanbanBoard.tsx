@@ -407,6 +407,14 @@ const [rightWidth, setRightWidth] = useState(402);
     }
   }, []);
 
+  // Disable browser scroll restoration — prevents iPad/mobile from jumping to a saved scroll position
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
     const es = new EventSource('/api/tasks/stream');
