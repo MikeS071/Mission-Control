@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { FileExplorer } from '@/components/FileExplorer';
-import { ActivityTab } from '@/components/ActivityTab';
 import { ArenaPanel } from '@/components/ArenaPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -66,8 +65,7 @@ export default async function DashboardPage() {
 
         {/* Navigation tabs */}
         <TabsList className="h-8 bg-transparent p-0 gap-0.5">
-          <TabsTrigger value="kanban"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Kanban</TabsTrigger>
-          <TabsTrigger value="activity"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Activity</TabsTrigger>
+          <TabsTrigger value="kanban"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Mission Control</TabsTrigger>
           <TabsTrigger value="files"     className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Memory</TabsTrigger>
           <TabsTrigger value="progress"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Arena</TabsTrigger>
           <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
@@ -119,7 +117,6 @@ export default async function DashboardPage() {
       {/* ── Tab content ── */}
       <div className="flex-1 px-4 pt-4 pb-4 min-h-0">
         <TabsContent value="kanban"   className="mt-0"><KanbanBoard /></TabsContent>
-        <TabsContent value="activity" className="mt-0"><ActivityTab /></TabsContent>
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
         <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
