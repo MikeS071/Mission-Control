@@ -155,11 +155,10 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Mirror to Telegram ───────────────────────────────────────────────────
-  // Both Mike's message and Navi's reply go to Telegram so both channels stay
-  // in sync. Mike's message is prefixed "👤 Mike:" so it's clearly attributed
-  // (the bot can't send as a specific user, so text attribution is the best we
-  // can do). Navi's reply goes as-is.
-  void sendToTelegram(`👤 *Mike:* ${userContent}`);
+  // Both Mike's MC message and Navi's reply mirror to Telegram.
+  // Prefixed with [MC] so it's clear this is forwarded from Mission Control,
+  // not a Navi statement. No parse_mode — user content is uncontrolled.
+  void sendToTelegram(`[MC] ${userContent}`);
   void sendToTelegram(reply);
 
   return NextResponse.json({
