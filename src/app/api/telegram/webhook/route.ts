@@ -152,38 +152,41 @@ export async function POST(req: NextRequest) {
     void telegramSendChatAction(chatId, 'typing');
   }, 4500);
 
-  try {
-    const sessionKey = `tg:${link.tenantId}:${telegramUserId}`;
+  // Respond to Telegram immediately to avoid webhook timeouts/retries.
+  // Continue processing in the background (best-effort).
+  void (async () => {
+    try {
+      const sessionKey = `tg:${link.tenantId}:${telegramUserId}`;
 
-    const reply = await openclawChatCompletion({
-      sessionKey,
-      messages: [{ role: 'user', content: text }],
-    });
+      const reply = await openclawChatCompletion({
+        sessionKey,
+        messages: [{ role: 'user', content: text }],
+      });
 
-    await db.insert(chatMessages).values({
-      tenantId: link.tenantId,
-      role: 'assistant',
-      content: reply,
-      source: 'telegram',
-    });
+      await db.insert(chatMessages).values({
+        tenantId: link.tenantId,
+        role: 'assistant',
+        content: reply,
+        source: 'telegram',
+      });
 
-    await telegramSendMessage(chatId, reply);
+      await telegramSendMessage(chatId, reply);
 
-    await db
-      .update(telegramUpdates)
-      .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'forwarded' })
-      .where(eq(telegramUpdates.updateId, update.update_id));
+      await db
+        .update(telegramUpdates)
+        .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'forwarded' })
+        .where(eq(telegramUpdates.updateId, update.update_id));
+    } catch (err: any) {
+      await telegramSendMessage(chatId, 'Sorry — something went wrong.');
+      await db
+        .update(telegramUpdates)
+        .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'error', error: String(err?.message ?? err) })
+        .where(eq(telegramUpdates.updateId, update.update_id));
+    } finally {
+      if (typingTimer) clearInterval(typingTimer);
+      typingTimer = null;
+    }
+  })();
 
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    await telegramSendMessage(chatId, 'Sorry — something went wrong.');
-    await db
-      .update(telegramUpdates)
-      .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'error', error: String(err?.message ?? err) })
-      .where(eq(telegramUpdates.updateId, update.update_id));
-    return NextResponse.json({ ok: true });
-  } finally {
-    if (typingTimer) clearInterval(typingTimer);
-    typingTimer = null;
-  }
+  return NextResponse.json({ ok: true });
 }
