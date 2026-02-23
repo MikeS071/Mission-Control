@@ -29,6 +29,16 @@ interface HistoryResponse {
   error?: string;
 }
 
+function isNearDuplicate(a: ChatMessage, b: ChatMessage): boolean {
+  if (String(a.id) === String(b.id)) return true;
+  if (a.role !== b.role) return false;
+  if (a.content !== b.content) return false;
+  const ta = Date.parse(a.createdAt);
+  const tb = Date.parse(b.createdAt);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return false;
+  return Math.abs(ta - tb) < 2_000;
+}
+
 interface ChatResponse {
   reply: string;
   messageId?: number;
@@ -74,16 +84,24 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         }))
         .filter((m) => Number.isFinite(m.id));
 
-      // De-dupe by id (string compare to avoid 303 vs "303")
-      const seen = new Set<string>();
-      const deduped: ChatMessage[] = [];
+      // De-dupe by id, then by (role+content+near-time) to guard against
+      // races between WS pushes and history polls.
+      const byIdSeen = new Set<string>();
+      const pass1: ChatMessage[] = [];
       for (const m of normalized) {
         const k = String(m.id);
-        if (seen.has(k)) continue;
-        seen.add(k);
-        deduped.push(m);
+        if (byIdSeen.has(k)) continue;
+        byIdSeen.add(k);
+        pass1.push(m);
       }
-      setMessages(deduped);
+
+      const pass2: ChatMessage[] = [];
+      for (const m of pass1) {
+        if (pass2.some((x) => isNearDuplicate(x, m))) continue;
+        pass2.push(m);
+      }
+
+      setMessages(pass2);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setHistoryError(msg);
@@ -144,6 +162,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           setMessages((prev) => {
             const key = String(msg.id);
             if (prev.some((m) => String(m.id) === key)) return prev;
+            if (prev.some((m) => isNearDuplicate(m, msg))) return prev;
             return [...prev, msg];
           });
         } catch (err) {
