@@ -376,7 +376,10 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       </div>
 
       {/* Message list */}
-      <div ref={messagesRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0">
+      <div
+        ref={messagesRef}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700"
+      >
         {historyLoading && (
           <div className="text-center text-gray-500 text-sm py-8">
             Loading conversation…
@@ -446,11 +449,11 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={loading}
-          placeholder="Message Navi…"
+          placeholder={loading ? 'Navi is replying… (you can keep typing)' : 'Message Navi…'}
           className="flex-1 resize-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-gray-500 focus:ring-0 disabled:opacity-50 transition-colors leading-relaxed"
         />
         <button
+          onMouseDown={(e) => e.preventDefault()} // keep focus in textarea
           onClick={sendMessage}
           disabled={loading || !input.trim()}
           className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-40 transition-colors"
