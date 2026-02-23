@@ -142,9 +142,9 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Mirror to Telegram ───────────────────────────────────────────────────
-  // Both the user's MC message and Navi's reply go to Telegram so all channels
-  // stay in sync. User messages get a "💬 MC:" prefix for visual distinction.
-  void sendToTelegram(`💬 *MC:* ${userContent}`);
+  // Only Navi's reply goes to Telegram — Mike's MC input is already visible
+  // to him in MC and doesn't need to be echoed. Both channels stay in sync
+  // for assistant responses.
   void sendToTelegram(reply);
 
   return NextResponse.json({
