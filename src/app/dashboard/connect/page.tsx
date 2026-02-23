@@ -48,12 +48,8 @@ type SettingsPayload = {
   wizardCompleted?: boolean;
 };
 
-const MODEL_OPTIONS = {
-  mainAgent: ['claude-haiku-3', 'claude-sonnet-4-5', 'claude-opus-4'],
-  subagents: ['gpt-4o-mini', 'gpt-4o', 'gpt-5.3-codex'],
-  deepResearch: ['gpt-4o', 'gpt-5.1-codex'],
-  costEfficient: ['claude-haiku-3', 'gpt-4o-mini'],
-};
+// Model options: show ALL available models for every category.
+// (UI uses ALL_AGENT_MODELS directly; filtering by configured keys may come later.)
 
 const MODEL_DEFAULTS = {
   mainAgent: 'claude-sonnet-4-5',
@@ -252,7 +248,7 @@ export default function ConnectGatewayPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4 text-white">
+    <div className="h-screen overflow-y-auto bg-gray-950 p-4 text-white">
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -409,10 +405,10 @@ export default function ConnectGatewayPage() {
               <>
                 <p className="text-gray-300">Different models for different jobs — we&apos;ve picked smart defaults.</p>
 
-                <ModelPicker label="Main agent (Navi)" description="Your lead helper" value={models.mainAgent} options={MODEL_OPTIONS.mainAgent} onChange={(value) => setModels((s) => ({ ...s, mainAgent: value }))} />
-                <ModelPicker label="Subagents (coding/research)" description="Fast builders and helpers" value={models.subagents} options={MODEL_OPTIONS.subagents} onChange={(value) => setModels((s) => ({ ...s, subagents: value }))} />
-                <ModelPicker label="Deep research" description="Longer deep dives" value={models.deepResearch} options={MODEL_OPTIONS.deepResearch} onChange={(value) => setModels((s) => ({ ...s, deepResearch: value }))} />
-                <ModelPicker label="Cost-efficient tasks" description="Great value for smaller jobs" value={models.costEfficient} options={MODEL_OPTIONS.costEfficient} onChange={(value) => setModels((s) => ({ ...s, costEfficient: value }))} />
+                <ModelPicker label="Main agent (Navi)" description="Your lead helper" value={models.mainAgent} options={ALL_AGENT_MODELS} onChange={(value) => setModels((s) => ({ ...s, mainAgent: value }))} />
+                <ModelPicker label="Subagents (coding/research)" description="Fast builders and helpers" value={models.subagents} options={ALL_AGENT_MODELS} onChange={(value) => setModels((s) => ({ ...s, subagents: value }))} />
+                <ModelPicker label="Deep research" description="Longer deep dives" value={models.deepResearch} options={ALL_AGENT_MODELS} onChange={(value) => setModels((s) => ({ ...s, deepResearch: value }))} />
+                <ModelPicker label="Cost-efficient tasks" description="Great value for smaller jobs" value={models.costEfficient} options={ALL_AGENT_MODELS} onChange={(value) => setModels((s) => ({ ...s, costEfficient: value }))} />
 
                 <Button disabled={saving} onClick={async () => {
                   await saveSettings({ models });
