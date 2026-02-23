@@ -478,6 +478,30 @@ export default function ConnectGatewayPage() {
                   }}>{saving ? 'Saving...' : 'Save & continue'}</Button>
                 </div>
                 {notificationStatus && <p className={notificationStatus.startsWith('✅') ? 'text-green-400' : 'text-red-400'}>{notificationStatus}</p>}
+
+                <div className="mt-6 rounded-md border border-gray-700 bg-gray-950 p-3 text-sm">
+                  <p className="font-medium">Telegram Chat Sync (beta)</p>
+                  <p className="mt-1 text-gray-300">Link your Telegram account so messages can flow through Mission Control (webhook ingress → OpenClaw).</p>
+                  <div className="mt-3">
+                    <Button variant="secondary" onClick={async () => {
+                      try {
+                        const res = await fetch('/api/telegram/link-token', { method: 'POST' });
+                        const data = await res.json();
+                        if (!res.ok) {
+                          alert(data?.error ?? 'Failed to create link token');
+                          return;
+                        }
+                        if (!data.deepLinkUrl) {
+                          alert('TELEGRAM_BOT_USERNAME not set on server');
+                          return;
+                        }
+                        window.open(data.deepLinkUrl, '_blank');
+                      } catch {
+                        alert('Failed to create link token');
+                      }
+                    }}>Connect Telegram →</Button>
+                  </div>
+                </div>
               </>
             )}
 
