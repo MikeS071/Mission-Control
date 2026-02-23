@@ -18,6 +18,7 @@ import { wsManager } from '@/lib/ws-manager';
 
 const GATEWAY_URL    = process.env.GATEWAY_URL            ?? 'http://127.0.0.1:18789';
 const GATEWAY_TOKEN  = process.env.OPENCLAW_GATEWAY_TOKEN;
+const API_SECRET     = process.env.API_SECRET; // optional: server-to-server auth bypass for smoke tests
 const TG_BOT_TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
 const TG_CHAT_ID     = process.env.TELEGRAM_CHAT_ID;
 
@@ -88,7 +89,23 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-  const tenantId = await resolveTenantId(req);
+  // Normal path: NextAuth session cookies → resolveTenantId(req)
+  // Smoke-test path: server-to-server API_SECRET (no cookies)
+  const authz = req.headers.get('authorization') ?? '';
+  const headerSecret = req.headers.get('x-api-secret') ?? '';
+  const bearer = authz.toLowerCase().startsWith('bearer ') ? authz.slice(7).trim() : '';
+
+  let tenantId: number | null = null;
+
+  const apiSecretOk = !!API_SECRET && (bearer === API_SECRET || headerSecret === API_SECRET);
+  if (apiSecretOk) {
+    const hdrTenant = req.headers.get('x-tenant-id');
+    const parsed = hdrTenant ? Number(hdrTenant) : NaN;
+    tenantId = Number.isFinite(parsed) ? parsed : 1; // dev default
+  } else {
+    tenantId = await resolveTenantId(req);
+  }
+
   if (!tenantId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -197,9 +214,18 @@ export async function POST(req: NextRequest) {
     } else {
       reply = first.reply ?? '';
     }
-  } catch (err) {
-    console.error('[chat/gateway] Fetch error:', err);
-    reply = 'Gateway unreachable — check that the OpenClaw gateway is running.';
+  } catch (err: any) {
+    const name = String(err?.name ?? 'Error');
+    const msg = String(err?.message ?? err);
+    const cause = err?.cause ? String(err.cause) : '';
+    console.error('[chat/gateway] Fetch error:', { name, msg, cause, gatewayUrl: GATEWAY_URL });
+
+    // Dev-friendly reply. In prod we still keep it human.
+    if ((process.env.NODE_ENV ?? 'development') === 'development') {
+      reply = `Gateway fetch failed (${name}): ${msg}`;
+    } else {
+      reply = 'Gateway unreachable — check that the OpenClaw gateway is running.';
+    }
   }
 
   if (!reply) reply = '…';
