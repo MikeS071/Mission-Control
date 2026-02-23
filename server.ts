@@ -10,7 +10,7 @@ import { wsManager } from './src/lib/ws-manager';
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
-const handleUpgrade = app.getUpgradeHandler();
+let handleUpgrade: ReturnType<typeof app.getUpgradeHandler> | null = null;
 
 const httpsPort = Number(process.env.PORT_HTTPS) || 3000;
 const httpPort  = Number(process.env.PORT_HTTP)  || 3001;
@@ -29,7 +29,11 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
 
     // Next.js dev HMR websocket
     if (dev && pathname === '/_next/webpack-hmr') {
-      handleUpgrade(req as any, socket as any, head as any);
+      if (handleUpgrade) {
+        handleUpgrade(req as any, socket as any, head as any);
+      } else {
+        socket.destroy();
+      }
       return;
     }
 
@@ -71,6 +75,7 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
 }
 
 app.prepare().then(() => {
+  handleUpgrade = app.getUpgradeHandler();
   startHeartbeatWorker();
 
   const handler = (req: any, res: any) => {
