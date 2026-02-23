@@ -87,6 +87,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 });
   }
 
+  // ── Mirror user message to Telegram immediately (latency UX) ──────────────
+  // NOTE: Telegram bots cannot impersonate the human sender; this is just a
+  // text prefix to visually distinguish MC-mirrored user messages.
+  void sendToTelegram(`👤 ${userContent}`);
+
   // ── Build conversation context ────────────────────────────────────────────
   const history = await db
     .select({ role: chatMessages.role, content: chatMessages.content })
@@ -179,12 +184,8 @@ export async function POST(req: NextRequest) {
     // Non-fatal — reply was already computed
   }
 
-  // ── Mirror to Telegram ───────────────────────────────────────────────────
-  // Both Mike's MC message and Navi's reply mirror to Telegram.
-  // NOTE: Telegram bots cannot impersonate the human sender, so this will
-  // still appear as a bot bubble in Telegram — we only control the text.
-  // No parse_mode — user content is uncontrolled.
-  void sendToTelegram(`👤 ${userContent}`);
+  // ── Mirror assistant reply to Telegram ────────────────────────────────────
+  // (User message was mirrored immediately after insert.)
   void sendToTelegram(reply);
 
   return NextResponse.json({
