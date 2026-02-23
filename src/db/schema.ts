@@ -312,8 +312,42 @@ export const chatMessages = pgTable('chat_messages', {
   tenantId: integer('tenant_id').notNull(),
   role: text('role').notNull(),
   content: text('content').notNull(),
+  // Message source for policy + audit + channel sync.
+  source: text('source').notNull().default('mc'), // 'mc' | 'telegram'
+  // External message id (e.g. Telegram message_id). Optional for MC-originated messages.
+  externalId: bigint('external_id', { mode: 'number' }),
   threadId: integer('thread_id').references(() => chatThreads.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── Telegram (webhook ingress + linking) ─────────────────────────────────────
+export const telegramLinks = pgTable('telegram_links', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  telegramUserId: bigint('telegram_user_id', { mode: 'number' }).notNull().unique(),
+  telegramChatId: bigint('telegram_chat_id', { mode: 'number' }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+});
+
+export const telegramLinkTokens = pgTable('telegram_link_tokens', {
+  token: text('token').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const telegramUpdates = pgTable('telegram_updates', {
+  updateId: bigint('update_id', { mode: 'number' }).primaryKey(),
+  tenantId: integer('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+  telegramUserId: bigint('telegram_user_id', { mode: 'number' }),
+  receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+  status: text('status').notNull().default('ignored'), // ignored|linked|forwarded|denied|error
+  error: text('error'),
 });
 
 // ── Activity feed ─────────────────────────────────────────────────────────────
