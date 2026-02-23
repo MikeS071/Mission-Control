@@ -7,6 +7,7 @@ export async function openclawChatCompletion(params: {
   sessionKey: string;
   messages: OpenClawChatMessage[];
   maxTokens?: number;
+  timeoutMs?: number;
 }): Promise<string> {
   const url = process.env.OPENCLAW_GATEWAY_URL ?? 'http://127.0.0.1:18789';
   const token = process.env.OPENCLAW_GATEWAY_TOKEN;
@@ -25,7 +26,7 @@ export async function openclawChatCompletion(params: {
       messages: params.messages,
       max_tokens: params.maxTokens ?? 1024,
     }),
-    signal: AbortSignal.timeout(120_000),
+    signal: AbortSignal.timeout(params.timeoutMs ?? 120_000),
   });
 
   if (!res.ok) {

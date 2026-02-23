@@ -164,8 +164,10 @@ export async function POST(req: NextRequest) {
     if (err?.code !== '23505') throw err;
   }
 
-  // UX: keep chat active without sending a noisy "Processing" message bubble.
-  // Telegram supports chat actions (typing) which show an activity indicator.
+  // UX: keep chat active.
+  // Send a quick "Processing…" message (so the user sees an immediate ack)
+  // and keep the typing indicator going until the final reply.
+  void telegramSendMessage(chatId, 'Processing…');
   void telegramSendChatAction(chatId, 'typing');
 
   let typingTimer: NodeJS.Timeout | null = setInterval(() => {
@@ -181,6 +183,7 @@ export async function POST(req: NextRequest) {
       const reply = await openclawChatCompletion({
         sessionKey,
         messages: [{ role: 'user', content: text }],
+        timeoutMs: 10 * 60_000, // allow longer OpenClaw runs; webhook is async
       });
 
       const [inserted] = await db
