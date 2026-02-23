@@ -25,11 +25,13 @@ interface TreeNodeProps {
   entry: FileEntry;
   selected: string | null;
   onSelect: (path: string) => void;
+  onDelete?: (path: string) => void;
   depth?: number;
 }
 
-function TreeNode({ entry, selected, onSelect, depth = 0 }: TreeNodeProps) {
+function TreeNode({ entry, selected, onSelect, onDelete, depth = 0 }: TreeNodeProps) {
   const [open, setOpen] = useState(depth === 0);
+  const [confirming, setConfirming] = useState(false);
 
   if (entry.type === 'dir') {
     return (
@@ -53,6 +55,7 @@ function TreeNode({ entry, selected, onSelect, depth = 0 }: TreeNodeProps) {
             entry={child}
             selected={selected}
             onSelect={onSelect}
+            onDelete={onDelete}
             depth={depth + 1}
           />
         ))}
@@ -60,17 +63,44 @@ function TreeNode({ entry, selected, onSelect, depth = 0 }: TreeNodeProps) {
     );
   }
 
+  const isDeletable = entry.name.endsWith('.md');
+
+  if (confirming) {
+    return (
+      <div
+        className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-gray-800"
+        style={{ paddingLeft: `${(depth + 1) * 8}px` }}
+      >
+        <span className="text-gray-400 truncate flex-1">Delete {entry.name}?</span>
+        <button
+          onClick={() => { onDelete?.(entry.path); setConfirming(false); }}
+          className="text-red-400 hover:text-red-300 font-medium"
+        >yes</button>
+        <span className="text-gray-600">/</span>
+        <button onClick={() => setConfirming(false)} className="text-gray-500 hover:text-gray-300">no</button>
+      </div>
+    );
+  }
+
   return (
-    <button
-      onClick={() => onSelect(entry.path)}
-      className={`flex items-center gap-1 w-full text-left text-xs px-2 py-1 rounded hover:bg-gray-800 ${
+    <div
+      className={`group flex items-center gap-1 w-full text-xs px-2 py-1 rounded hover:bg-gray-800 ${
         selected === entry.path ? 'bg-gray-700 text-white' : 'text-gray-400'
       }`}
       style={{ paddingLeft: `${(depth + 1) * 8}px` }}
     >
-      {fileIcon(entry.name)}
-      <span className="truncate">{entry.name}</span>
-    </button>
+      <button className="flex items-center gap-1 flex-1 min-w-0 text-left" onClick={() => onSelect(entry.path)}>
+        {fileIcon(entry.name)}
+        <span className="truncate">{entry.name}</span>
+      </button>
+      {isDeletable && (
+        <button
+          onClick={e => { e.stopPropagation(); setConfirming(true); }}
+          className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 flex-shrink-0 leading-none px-0.5"
+          title="Delete file"
+        >×</button>
+      )}
+    </div>
   );
 }
 
@@ -158,6 +188,17 @@ export function FileExplorer() {
       .catch(() => {});
   };
 
+  const deleteFile = async (filePath: string) => {
+    await fetch(`/api/workspace/file?name=${encodeURIComponent(filePath)}`, { method: 'DELETE' });
+    if (selected === filePath) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      setSelected(null);
+      setContent('');
+      setServerContent('');
+    }
+    refreshFiles();
+  };
+
   const confirmCreate = async () => {
     let name = newFileName.trim();
     if (!name) return;
@@ -241,6 +282,7 @@ export function FileExplorer() {
               entry={entry}
               selected={selected}
               onSelect={open}
+              onDelete={filePath => void deleteFile(filePath)}
               depth={0}
             />
           ))
