@@ -40,6 +40,7 @@ async function sendToTelegram(text: string): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: TG_CHAT_ID, text }),
+      signal: AbortSignal.timeout(3_000),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
@@ -49,6 +50,36 @@ async function sendToTelegram(text: string): Promise<void> {
     console.error('[chat/gateway] Telegram send error:', err);
   }
 }
+
+/**
+ * Telegram typing indicator (`sendChatAction`).
+ * Must be repeated every few seconds while we wait for the gateway.
+ */
+async function sendTelegramTyping(): Promise<void> {
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendChatAction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, action: 'typing' }),
+      signal: AbortSignal.timeout(2_000),
+    });
+  } catch {
+    // best-effort only
+  }
+}
+
+function startTelegramTyping(): () => void {
+  // Initial poke so it feels instant.
+  void sendTelegramTyping();
+
+  const interval = setInterval(() => {
+    void sendTelegramTyping();
+  }, 4_500);
+
+  return () => clearInterval(interval);
+}
+
 const CONTEXT_LIMIT = 10;
 
 export async function POST(req: NextRequest) {
@@ -110,6 +141,9 @@ export async function POST(req: NextRequest) {
   // We already send recent DB history as context, so we can use a per-request
   // session key to avoid poisoned sessions causing "No tool call found...".
   const sessionKeyBase = `web:mc:${tenantId}:m${userMsgId}`;
+
+  // Telegram native typing indicator while gateway is processing.
+  const stopTelegramTyping = startTelegramTyping();
 
   async function callGateway(sessionKey: string): Promise<{ ok: boolean; status?: number; errText?: string; reply?: string }> {
     const gwRes = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
@@ -182,6 +216,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[chat/gateway] DB insert assistant msg:', err);
     // Non-fatal — reply was already computed
+  } finally {
+    stopTelegramTyping();
   }
 
   // ── Mirror assistant reply to Telegram ────────────────────────────────────
