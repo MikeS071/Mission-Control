@@ -36,9 +36,11 @@ team_ok_code="$(curl -sS -o /tmp/billing_team_ok.json -w '%{http_code}' -X POST 
 grep -q '"url"' /tmp/billing_team_ok.json || fail "team seats=10 missing url"
 pass "POST /api/billing/checkout plan=team seats=10 accepted"
 
+# Billing webhook can require a Stripe signature when STRIPE_WEBHOOK_SECRET is set.
+# In CI/dev we allow unsigned payloads only when using placeholder webhook secret.
 webhook_code="$(curl -sS -o /tmp/billing_webhook.json -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
   -d '{"type":"checkout.session.completed","data":{"object":{"metadata":{"tenantId":"1","plan":"pro"},"customer":"cus_mock","subscription":"sub_mock"}}}' "$BASE_URL/api/billing/webhook")"
-[ "$webhook_code" = "200" ] || fail "webhook should return 200 for valid payload shape"
-pass "POST /api/billing/webhook exists and returns 200"
+[ "$webhook_code" = "200" ] || fail "webhook should return 200 for valid payload shape (got $webhook_code). If this fails locally, STRIPE_WEBHOOK_SECRET is likely set and requires stripe-signature."
+pass "POST /api/billing/webhook exists and returns 200 (unsigned payload may require placeholder secret)"
 
 echo "🎉 Billing API tests passed"
