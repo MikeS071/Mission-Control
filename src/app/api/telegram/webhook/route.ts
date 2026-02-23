@@ -22,13 +22,14 @@ function getSecret(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
-  const expected = process.env.MC_TELEGRAM_WEBHOOK_SECRET ?? '';
-  if (!expected || getSecret(req) !== expected) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
+  try {
+    const expected = process.env.MC_TELEGRAM_WEBHOOK_SECRET ?? '';
+    if (!expected || getSecret(req) !== expected) {
+      return NextResponse.json({ ok: false }, { status: 401 });
+    }
 
-  const update = (await req.json().catch(() => null)) as TelegramUpdate | null;
-  if (!update?.update_id) return NextResponse.json({ ok: true });
+    const update = (await req.json().catch(() => null)) as TelegramUpdate | null;
+    if (!update?.update_id) return NextResponse.json({ ok: true });
 
   // Idempotency: insert update_id; if already exists return 200.
   try {
@@ -195,4 +196,10 @@ export async function POST(req: NextRequest) {
   })();
 
   return NextResponse.json({ ok: true });
+  } catch (err) {
+    // Never let this endpoint throw — Telegram treats non-200 as retry-worthy,
+    // which amplifies duplicates and delays.
+    console.error('[telegram/webhook] Unhandled error:', err);
+    return NextResponse.json({ ok: true });
+  }
 }
