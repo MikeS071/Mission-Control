@@ -54,7 +54,8 @@ function nextLocalId(): number {
 export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const loading = pendingCount > 0;
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
@@ -259,7 +260,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text) return;
 
     setInput('');
 
@@ -271,7 +272,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, tempUserMsg]);
-    setLoading(true);
+    setPendingCount((n) => n + 1);
 
     try {
       const res = await fetch('/api/chat/gateway', {
@@ -314,11 +315,11 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       };
       setMessages((prev) => [...prev, errMsg]);
     } finally {
-      setLoading(false);
+      setPendingCount((n) => Math.max(0, n - 1));
       // Refocus input after send
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [input, loading]);
+  }, [input]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -450,12 +451,12 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={loading ? 'Navi is replying… (you can keep typing)' : 'Message Navi…'}
-          className="flex-1 resize-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-gray-500 focus:ring-0 disabled:opacity-50 transition-colors leading-relaxed"
+          className="flex-1 resize-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-gray-500 focus:ring-0 disabled:opacity-50 transition-colors leading-relaxed overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700"
         />
         <button
           onMouseDown={(e) => e.preventDefault()} // keep focus in textarea
           onClick={sendMessage}
-          disabled={loading || !input.trim()}
+          disabled={!input.trim()}
           className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-40 transition-colors"
           style={{ background: '#ff3b6f' }}
           aria-label="Send message"
