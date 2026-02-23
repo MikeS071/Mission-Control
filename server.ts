@@ -27,8 +27,8 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
   server.on('upgrade', (req, socket, head) => {
     const { pathname, query } = parse(req.url ?? '', true);
 
-    // Next.js dev HMR websocket
-    if (dev && pathname === '/_next/webpack-hmr') {
+    // Next.js dev HMR websocket(s)
+    if (dev && pathname && pathname.startsWith('/_next/')) {
       if (handleUpgrade) {
         handleUpgrade(req as any, socket as any, head as any);
       } else {
