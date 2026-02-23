@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
   }
 
   const src = (source === undefined ? 'telegram' : source);
-  if (src !== 'telegram' && src !== 'mc') {
-    return NextResponse.json({ error: 'source must be "telegram" or "mc"' }, { status: 400 });
+  if (src !== 'telegram' && src !== 'mc' && src !== 'webchat') {
+    return NextResponse.json({ error: 'source must be "telegram", "mc", or "webchat"' }, { status: 400 });
   }
 
   let extId: number | null = null;
