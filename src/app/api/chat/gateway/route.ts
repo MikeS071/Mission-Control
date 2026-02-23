@@ -15,10 +15,29 @@ import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 
-const GATEWAY_URL   = process.env.GATEWAY_URL            ?? 'http://127.0.0.1:18789';
-const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN;
+const GATEWAY_URL    = process.env.GATEWAY_URL            ?? 'http://127.0.0.1:18789';
+const GATEWAY_TOKEN  = process.env.OPENCLAW_GATEWAY_TOKEN;
+const TG_BOT_TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
+const TG_CHAT_ID     = process.env.TELEGRAM_CHAT_ID;
+
 if (!GATEWAY_TOKEN) {
   console.error('[chat/gateway] OPENCLAW_GATEWAY_TOKEN is not set — requests will fail auth');
+}
+
+/** Send a message to the Telegram channel — fire-and-forget, never throws. */
+async function sendToTelegram(text: string): Promise<void> {
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TG_CHAT_ID,
+        text,
+        parse_mode: 'Markdown',
+      }),
+    });
+  } catch { /* fire-and-forget */ }
 }
 const CONTEXT_LIMIT = 10;
 
@@ -121,6 +140,12 @@ export async function POST(req: NextRequest) {
     console.error('[chat/gateway] DB insert assistant msg:', err);
     // Non-fatal — reply was already computed
   }
+
+  // ── Mirror to Telegram ───────────────────────────────────────────────────
+  // Both the user's MC message and Navi's reply go to Telegram so all channels
+  // stay in sync. User messages get a "💬 MC:" prefix for visual distinction.
+  void sendToTelegram(`💬 *MC:* ${userContent}`);
+  void sendToTelegram(reply);
 
   return NextResponse.json({
     reply,
