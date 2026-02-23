@@ -29,6 +29,27 @@ interface HistoryResponse {
   error?: string;
 }
 
+function normalizeChatMessage(raw: unknown): ChatMessage | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+
+  const id = Number(r.id);
+  if (!Number.isFinite(id)) return null;
+
+  const roleRaw = String(r.role ?? '').toLowerCase().trim();
+  const role: ChatMessage['role'] =
+    roleRaw === 'user' || roleRaw === 'assistant' || roleRaw === 'system'
+      ? (roleRaw as ChatMessage['role'])
+      : 'assistant';
+
+  return {
+    id,
+    role,
+    content: String(r.content ?? ''),
+    createdAt: String(r.createdAt ?? ''),
+  };
+}
+
 function isNearDuplicate(a: ChatMessage, b: ChatMessage): boolean {
   if (String(a.id) === String(b.id)) return true;
   if (a.role !== b.role) return false;
@@ -67,6 +88,9 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const initialScrollDone = useRef(false);
 
   const stickToBottomRef = useRef(true);
+  const lastScrollTopRef = useRef(0);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -79,20 +103,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       }
       const data: HistoryResponse = await res.json();
       const normalized: ChatMessage[] = (data.messages ?? [])
-        .map((m: any) => {
-          const roleRaw = String(m?.role ?? '').toLowerCase().trim();
-          const role: ChatMessage['role'] =
-            roleRaw === 'user' || roleRaw === 'assistant' || roleRaw === 'system'
-              ? (roleRaw as ChatMessage['role'])
-              : 'assistant';
-          return {
-            id: Number(m.id),
-            role,
-            content: String(m.content ?? ''),
-            createdAt: String(m.createdAt ?? ''),
-          };
-        })
-        .filter((m) => Number.isFinite(m.id));
+        .map((m) => normalizeChatMessage(m))
+        .filter((m): m is ChatMessage => !!m);
 
       // De-dupe by id, then by (role+content+near-time) to guard against
       // races between WS pushes and history polls.
@@ -112,6 +124,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       }
 
       setMessages(pass2);
+      setHasMore((data.messages ?? []).length >= 200);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setHistoryError(msg);
@@ -120,6 +133,69 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       setHistoryLoading(false);
     }
   }, []);
+
+  const loadOlder = useCallback(async () => {
+    if (loadingOlder) return;
+    if (!hasMore) return;
+
+    const first = messages[0];
+    const beforeId = first?.id;
+    if (!beforeId || beforeId <= 0) {
+      setHasMore(false);
+      return;
+    }
+
+    const container = messagesRef.current;
+    const prevScrollHeight = container?.scrollHeight ?? 0;
+    const prevScrollTop = container?.scrollTop ?? 0;
+
+    setLoadingOlder(true);
+    try {
+      const res = await fetch(`/api/chat/history?limit=80&beforeId=${encodeURIComponent(String(beforeId))}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => 'Unknown error');
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+
+      const data: HistoryResponse = await res.json();
+      const older: ChatMessage[] = (data.messages ?? [])
+        .map((m) => normalizeChatMessage(m))
+        .filter((m): m is ChatMessage => !!m && m.id > 0);
+
+      if (older.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      setMessages((prev) => {
+        const merged: ChatMessage[] = [...older, ...prev];
+        const byId = new Set<string>();
+        const out: ChatMessage[] = [];
+        for (const m of merged) {
+          const k = String(m.id);
+          if (byId.has(k)) continue;
+          byId.add(k);
+          out.push(m);
+        }
+        return out;
+      });
+
+      // Maintain visual position: keep the same content under the user's eye.
+      setTimeout(() => {
+        const el = messagesRef.current;
+        if (!el) return;
+        const nextScrollHeight = el.scrollHeight;
+        const delta = nextScrollHeight - prevScrollHeight;
+        el.scrollTop = prevScrollTop + delta;
+      }, 0);
+    } catch (err) {
+      console.error('[ChatPanel] Failed to load older:', err);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [hasMore, loadingOlder, messages, messagesRef]);
 
   // ── Load history on mount ─────────────────────────────────────────────────
   useEffect(() => {
@@ -160,19 +236,13 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
       ws.onmessage = (event) => {
         try {
-          const raw = JSON.parse(event.data as string) as any;
-          const id = Number(raw?.id);
-          if (!Number.isFinite(id)) return;
-          const roleRaw = String(raw?.role ?? '').toLowerCase().trim();
-          const role = (roleRaw === 'user' || roleRaw === 'assistant' || roleRaw === 'system')
-            ? (roleRaw as ChatMessage['role'])
-            : 'assistant';
+          const raw = JSON.parse(event.data as string) as unknown;
+          const base = normalizeChatMessage(raw);
+          if (!base) return;
 
           const msg: ChatMessage = {
-            id,
-            role,
-            content: String(raw.content ?? ''),
-            createdAt: String(raw.createdAt ?? new Date().toISOString()),
+            ...base,
+            createdAt: base.createdAt || new Date().toISOString(),
           };
           setMessages((prev) => {
             const key = String(msg.id);
@@ -234,11 +304,13 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       return;
     }
 
-    // Only auto-scroll if the user is already at/near bottom.
+    // Only auto-scroll when a NEW message arrives *and* the user is at the bottom.
+    // (Do not couple to `loading` — that causes annoying "snap to bottom" while
+    // the user is trying to scroll up during a reply.)
     if (stickToBottomRef.current) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages, loading]);
+  }, [messages]);
 
   // ── Poll Navi agent status ────────────────────────────────────────────────
   useEffect(() => {
@@ -393,8 +465,23 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         onScroll={() => {
           const el = messagesRef.current;
           if (!el) return;
-          const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-          stickToBottomRef.current = distFromBottom < 80;
+
+          const prevTop = lastScrollTopRef.current;
+          const nextTop = el.scrollTop;
+          lastScrollTopRef.current = nextTop;
+
+          // If the user scrolls up at all, immediately disable auto-stick.
+          if (nextTop < prevTop) {
+            stickToBottomRef.current = false;
+          } else {
+            const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+            stickToBottomRef.current = distFromBottom < 20;
+          }
+
+          // Infinite scroll: when near the top, fetch older messages.
+          if (el.scrollTop < 40) {
+            void loadOlder();
+          }
         }}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700"
       >
@@ -474,8 +561,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           onMouseDown={(e) => e.preventDefault()} // keep focus in textarea
           onClick={sendMessage}
           disabled={!input.trim()}
-          className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-40 transition-colors"
-          style={{ background: '#ff3b6f' }}
+          className="rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed"
+          style={{ background: '#ff3b6f', opacity: 1 }}
           aria-label="Send message"
         >
           Send
