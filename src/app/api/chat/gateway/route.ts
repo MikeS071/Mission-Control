@@ -119,6 +119,7 @@ export async function POST(req: NextRequest) {
         messages: contextMessages,
         max_tokens: 1024,
       }),
+      signal: AbortSignal.timeout(120_000), // 2-min ceiling; gateway can be slow
     });
 
     if (!gwRes.ok) {
