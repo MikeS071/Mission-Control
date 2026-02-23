@@ -10,7 +10,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveTenantId } from '@/lib/tenant';
-import { wsManager } from '@/lib/ws-manager';
+// IMPORTANT: import via the same module specifier as server.ts to ensure
+// the wsManager singleton instance is shared (token minting must match WS upgrade).
+import { wsManager } from '../../../../lib/ws-manager';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
