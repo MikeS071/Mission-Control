@@ -5,6 +5,7 @@ import { chatMessages, telegramLinks, telegramLinkTokens, telegramUpdates, users
 import { openclawChatCompletion } from '@/lib/openclaw-gateway';
 import { authorizeInbound } from '@/lib/policy';
 import { telegramSendChatAction, telegramSendMessage } from '@/lib/telegram-bot';
+import { wsManager } from '@/lib/ws-manager';
 
 type TelegramUpdate = {
   update_id: number;
@@ -136,15 +137,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // Persist inbound (idempotent)
+  // Persist inbound (idempotent) + broadcast to live MC chat
   try {
-    await db.insert(chatMessages).values({
-      tenantId: link.tenantId,
-      role: 'user',
-      content: text,
-      source: 'telegram',
-      externalId: msg.message_id,
-    });
+    const [inserted] = await db
+      .insert(chatMessages)
+      .values({
+        tenantId: link.tenantId,
+        role: 'user',
+        content: text,
+        source: 'telegram',
+        externalId: msg.message_id,
+      })
+      .returning({ id: chatMessages.id, createdAt: chatMessages.createdAt });
+
+    if (inserted?.id) {
+      wsManager.broadcast(link.tenantId, {
+        id: inserted.id,
+        role: 'user',
+        content: text,
+        createdAt: inserted.createdAt.toISOString(),
+      });
+    }
   } catch (err: any) {
     // Unique index on (tenant_id, source, external_id) WHERE external_id IS NOT NULL
     // makes Telegram ingress idempotent.
@@ -170,12 +183,24 @@ export async function POST(req: NextRequest) {
         messages: [{ role: 'user', content: text }],
       });
 
-      await db.insert(chatMessages).values({
-        tenantId: link.tenantId,
-        role: 'assistant',
-        content: reply,
-        source: 'telegram',
-      });
+      const [inserted] = await db
+        .insert(chatMessages)
+        .values({
+          tenantId: link.tenantId,
+          role: 'assistant',
+          content: reply,
+          source: 'telegram',
+        })
+        .returning({ id: chatMessages.id, createdAt: chatMessages.createdAt });
+
+      if (inserted?.id) {
+        wsManager.broadcast(link.tenantId, {
+          id: inserted.id,
+          role: 'assistant',
+          content: reply,
+          createdAt: inserted.createdAt.toISOString(),
+        });
+      }
 
       await telegramSendMessage(chatId, reply);
 
