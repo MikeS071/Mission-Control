@@ -1,3 +1,7 @@
+---
+title: MC ↔ Telegram ↔ OpenClaw Gateway (Dev)
+---
+
 # MC ↔ Telegram ↔ OpenClaw Gateway (Dev)
 
 This doc captures the current dev integration wiring between:
@@ -53,4 +57,3 @@ This doc captures the current dev integration wiring between:
 ## Tests run (dev)
 - `npm test` (Jest)
 - `NODE_OPTIONS=--max-old-space-size=4096 npm run build`
-
