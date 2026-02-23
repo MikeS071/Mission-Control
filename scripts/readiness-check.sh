@@ -23,7 +23,7 @@ echo ""
 echo "## 1. Schema ↔ Migration Coherence"
 
 # Extract column names defined in schema.ts
-SCHEMA_COLS=$(grep -oP "(?:text|integer|boolean|timestamp|jsonb|numeric|bigint|date|uuid)\('[a-z_]+'\)" src/db/schema.ts 2>/dev/null | grep -oP "(?<=')[a-z_]+(?=')" | sort)
+SCHEMA_COLS=$(grep -oP "(?:text|integer|boolean|timestamp|jsonb|numeric|bigint|date|uuid)\('\K[a-z_]+(?=')" src/db/schema.ts 2>/dev/null | sort)
 # Extract columns from migration files
 MIGRATION_COLS=$(grep -ohP "ADD COLUMN IF NOT EXISTS [a-z_]+" drizzle/migrations/*.sql 2>/dev/null | awk '{print $NF}' | sort)
 
