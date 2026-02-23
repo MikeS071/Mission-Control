@@ -181,9 +181,10 @@ export async function POST(req: NextRequest) {
 
   // ── Mirror to Telegram ───────────────────────────────────────────────────
   // Both Mike's MC message and Navi's reply mirror to Telegram.
-  // Prefixed with [MC] so it's clear this is forwarded from Mission Control,
-  // not a Navi statement. No parse_mode — user content is uncontrolled.
-  void sendToTelegram(`[MC] ${userContent}`);
+  // NOTE: Telegram bots cannot impersonate the human sender, so this will
+  // still appear as a bot bubble in Telegram — we only control the text.
+  // No parse_mode — user content is uncontrolled.
+  void sendToTelegram(userContent);
   void sendToTelegram(reply);
 
   return NextResponse.json({
