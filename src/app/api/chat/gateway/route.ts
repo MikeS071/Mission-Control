@@ -16,10 +16,17 @@ import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 
 const GATEWAY_URL   = process.env.GATEWAY_URL            ?? 'http://127.0.0.1:18789';
-const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN ?? 'cc68b7fe544ea32d1708115c67da65b55553eee215df3bff';
+const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN;
+if (!GATEWAY_TOKEN) {
+  console.error('[chat/gateway] OPENCLAW_GATEWAY_TOKEN is not set — requests will fail auth');
+}
 const CONTEXT_LIMIT = 10;
 
 export async function POST(req: NextRequest) {
+  if (!GATEWAY_TOKEN) {
+    return NextResponse.json({ error: 'Gateway not configured — OPENCLAW_GATEWAY_TOKEN missing' }, { status: 503 });
+  }
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   const tenantId = await resolveTenantId(req);
   if (!tenantId) {
