@@ -57,7 +57,11 @@ describe('xp helpers', () => {
     const today = new Date('2024-05-01T00:00:00.000Z');
     jest.setSystemTime(today);
 
+    // 1) total xp aggregate
+    mockedDb.select.mockReturnValueOnce(createSelectBuilder([{ totalXp: 0 }], { withLimit: false }));
+    // 2) streak row lookup
     mockedDb.select.mockReturnValueOnce(createSelectBuilder([]));
+
     const ledgerInsert = createInsertBuilder();
     const streakInsert = createInsertBuilder();
     const bonusInsert = createInsertBuilder();
@@ -84,11 +88,15 @@ describe('xp helpers', () => {
     const today = new Date('2024-05-02T00:00:00.000Z');
     jest.setSystemTime(today);
 
+    // 1) total xp aggregate
+    mockedDb.select.mockReturnValueOnce(createSelectBuilder([{ totalXp: 0 }], { withLimit: false }));
+    // 2) streak row lookup
     mockedDb.select.mockReturnValueOnce(
       createSelectBuilder([
         { id: 1, tenantId: 5, userEmail: 'system', currentStreak: 3, longestStreak: 4, lastActivityDate: '2024-05-02' },
       ])
     );
+
     const ledgerInsert = createInsertBuilder();
     mockedDb.insert.mockReturnValueOnce(ledgerInsert);
 
@@ -104,6 +112,9 @@ describe('xp helpers', () => {
     const today = new Date('2024-05-03T00:00:00.000Z');
     jest.setSystemTime(today);
 
+    // 1) total xp aggregate
+    mockedDb.select.mockReturnValueOnce(createSelectBuilder([{ totalXp: 0 }], { withLimit: false }));
+    // 2) streak row lookup
     mockedDb.select.mockReturnValueOnce(
       createSelectBuilder([
         { id: 7, tenantId: 5, userEmail: 'system', currentStreak: 2, longestStreak: 3, lastActivityDate: '2024-05-02' },
