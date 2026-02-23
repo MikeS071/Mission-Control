@@ -2,11 +2,13 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, MessageSquare, Pencil, Plus, Send, Settings2, UserX } from 'lucide-react';
+import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, Pencil, Plus, Settings2, UserX } from 'lucide-react';
+import { ChatPanel } from '@/components/ChatPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EventItem, EventTimeline } from '@/components/EventTimeline';
+import { ActivityPane } from '@/components/ActivityPane';
 
 type ChecklistItem = { id: string; text: string; checked: boolean };
 
@@ -60,6 +62,8 @@ type StatsSummary = {
   tokenLimitMonthly: number;
   tokenPctOfLimit: number | null;
   primaryAgentName: string | null;
+  tasksThisWeek: number;
+  currentStreak: number;
 };
 
 const STATUS_COLUMNS = ['backlog', 'in_progress', 'review', 'done'];
@@ -304,6 +308,80 @@ function AgentTeamPanel({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; p
   );
 }
 
+// ─── Navi Status Tile ─────────────────────────────────────────────────────────
+
+function timeAgoShort(dateStr: string): string {
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return 'now';
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    return `${Math.floor(hours / 24)}d`;
+  } catch {
+    return '';
+  }
+}
+
+function NaviStatusTile({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; primaryAgentName: string | null }) {
+  const [agents, setAgents] = useState<ActiveAgent[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/agents/active', { cache: 'no-store' });
+        if (res.ok) {
+          const data = (await res.json()) as ActiveAgent[];
+          setAgents(Array.isArray(data) ? data : []);
+        }
+      } catch { /* ignore */ }
+    };
+    void load();
+    const interval = setInterval(() => void load(), 10_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayName = primaryAgentName || 'Navi';
+
+  // Find Navi in the agents list for last-seen info
+  const naviAgent = agents.find((a) =>
+    ['navi', displayName.toLowerCase()].includes(a.agentName.toLowerCase())
+  );
+  const lastSeen = naviAgent?.lastSeenAt ? timeAgoShort(naviAgent.lastSeenAt) : null;
+
+  // Determine effective status: gateway determines Navi's connectivity; sub-agent
+  // presence in the poll response can indicate idle vs working
+  const agentStatus: AgentStatus = !gatewayOk
+    ? 'inactive'
+    : naviAgent?.status ?? 'working';
+
+  const dotColor = agentStatus === 'working'
+    ? 'bg-emerald-400'
+    : agentStatus === 'idle'
+    ? 'bg-amber-400'
+    : 'bg-gray-600';
+
+  const statusLabel = agentStatus === 'working'
+    ? 'Active'
+    : agentStatus === 'idle'
+    ? 'Idle'
+    : 'Offline';
+
+  return (
+    <div className="flex-shrink-0 flex items-center gap-2 rounded-lg border border-gray-800 bg-gray-900/60 px-3 py-2 min-w-[120px]">
+      <span className={`h-2 w-2 rounded-full flex-shrink-0 ${dotColor}`} />
+      <div className="min-w-0">
+        <div className="text-[11px] font-semibold text-gray-200 truncate">{displayName}</div>
+        <div className="text-[10px] text-gray-500">
+          {statusLabel}{lastSeen ? ` · ${lastSeen}` : ''}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Resizable Divider ────────────────────────────────────────────────────────
 
 function ResizableDivider({ onDrag }: { onDrag: (dx: number) => void }) {
@@ -337,152 +415,6 @@ function ResizableDivider({ onDrag }: { onDrag: (dx: number) => void }) {
   );
 }
 
-// ─── Chat Pane ────────────────────────────────────────────────────────────────
-
-type ChatMessage = { id: string; from: 'agent' | 'user'; avatar: string; text: string };
-type ChatThread = { id: string; label: string };
-
-const INITIAL_THREADS: ChatThread[] = [
-  { id: '1', label: 'Sprint' },
-  { id: '2', label: 'Auth' },
-  { id: '3', label: 'Kanban' },
-  { id: '4', label: 'Docs' },
-];
-
-const PLACEHOLDER_MESSAGES: ChatMessage[] = [
-  { id: '1', from: 'agent', avatar: 'N', text: 'Working on T006 — auth middleware refactor. 3 subtasks complete, wrapping up tests.' },
-  { id: '2', from: 'user', avatar: 'M', text: "What's the ETA?" },
-  { id: '3', from: 'agent', avatar: 'N', text: '~15 minutes. Will update T006 status to done when complete.' },
-  { id: '4', from: 'agent', avatar: 'N', text: 'Also flagging: T007 analytics dashboard merged to dev. Readiness score 95 — auto-merged.' },
-];
-
-function ChatPane({ primaryAgentName }: { primaryAgentName: string | null }) {
-  const displayName = primaryAgentName || 'Navi';
-  const initial = displayName[0]?.toUpperCase() ?? 'N';
-  const [threads, setThreads] = useState<ChatThread[]>(INITIAL_THREADS);
-  const [activeThreadId, setActiveThreadId] = useState('1');
-  const [messagesByThread, setMessagesByThread] = useState<Record<string, ChatMessage[]>>({
-    '1': PLACEHOLDER_MESSAGES,
-    '2': [],
-    '3': [],
-    '4': [],
-  });
-  const [input, setInput] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const messages = messagesByThread[activeThreadId] ?? [];
-
-  const send = () => {
-    const text = input.trim();
-    if (!text) return;
-    const userMsg: ChatMessage = { id: String(Date.now()), from: 'user', avatar: 'M', text };
-    setMessagesByThread((prev) => ({ ...prev, [activeThreadId]: [...(prev[activeThreadId] ?? []), userMsg] }));
-    setInput('');
-    setTimeout(() => {
-      const agentMsg: ChatMessage = { id: String(Date.now() + 1), from: 'agent', avatar: initial, text: 'Got it — on it.' };
-      setMessagesByThread((prev) => ({ ...prev, [activeThreadId]: [...(prev[activeThreadId] ?? []), agentMsg] }));
-    }, 800);
-  };
-
-  const addThread = () => {
-    const id = String(Date.now());
-    const label = `Thread ${threads.length + 1}`;
-    setThreads((prev) => [...prev, { id, label }]);
-    setMessagesByThread((prev) => ({ ...prev, [id]: [] }));
-    setActiveThreadId(id);
-  };
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, activeThreadId]);
-
-  const activeThread = threads.find((t) => t.id === activeThreadId);
-
-  return (
-    <div className="flex h-full bg-gray-950 overflow-hidden">
-      {/* Thread sidebar — narrow */}
-      <div className="w-14 flex-shrink-0 border-r border-gray-800 flex flex-col bg-gray-900/40">
-        {/* Header icon */}
-        <div className="flex-shrink-0 h-8 flex items-center justify-center border-b border-gray-800">
-          <MessageSquare className="h-3 w-3 text-gray-600" />
-        </div>
-        {/* Thread list */}
-        <div className="flex-1 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-0.5 [&::-webkit-scrollbar-thumb]:bg-gray-800">
-          {threads.map((thread) => (
-            <button
-              key={thread.id}
-              type="button"
-              onClick={() => setActiveThreadId(thread.id)}
-              className={`w-full px-1 py-2.5 text-[9px] leading-tight text-center truncate transition-colors border-l-2 ${
-                activeThreadId === thread.id
-                  ? 'bg-indigo-900/40 text-indigo-300 border-indigo-500'
-                  : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/40 border-transparent'
-              }`}
-              title={thread.label}
-            >
-              {thread.label}
-            </button>
-          ))}
-        </div>
-        {/* New thread */}
-        <button
-          type="button"
-          onClick={addThread}
-          className="flex-shrink-0 h-8 flex items-center justify-center border-t border-gray-800 text-gray-600 hover:text-gray-400 hover:bg-gray-800/40 transition-colors"
-          title="New thread"
-        >
-          <Plus className="h-3 w-3" />
-        </button>
-      </div>
-
-      {/* Main chat column */}
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* Title bar */}
-        <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 border-b border-gray-800 bg-gray-900/60 flex-shrink-0">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(74,222,128,0.6)]" />
-          <span className="text-[11px] font-semibold text-gray-200">{displayName}</span>
-          {activeThread && <span className="text-[9px] text-gray-600">· {activeThread.label}</span>}
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2.5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700">
-          {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center">
-              <span className="text-[10px] text-gray-700">Start a conversation…</span>
-            </div>
-          )}
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex gap-2 ${msg.from === 'user' ? 'flex-row-reverse' : ''}`}>
-              <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0 mt-0.5 ${msg.from === 'agent' ? 'bg-indigo-700' : 'bg-gray-700'}`}>
-                {msg.avatar}
-              </div>
-              <div className={`rounded-lg px-2.5 py-1.5 text-[11px] leading-relaxed text-gray-200 max-w-[88%] ${msg.from === 'agent' ? 'bg-gray-800/80' : 'bg-indigo-900/50'}`}>
-                {msg.text}
-              </div>
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Input — always pinned to bottom */}
-        <div className="px-2.5 py-2 border-t border-gray-800 flex-shrink-0 bg-gray-900/30">
-          <div className="flex gap-1.5 items-start">
-            <textarea
-              className="flex-1 min-w-0 rounded border border-gray-700/60 bg-gray-900 px-2.5 py-1.5 text-[11px] text-white placeholder-gray-600 focus:outline-none focus:border-indigo-600/60 resize-none"
-              placeholder={`Message ${displayName}\u2026`}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-            />
-            <button type="button" onClick={send} className="flex-shrink-0 rounded bg-indigo-700/80 hover:bg-indigo-600 p-1.5 transition-colors mt-0.5">
-              <Send className="h-3 w-3 text-white" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Main KanbanBoard ─────────────────────────────────────────────────────────
 
@@ -493,7 +425,7 @@ export function KanbanBoard() {
   const [newTask, setNewTask] = useState<TaskForm>(emptyForm);
   const [editTask, setEditTask] = useState<TaskForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [stats, setStats] = useState({ tokens: '--', cost: '--', agents: '--', taskSummary: '--', saved: '--', tokenPct: '--' });
+  const [stats, setStats] = useState({ tokens: '--', cost: '--', taskSummary: '--', saved: '--', tokenPct: '--', tasksThisWeek: '--', streak: '--' });
   const [primaryAgentName, setPrimaryAgentName] = useState<string | null>(null);
   const [gatewayOk, setGatewayOk] = useState(false);
   const [leftWidth, setLeftWidth] = useState(220);
@@ -534,7 +466,6 @@ const [rightWidth, setRightWidth] = useState(402);
       const totalTokens = summary.totalTokens ?? 0;
       const totalCost = parseFloat(summary.totalCostUsd ?? '0');
       const savedCost = parseFloat(summary.savedUsd ?? '0');
-      const activeAgents = summary.activeAgents ?? 0;
       const pct = summary.pctComplete ?? 0;
       const tokenPct = summary.tokenPctOfLimit;
 
@@ -543,12 +474,21 @@ const [rightWidth, setRightWidth] = useState(402);
         tokens: formatTokens(totalTokens),
         cost: `$${totalCost.toFixed(2)}`,
         saved: `$${savedCost.toFixed(2)}`,
-        agents: String(activeAgents),
         taskSummary: `${pct}%`,
         tokenPct: typeof tokenPct === 'number' ? `${tokenPct}%` : '--',
+        tasksThisWeek: String(summary.tasksThisWeek ?? 0),
+        streak: String(summary.currentStreak ?? 0),
       });
     } catch {
       // noop
+    }
+  }, []);
+
+  // Disable browser scroll restoration — prevents iPad/mobile from jumping to a saved scroll position
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
     }
   }, []);
 
@@ -775,22 +715,22 @@ const [rightWidth, setRightWidth] = useState(402);
   const saveWipLimit = (column: string) => { const parsed = Number(editingWipValue); setWipLimits((prev) => ({ ...prev, [column]: Number.isFinite(parsed) && parsed > 0 ? parsed : null })); setEditingWipColumn(null); };
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col h-full gap-2">
       {/* Stats tiles */}
-      <div className="flex gap-3 overflow-x-auto pb-0.5">
+      <div className="flex-shrink-0 flex gap-3 overflow-x-auto pb-0.5">
         <StatsTile label="Session Tokens" value={stats.tokens} sub={stats.tokenPct !== '--' ? `${stats.tokenPct} of limit` : undefined} color="border-blue-700" />
         <StatsTile label="Estimated Cost" value={stats.cost} color="border-emerald-700" />
         <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
-        <StatsTile label="Active Agents" value={stats.agents} color="border-purple-700" />
-        <StatsTile label="% Complete" value={stats.taskSummary} color="border-orange-700" />
+        <StatsTile label="Tasks This Week" value={stats.tasksThisWeek} color="border-purple-700" />
+        <StatsTile label="Streak 🔥" value={stats.streak} sub={stats.streak !== '--' && stats.streak !== '0' ? 'days' : undefined} color="border-orange-700" />
       </div>
 
       {/* 3-pane resizable layout */}
-<div className="flex h-[calc(100vh-165px)] rounded-lg overflow-hidden border border-gray-800">
+<div className="flex flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-800">
 
-        {/* ── Left pane: Agent Team ── */}
-        <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
-          <AgentTeamPanel gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
+        {/* ── Left pane: Activity Feed ── */}
+        <div style={{ width: leftWidth, minWidth: 160, maxWidth: 360 }} className="flex-shrink-0 flex flex-col overflow-hidden bg-gray-900/50">
+          <ActivityPane />
         </div>
 
         <ResizableDivider onDrag={(dx) => setLeftWidth((w) => Math.max(140, Math.min(320, w + dx)))} />
@@ -800,11 +740,11 @@ const [rightWidth, setRightWidth] = useState(402);
           {/* Compact filter bar */}
           <div className="flex-shrink-0 border-b border-gray-800 bg-gray-900/30 px-3 py-2">
             <div className="flex flex-wrap gap-1.5 items-center">
-              <input className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-36" placeholder="Search…" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
-              <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.priority} onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}><option value="All">Priority</option>{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}</select>
-              <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.goal} onChange={(e) => setFilters((prev) => ({ ...prev, goal: e.target.value }))}>{filterGoalOptions.map((g) => <option key={g} value={g}>{g === 'All' ? 'Goal' : g}</option>)}</select>
-              <select className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.agent} onChange={(e) => setFilters((prev) => ({ ...prev, agent: e.target.value }))}>{agentOptions.map((a) => <option key={a} value={a}>{a === 'All' ? 'Agent' : a}</option>)}</select>
-              <input className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-24" placeholder="Tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
+              <input autoComplete="off" suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-36" placeholder="Search…" value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} />
+              <select suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.priority} onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}><option value="All">Priority</option>{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+              <select suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.goal} onChange={(e) => setFilters((prev) => ({ ...prev, goal: e.target.value }))}>{filterGoalOptions.map((g) => <option key={g} value={g}>{g === 'All' ? 'Goal' : g}</option>)}</select>
+              <select suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs" value={filters.agent} onChange={(e) => setFilters((prev) => ({ ...prev, agent: e.target.value }))}>{agentOptions.map((a) => <option key={a} value={a}>{a === 'All' ? 'Agent' : a}</option>)}</select>
+              <input autoComplete="off" suppressHydrationWarning className="rounded border border-gray-700/60 bg-gray-950 px-2 py-1 text-xs w-24" placeholder="Tag" value={filters.tags} onChange={(e) => setFilters((prev) => ({ ...prev, tags: e.target.value }))} />
               {hasActiveFilters && <button type="button" onClick={() => setFilters(emptyFilters)} className="text-[10px] text-gray-500 hover:text-gray-300 px-1">✕ Clear</button>}
               {hasActiveFilters && hiddenCount > 0 && <span className="text-[10px] text-gray-600">{hiddenCount} hidden</span>}
             </div>
@@ -947,7 +887,7 @@ const [rightWidth, setRightWidth] = useState(402);
 
         {/* ── Right pane: Chat ── */}
         <div style={{ width: rightWidth, minWidth: 280, maxWidth: 700 }} className="flex-shrink-0 overflow-hidden h-full">
-          <ChatPane primaryAgentName={primaryAgentName} />
+          <ChatPanel agentName={primaryAgentName ?? 'Navi'} />
         </div>
 
       </div>{/* end 3-pane */}

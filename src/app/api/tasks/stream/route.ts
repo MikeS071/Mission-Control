@@ -27,15 +27,14 @@ export async function GET(req: NextRequest) {
       };
       await send();
       const interval = setInterval(send, 5000);
-      // Close after 5 minutes; client will reconnect
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        try { controller.close(); } catch {}
-      }, 300000);
+      // Keepalive comment every 15s — prevents Tailscale / CF from closing idle connections
+      const keepalive = setInterval(() => {
+        try { controller.enqueue(encoder.encode(': keepalive\n\n')); } catch { clearInterval(keepalive); }
+      }, 15_000);
       // Clean up if client disconnects
       req.signal.addEventListener('abort', () => {
         clearInterval(interval);
-        clearTimeout(timeout);
+        clearInterval(keepalive);
         try { controller.close(); } catch {}
       });
     },

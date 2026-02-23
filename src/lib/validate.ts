@@ -76,6 +76,7 @@ export const BillingCheckoutSchema = z.object({
     message: 'plan must be strategos, archon, pro, or team',
   }),
   billingCycle: z.enum(['monthly', 'yearly'] as const).optional(),
+  seats: z.number().int().min(1).max(1000).optional(),
 });
 
 export const GatewayCreateSchema = z.object({

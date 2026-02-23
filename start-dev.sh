@@ -16,7 +16,7 @@ fi
 for port in 3003 3004; do
   pid=$(ss -ltnp 2>/dev/null | awk -v p=":$port" '$4 ~ p {match($0,/pid=([0-9]+)/,m); if(m[1]){print m[1]; exit}}')
   if [ -n "$pid" ]; then
-    kill -9 "$pid" 2>/dev/null || true
+    kill "$pid" 2>/dev/null || true
     sleep 0.5
   fi
 done
@@ -48,4 +48,4 @@ export NODE_OPTIONS="--max-old-space-size=3072"
 nohup ./node_modules/.bin/tsx server.ts >> /tmp/mc-dev.log 2>&1 &
 DEV_PID=$!
 echo "$DEV_PID" > "$DEV_PID_FILE"
-echo "Dev instance started (PID $DEV_PID) — https://ocprd-sgp1-01.***REDACTED_HOST***:3002 / http://127.0.0.1:3003"
+echo "Dev instance started (PID $DEV_PID) — https://dev.archonhq.ai (HTTPS:3004 / HTTP:3003)"

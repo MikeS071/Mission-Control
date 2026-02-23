@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { arenaChallenges, arenaUserProgress } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
+import { emitEvent } from '@/lib/activity';
 
 type Body = { progressId?: number };
 
@@ -23,6 +24,10 @@ export async function POST(req: NextRequest) {
     const [updated] = await db.update(arenaUserProgress).set({
       status: 'claimed', claimedAt: new Date(), rewardXpAwarded: row.rewardXp, updatedAt: new Date(),
     }).where(and(eq(arenaUserProgress.id, progressId), eq(arenaUserProgress.tenantId, tenantId))).returning();
+    void emitEvent(tenantId, 'badge_earned', {
+      badgeName:  `Arena Challenge #${row.progress.challengeId}`,
+      xpAwarded:  updated.rewardXpAwarded ?? 0,
+    });
     return NextResponse.json({ ok: true, xp_awarded: updated.rewardXpAwarded ?? 0 });
   } catch {
     return NextResponse.json({ error: 'Failed to claim challenge' }, { status: 500 });

@@ -66,3 +66,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Write failed' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const tenantId = await resolveTenantId(req);
+  if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const name = req.nextUrl.searchParams.get('name');
+  if (!name) return NextResponse.json({ error: 'Missing name parameter' }, { status: 400 });
+
+  const filePath = safeResolvePath(name, true); // writable scope only
+  if (!filePath) return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+
+  try {
+    fs.unlinkSync(filePath);
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
+  }
+}

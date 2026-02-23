@@ -113,7 +113,7 @@ function ResetPasswordPageInner() {
           <h1 className="text-4xl font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-bricolage, sans-serif)' }}>
             Set new password
           </h1>
-          <p className="text-sm text-[#a3b8a8]">Choose a strong password you'll remember.</p>
+          <p className="text-sm text-[#a3b8a8]">Choose a strong password you&apos;ll remember.</p>
         </div>
 
         <form
