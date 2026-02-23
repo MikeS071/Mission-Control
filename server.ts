@@ -47,13 +47,18 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
     }
 
     wss.handleUpgrade(req, socket, head, (ws) => {
+      console.log(`[ws] client connected tenant=${tenantId} total=${wsManager.clientCount + 1}`);
       wsManager.addClient(tenantId, ws);
-      // Send a ping every 25s to keep connections alive through proxies
+      // Ping every 10s — keeps connection alive through Tailscale and CF proxies
       const ping = setInterval(() => {
         if (ws.readyState === ws.OPEN) ws.ping();
         else clearInterval(ping);
-      }, 25_000);
-      ws.on('close', () => clearInterval(ping));
+      }, 10_000);
+      ws.on('close', (code, reason) => {
+        console.log(`[ws] client disconnected tenant=${tenantId} code=${code} reason=${reason} remaining=${wsManager.clientCount}`);
+        clearInterval(ping);
+      });
+      ws.on('error', (err) => console.error(`[ws] error tenant=${tenantId}:`, err.message));
     });
   });
 }
