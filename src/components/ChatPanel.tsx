@@ -65,7 +65,25 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         throw new Error(`HTTP ${res.status}: ${text}`);
       }
       const data: HistoryResponse = await res.json();
-      setMessages(data.messages ?? []);
+      const normalized: ChatMessage[] = (data.messages ?? [])
+        .map((m: any) => ({
+          id: Number(m.id),
+          role: m.role,
+          content: String(m.content ?? ''),
+          createdAt: String(m.createdAt ?? ''),
+        }))
+        .filter((m) => Number.isFinite(m.id));
+
+      // De-dupe by id (string compare to avoid 303 vs "303")
+      const seen = new Set<string>();
+      const deduped: ChatMessage[] = [];
+      for (const m of normalized) {
+        const k = String(m.id);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        deduped.push(m);
+      }
+      setMessages(deduped);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setHistoryError(msg);
@@ -114,9 +132,18 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
       ws.onmessage = (event) => {
         try {
-          const msg: ChatMessage = JSON.parse(event.data as string);
+          const raw = JSON.parse(event.data as string) as any;
+          const id = Number(raw?.id);
+          if (!Number.isFinite(id)) return;
+          const msg: ChatMessage = {
+            id,
+            role: raw.role,
+            content: String(raw.content ?? ''),
+            createdAt: String(raw.createdAt ?? new Date().toISOString()),
+          };
           setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
+            const key = String(msg.id);
+            if (prev.some((m) => String(m.id) === key)) return prev;
             return [...prev, msg];
           });
         } catch (err) {
