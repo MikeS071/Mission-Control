@@ -10,6 +10,7 @@ import { wsManager } from './src/lib/ws-manager';
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
+const handleUpgrade = app.getUpgradeHandler();
 
 const httpsPort = Number(process.env.PORT_HTTPS) || 3000;
 const httpPort  = Number(process.env.PORT_HTTP)  || 3001;
@@ -25,6 +26,12 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
 
   server.on('upgrade', (req, socket, head) => {
     const { pathname, query } = parse(req.url ?? '', true);
+
+    // Next.js dev HMR websocket
+    if (dev && pathname === '/_next/webpack-hmr') {
+      handleUpgrade(req as any, socket as any, head as any);
+      return;
+    }
 
     // Only handle our chat WS endpoint
     if (pathname !== '/api/chat/ws') {
