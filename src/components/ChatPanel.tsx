@@ -96,7 +96,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const res = await fetch('/api/chat/history?limit=200', { cache: 'no-store' });
+      const res = await fetch('/api/chat/history?limit=80', { cache: 'no-store' });
       if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${res.status}: ${text}`);
@@ -479,7 +479,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           }
 
           // Infinite scroll: when near the top, fetch older messages.
-          if (el.scrollTop < 40) {
+          if (el.scrollTop < 200) {
             void loadOlder();
           }
         }}
