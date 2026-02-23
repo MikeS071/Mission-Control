@@ -19,6 +19,7 @@ import { desc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
+import { wsManager } from '@/lib/ws-manager';
 
 const SYSTEM_PROMPT =
   'You are an AI assistant integrated into ArchonHQ Mission Control. ' +
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       .values({ tenantId, role: 'user', content: userContent })
       .returning({ id: chatMessages.id });
     userMsgId = inserted.id;
+    wsManager.broadcast(tenantId, { id: userMsgId, role: 'user', content: userContent, createdAt: new Date().toISOString() });
   } catch (err) {
     console.error('[chat] Failed to save user message:', err);
     return NextResponse.json({ error: 'Database error saving message' }, { status: 500 });
@@ -146,6 +148,7 @@ export async function POST(req: NextRequest) {
       .values({ tenantId, role: 'assistant', content: reply })
       .returning({ id: chatMessages.id });
     assistantMsgId = inserted.id;
+    wsManager.broadcast(tenantId, { id: assistantMsgId, role: 'assistant', content: reply, createdAt: new Date().toISOString() });
   } catch (err) {
     console.error('[chat] Failed to save assistant reply:', err);
     // Non-fatal: still return the reply to the user

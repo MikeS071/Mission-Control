@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
+import { wsManager } from '@/lib/ws-manager';
 
 const INBOUND_SECRET = process.env.MC_INBOUND_SECRET;
 
@@ -51,10 +52,18 @@ export async function POST(req: NextRequest) {
 
   // ── Persist ───────────────────────────────────────────────────────────────
   try {
+    const trimmedContent = content.trim();
     const [inserted] = await db
       .insert(chatMessages)
-      .values({ tenantId, role, content: content.trim() })
+      .values({ tenantId, role, content: trimmedContent })
       .returning({ id: chatMessages.id });
+
+    wsManager.broadcast(tenantId, {
+      id: inserted.id,
+      role: role as 'user' | 'assistant',
+      content: trimmedContent,
+      createdAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({ ok: true, messageId: inserted.id });
   } catch (err) {
