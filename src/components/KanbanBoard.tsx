@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EventItem, EventTimeline } from '@/components/EventTimeline';
+import { ActivityPane } from '@/components/ActivityPane';
 
 type ChecklistItem = { id: string; text: string; checked: boolean };
 
@@ -303,6 +304,80 @@ function AgentTeamPanel({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; p
       {subAgents.length === 0 && (
         <div className="text-[10px] text-gray-600 px-1">No sub-agents active</div>
       )}
+    </div>
+  );
+}
+
+// ─── Navi Status Tile ─────────────────────────────────────────────────────────
+
+function timeAgoShort(dateStr: string): string {
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return 'now';
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    return `${Math.floor(hours / 24)}d`;
+  } catch {
+    return '';
+  }
+}
+
+function NaviStatusTile({ gatewayOk, primaryAgentName }: { gatewayOk: boolean; primaryAgentName: string | null }) {
+  const [agents, setAgents] = useState<ActiveAgent[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/agents/active', { cache: 'no-store' });
+        if (res.ok) {
+          const data = (await res.json()) as ActiveAgent[];
+          setAgents(Array.isArray(data) ? data : []);
+        }
+      } catch { /* ignore */ }
+    };
+    void load();
+    const interval = setInterval(() => void load(), 10_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayName = primaryAgentName || 'Navi';
+
+  // Find Navi in the agents list for last-seen info
+  const naviAgent = agents.find((a) =>
+    ['navi', displayName.toLowerCase()].includes(a.agentName.toLowerCase())
+  );
+  const lastSeen = naviAgent?.lastSeenAt ? timeAgoShort(naviAgent.lastSeenAt) : null;
+
+  // Determine effective status: gateway determines Navi's connectivity; sub-agent
+  // presence in the poll response can indicate idle vs working
+  const agentStatus: AgentStatus = !gatewayOk
+    ? 'inactive'
+    : naviAgent?.status ?? 'working';
+
+  const dotColor = agentStatus === 'working'
+    ? 'bg-emerald-400'
+    : agentStatus === 'idle'
+    ? 'bg-amber-400'
+    : 'bg-gray-600';
+
+  const statusLabel = agentStatus === 'working'
+    ? 'Active'
+    : agentStatus === 'idle'
+    ? 'Idle'
+    : 'Offline';
+
+  return (
+    <div className="flex-shrink-0 flex items-center gap-2 rounded-lg border border-gray-800 bg-gray-900/60 px-3 py-2 min-w-[120px]">
+      <span className={`h-2 w-2 rounded-full flex-shrink-0 ${dotColor}`} />
+      <div className="min-w-0">
+        <div className="text-[11px] font-semibold text-gray-200 truncate">{displayName}</div>
+        <div className="text-[10px] text-gray-500">
+          {statusLabel}{lastSeen ? ` · ${lastSeen}` : ''}
+        </div>
+      </div>
     </div>
   );
 }
@@ -648,14 +723,15 @@ const [rightWidth, setRightWidth] = useState(402);
         <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
         <StatsTile label="Tasks This Week" value={stats.tasksThisWeek} color="border-purple-700" />
         <StatsTile label="Streak 🔥" value={stats.streak} sub={stats.streak !== '--' && stats.streak !== '0' ? 'days' : undefined} color="border-orange-700" />
+        <NaviStatusTile gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
       </div>
 
       {/* 3-pane resizable layout */}
 <div className="flex flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-800">
 
-        {/* ── Left pane: Agent Team ── */}
-        <div style={{ width: leftWidth, minWidth: 140, maxWidth: 320 }} className="flex-shrink-0 overflow-y-auto bg-gray-900/50 p-3 space-y-2">
-          <AgentTeamPanel gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
+        {/* ── Left pane: Activity Feed ── */}
+        <div style={{ width: leftWidth, minWidth: 160, maxWidth: 360 }} className="flex-shrink-0 flex flex-col overflow-hidden bg-gray-900/50">
+          <ActivityPane />
         </div>
 
         <ResizableDivider onDrag={(dx) => setLeftWidth((w) => Math.max(140, Math.min(320, w + dx)))} />
