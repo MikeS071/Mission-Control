@@ -25,20 +25,29 @@ if (!GATEWAY_TOKEN) {
   console.error('[chat/gateway] OPENCLAW_GATEWAY_TOKEN is not set — requests will fail auth');
 }
 
-/** Send a message to the Telegram channel — fire-and-forget, never throws. */
+/**
+ * Send a message to the Telegram channel — fire-and-forget, never throws.
+ * No parse_mode: plain text only. User messages are uncontrolled input and
+ * will break Markdown parsing, causing silent 400s from the Telegram API.
+ */
 async function sendToTelegram(text: string): Promise<void> {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
+    console.warn('[chat/gateway] sendToTelegram: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set');
+    return;
+  }
   try {
-    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TG_CHAT_ID,
-        text,
-        parse_mode: 'Markdown',
-      }),
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, text }),
     });
-  } catch { /* fire-and-forget */ }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error(`[chat/gateway] Telegram send failed ${res.status}: ${body}`);
+    }
+  } catch (err) {
+    console.error('[chat/gateway] Telegram send error:', err);
+  }
 }
 const CONTEXT_LIMIT = 10;
 
