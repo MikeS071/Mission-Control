@@ -12,12 +12,30 @@ if [ -f "$DEV_PID_FILE" ]; then
   sleep 1
 fi
 
+# Kill anything still bound to dev ports (PID file can go stale)
+for port in 3003 3004; do
+  pid=$(ss -ltnp 2>/dev/null | awk -v p=":$port" '$4 ~ p {match($0,/pid=([0-9]+)/,m); if(m[1]){print m[1]; exit}}')
+  if [ -n "$pid" ]; then
+    kill -9 "$pid" 2>/dev/null || true
+    sleep 0.5
+  fi
+done
+
+# Clear stale Next locks + turbopack cache (prevents Rust panics / missing SST files)
+rm -f /home/openclaw/projects/openclaw-mission-control/.next/dev/lock 2>/dev/null || true
+rm -rf /home/openclaw/projects/openclaw-mission-control/.next/dev/cache/turbopack 2>/dev/null || true
+rm -f /home/openclaw/projects/openclaw-mission-control/.next/lock 2>/dev/null || true
+
 cd /home/openclaw/projects/openclaw-mission-control
 set -a
 source .env.local 2>/dev/null || true
 set +a
 
 export NODE_ENV=development
+# Turbopack is currently unstable here (Rust panics / corrupted cache).
+# Force legacy webpack dev until we stabilize turbopack root/caching.
+export NEXT_DISABLE_TURBOPACK=1
+export NEXT_TELEMETRY_DISABLED=1
 export PORT_HTTPS=3004
 export PORT_HTTP=3003
 export HTTP_BIND=0.0.0.0
