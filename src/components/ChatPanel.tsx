@@ -345,11 +345,13 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
               className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[75%] rounded-lg px-3 py-2 text-xs text-white ${
+                className={`max-w-[75%] rounded-lg px-3 py-2 text-xs text-white whitespace-pre-wrap break-words overflow-hidden ${
                   isUser ? 'rounded-br-sm' : 'rounded-bl-sm'
                 }`}
                 style={{
                   background: isUser ? '#ff3b6f' : '#142e1f',
+                  overflowWrap: 'anywhere',
+                  wordBreak: 'break-word',
                 }}
               >
                 {msg.content}
