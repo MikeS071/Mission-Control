@@ -192,9 +192,11 @@ export async function POST(req: NextRequest) {
   }
 
   let reply = '';
+  let debugError: any = undefined;
   try {
     const first = await callGateway(sessionKeyBase);
     if (!first.ok) {
+      debugError = { kind: 'gateway_http', status: first.status, errText: first.errText };
       console.error('[chat/gateway] Gateway error:', first.status, first.errText);
 
       // Retry once if the upstream complains about tool-call mismatch / corrupted session.
@@ -205,6 +207,7 @@ export async function POST(req: NextRequest) {
         if (second.ok) {
           reply = second.reply ?? '';
         } else {
+          debugError = { kind: 'gateway_http_retry', status: second.status, errText: second.errText };
           console.error('[chat/gateway] Gateway retry error:', second.status, second.errText);
           reply = `[Gateway error ${second.status}] I couldn't process that right now.`;
         }
@@ -218,6 +221,7 @@ export async function POST(req: NextRequest) {
     const name = String(err?.name ?? 'Error');
     const msg = String(err?.message ?? err);
     const cause = err?.cause ? String(err.cause) : '';
+    debugError = { kind: 'gateway_fetch', name, message: msg, cause, gatewayUrl: GATEWAY_URL };
     console.error('[chat/gateway] Fetch error:', { name, msg, cause, gatewayUrl: GATEWAY_URL });
 
     // Dev-friendly reply. In prod we still keep it human.
@@ -250,9 +254,12 @@ export async function POST(req: NextRequest) {
   // (User message was mirrored immediately after insert.)
   void sendToTelegram(reply);
 
+  const isDev = (process.env.NODE_ENV ?? 'development') === 'development';
+
   return NextResponse.json({
     reply,
     userMessageId: userMsgId,
     messageId: assistantMsgId,
+    ...(isDev ? { debugError } : {}),
   });
 }
