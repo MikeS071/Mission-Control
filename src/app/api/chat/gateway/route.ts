@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
   // NOTE: Telegram bots cannot impersonate the human sender, so this will
   // still appear as a bot bubble in Telegram — we only control the text.
   // No parse_mode — user content is uncontrolled.
-  void sendToTelegram(userContent);
+  void sendToTelegram(`👤 ${userContent}`);
   void sendToTelegram(reply);
 
   return NextResponse.json({
