@@ -86,37 +86,76 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Connect to SSE stream for real-time updates ────────────────────────────
-  useEffect(() => {
-    let eventSource: EventSource | null = null;
+  // ── WebSocket — real-time message push ───────────────────────────────────
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectDelayRef = useRef(1_000); // exponential backoff start: 1s
+  const unmountedRef = useRef(false);
+
+  const connectWs = useCallback(async () => {
+    if (unmountedRef.current) return;
+
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
 
     try {
-      eventSource = new EventSource('/api/chat/stream');
+      const tokenRes = await fetch('/api/chat/ws-token');
+      if (!tokenRes.ok) return; // Unauthenticated — don't loop
+      const { token } = (await tokenRes.json()) as { token: string };
 
-      eventSource.onmessage = (event) => {
+      if (unmountedRef.current) return;
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/api/chat/ws?token=${encodeURIComponent(token)}`;
+
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        reconnectDelayRef.current = 1_000; // reset backoff on success
+      };
+
+      ws.onmessage = (event) => {
         try {
-          const msg: ChatMessage = JSON.parse(event.data);
+          const msg: ChatMessage = JSON.parse(event.data as string);
           setMessages((prev) => {
-            // Avoid duplicates
             if (prev.some((m) => m.id === msg.id)) return prev;
             return [...prev, msg];
           });
         } catch (err) {
-          console.error('[ChatPanel] Failed to parse SSE message:', err);
+          console.error('[ChatPanel] WS parse error:', err);
         }
       };
 
-      eventSource.onerror = () => {
-        // Stream closed or timed out — EventSource will auto-reconnect
+      ws.onclose = () => {
+        wsRef.current = null;
+        if (unmountedRef.current) return;
+        // Exponential backoff: 1s → 2s → 4s → … → 30s max
+        reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30_000);
+        reconnectTimerRef.current = setTimeout(() => void connectWs(), reconnectDelayRef.current);
       };
-    } catch (err) {
-      console.error('[ChatPanel] Failed to connect to SSE stream:', err);
-    }
 
-    return () => {
-      eventSource?.close();
-    };
+      ws.onerror = () => {
+        // onclose fires after onerror — reconnect logic lives there
+      };
+    } catch {
+      if (unmountedRef.current) return;
+      reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30_000);
+      reconnectTimerRef.current = setTimeout(() => void connectWs(), reconnectDelayRef.current);
+    }
   }, []);
+
+  useEffect(() => {
+    unmountedRef.current = false;
+    void connectWs();
+    return () => {
+      unmountedRef.current = true;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      wsRef.current?.close();
+    };
+  }, [connectWs]);
 
   // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
