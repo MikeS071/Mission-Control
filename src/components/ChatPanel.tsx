@@ -50,7 +50,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [naviStatus, setNaviStatus] = useState<AgentStatus>('inactive');
   const [naviLastSeen, setNaviLastSeen] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
 
@@ -259,11 +259,12 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     }
   }, [input, loading]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
+    // Shift+Enter inserts a newline naturally (browser default for textarea)
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -341,7 +342,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
               className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[75%] rounded-lg px-3 py-2 text-sm text-white ${
+                className={`max-w-[75%] rounded-lg px-3 py-2 text-xs text-white ${
                   isUser ? 'rounded-br-sm' : 'rounded-bl-sm'
                 }`}
                 style={{
@@ -357,7 +358,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         {loading && (
           <div className="flex justify-start">
             <div
-              className="max-w-[75%] rounded-lg rounded-bl-sm px-3 py-2 text-sm text-gray-400"
+              className="max-w-[75%] rounded-lg rounded-bl-sm px-3 py-2 text-xs text-gray-400"
               style={{ background: '#142e1f' }}
             >
               <span className="inline-flex gap-1 items-center">
@@ -374,17 +375,17 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
       {/* Input bar */}
       <div className="flex-shrink-0 border-t border-gray-800 px-3 py-3 flex gap-2">
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           autoComplete="off"
           suppressHydrationWarning
+          rows={2}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={loading}
           placeholder="Message Navi…"
-          className="flex-1 rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none focus:border-gray-500 focus:ring-0 disabled:opacity-50 transition-colors"
+          className="flex-1 resize-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-gray-500 focus:ring-0 disabled:opacity-50 transition-colors leading-relaxed"
         />
         <button
           onClick={sendMessage}
