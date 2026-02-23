@@ -6,7 +6,9 @@ import { parse } from 'url';
 import { startHeartbeatWorker } from './src/lib/heartbeat';
 
 const dev = process.env.NODE_ENV !== 'production';
-const app = next({ dev });
+// Turbopack is currently unstable on this host (cache/root inference issues).
+// Force webpack in development mode for stability.
+const app = next({ dev, ...(dev ? { webpack: true } : {}) } as any);
 const handle = app.getRequestHandler();
 
 const httpsPort = Number(process.env.PORT_HTTPS) || 3000;
