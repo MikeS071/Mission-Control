@@ -263,7 +263,7 @@ export default function ConnectGatewayPage() {
         <Card className="border-gray-800 bg-gray-900">
           <CardHeader>
             <CardTitle>
-              {step === 1 && "Let's get your AI team set up 🚀"}
+              {step === 1 && "Let’s get your AI team set up 🚀"}
               {step === 2 && 'Connect your OpenClaw gateway'}
               {step === 3 && 'Add your AI keys 🔑'}
               {step === 4 && 'Enable Smart Routing ⚡'}
@@ -277,9 +277,9 @@ export default function ConnectGatewayPage() {
           <CardContent className="space-y-4">
             {step === 1 && (
               <>
-                <p className="text-gray-300">We'll walk you through it — takes about 5 minutes.</p>
+                <p className="text-gray-300">We&apos;ll walk you through it — takes about 5 minutes.</p>
                 <Button className="h-12 px-8 text-base" onClick={() => setStep(2)}>
-                  Let's go →
+                  Let’s go →
                 </Button>
               </>
             )}

@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 import { createMDX } from 'fumadocs-mdx/next';
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    // Ensure Turbopack treats this repo as the workspace root even if other lockfiles exist.
+    root: process.cwd(),
+  },
   async headers() {
     return [
       {

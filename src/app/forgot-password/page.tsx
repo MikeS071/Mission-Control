@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
 
           <div className="space-y-6 rounded-3xl border border-[#1a3020] bg-[#0f2418] p-8 shadow-2xl">
             <div className="rounded-2xl border border-[#2dd47a]/30 bg-[#2dd47a]/10 p-4 text-sm text-[#2dd47a]">
-              If an account exists with that email, we've sent a password reset link. Check your inbox (and spam folder).
+              If an account exists with that email, we&apos;ve sent a password reset link. Check your inbox (and spam folder).
             </div>
 
             <p className="text-sm text-[#a3b8a8] text-center">
