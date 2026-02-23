@@ -16,7 +16,9 @@ import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 
 const POLL_INTERVAL_MS = 3000;
-const STREAM_TIMEOUT_MS = 60000;
+// Legacy endpoint: older clients may still connect. Keep it open longer to
+// avoid 60s reconnect churn which *looks like* a dashboard reload.
+const STREAM_TIMEOUT_MS = 10 * 60_000;
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -64,6 +66,7 @@ export async function GET(req: NextRequest) {
 
           // Check if stream timeout reached
           if (Date.now() - startTime > STREAM_TIMEOUT_MS) {
+            controller.enqueue(encoder.encode(': keepalive\n\n'));
             controller.close();
             return;
           }
