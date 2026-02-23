@@ -1,14 +1,17 @@
 /**
  * Chat History API
- * GET /api/chat/history?limit=50
+ * GET /api/chat/history?limit=50&beforeId=<optional>
  *
- * Returns the last N messages for the authenticated tenant,
- * ordered oldest-first (for display in chronological order).
+ * Returns messages for the authenticated tenant, ordered oldest-first
+ * (chronological display).
+ *
+ * - If beforeId is omitted: returns the latest N messages.
+ * - If beforeId is provided: returns the N messages immediately older than beforeId.
  *
  * Requires NextAuth session.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, lt } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
@@ -23,6 +26,10 @@ export async function GET(req: NextRequest) {
   const rawLimit = url.searchParams.get('limit');
   const limit = Math.min(Math.max(parseInt(rawLimit ?? '50', 10) || 50, 1), 200);
 
+  const rawBeforeId = url.searchParams.get('beforeId');
+  const beforeId = rawBeforeId ? parseInt(rawBeforeId, 10) : null;
+  const hasBefore = Number.isFinite(beforeId as any) && (beforeId as number) > 0;
+
   let rows: Array<{ id: number; role: string; content: string; createdAt: Date }>;
   try {
     rows = await db
@@ -33,8 +40,12 @@ export async function GET(req: NextRequest) {
         createdAt: chatMessages.createdAt,
       })
       .from(chatMessages)
-      .where(eq(chatMessages.tenantId, tenantId))
-      .orderBy(desc(chatMessages.createdAt))
+      .where(
+        hasBefore
+          ? and(eq(chatMessages.tenantId, tenantId), lt(chatMessages.id, beforeId as number))
+          : eq(chatMessages.tenantId, tenantId)
+      )
+      .orderBy(desc(chatMessages.id))
       .limit(limit);
   } catch (err) {
     console.error('[chat/history] DB query error:', err);
