@@ -66,11 +66,13 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
 
+  const stickToBottomRef = useRef(true);
+
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const res = await fetch('/api/chat/history?limit=50', { cache: 'no-store' });
+      const res = await fetch('/api/chat/history?limit=200', { cache: 'no-store' });
       if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${res.status}: ${text}`);
@@ -223,11 +225,17 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   useEffect(() => {
     const el = messagesRef.current;
     if (!el) return;
-    // Instant on first load (avoids page-level scroll side-effects), smooth after
+
+    // Always jump to bottom on first paint (history load)
     if (!initialScrollDone.current) {
       el.scrollTop = el.scrollHeight;
       initialScrollDone.current = true;
-    } else {
+      stickToBottomRef.current = true;
+      return;
+    }
+
+    // Only auto-scroll if the user is already at/near bottom.
+    if (stickToBottomRef.current) {
       el.scrollTop = el.scrollHeight;
     }
   }, [messages, loading]);
@@ -263,6 +271,9 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     if (!text) return;
 
     setInput('');
+
+    // User is actively sending → keep us pinned to bottom
+    stickToBottomRef.current = true;
 
     // Optimistic user message
     const tempUserMsg: ChatMessage = {
@@ -379,6 +390,12 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       {/* Message list */}
       <div
         ref={messagesRef}
+        onScroll={() => {
+          const el = messagesRef.current;
+          if (!el) return;
+          const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+          stickToBottomRef.current = distFromBottom < 80;
+        }}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700"
       >
         {historyLoading && (
