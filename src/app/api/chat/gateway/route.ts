@@ -101,10 +101,10 @@ export async function POST(req: NextRequest) {
     .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
   // ── Call OpenClaw gateway ─────────────────────────────────────────────────
-  // Use a stable per-tenant MC session so context persists across reloads.
-  // If the upstream session becomes corrupted (e.g. tool call id mismatch),
-  // retry once with a rotated session key.
-  const sessionKeyBase = `web:mc:${tenantId}`;
+  // IMPORTANT: OpenClaw may persist tool-call state per session key.
+  // We already send recent DB history as context, so we can use a per-request
+  // session key to avoid poisoned sessions causing "No tool call found...".
+  const sessionKeyBase = `web:mc:${tenantId}:m${userMsgId}`;
 
   async function callGateway(sessionKey: string): Promise<{ ok: boolean; status?: number; errText?: string; reply?: string }> {
     const gwRes = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
