@@ -142,9 +142,11 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Mirror to Telegram ───────────────────────────────────────────────────
-  // Only Navi's reply goes to Telegram. Mike's MC message is NOT echoed —
-  // Telegram can't show bot messages as the user, so it would appear as Navi
-  // speaking, which is confusing. Mike already sees his own words in MC.
+  // Both Mike's message and Navi's reply go to Telegram so both channels stay
+  // in sync. Mike's message is prefixed "👤 Mike:" so it's clearly attributed
+  // (the bot can't send as a specific user, so text attribution is the best we
+  // can do). Navi's reply goes as-is.
+  void sendToTelegram(`👤 *Mike:* ${userContent}`);
   void sendToTelegram(reply);
 
   return NextResponse.json({
