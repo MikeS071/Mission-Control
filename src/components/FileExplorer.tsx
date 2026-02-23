@@ -1,8 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronDown, FileText, FileCode2, Folder, FolderOpen } from 'lucide-react';
+
+const POLL_INTERVAL_MS = 3_000;
 
 function fileIcon(name: string) {
   const ext = name.slice(name.lastIndexOf('.'));
@@ -77,8 +79,11 @@ export function FileExplorer() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [content, setContent] = useState('');
+  const [serverContent, setServerContent] = useState(''); // last fetched value — used to detect local edits
   const [contentError, setContentError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [liveSync, setLiveSync] = useState(false); // true when last poll matched
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetch('/api/workspace/files')
@@ -98,25 +103,46 @@ export function FileExplorer() {
       });
   }, []);
 
+  const fetchContent = async (filePath: string, isInitial = false) => {
+    try {
+      const r = await fetch(`/api/workspace/file?name=${encodeURIComponent(filePath)}`);
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({})) as { error?: string };
+        throw new Error(e.error ?? 'Failed to load file');
+      }
+      const text = await r.text();
+      setServerContent(text);
+      setContent(prev => {
+        // On initial load always set; on poll only update if user has no unsaved edits
+        if (isInitial || prev === text) {
+          setLiveSync(true);
+          return text;
+        }
+        setLiveSync(false); // user has local edits — skip overwrite
+        return prev;
+      });
+      setContentError(null);
+    } catch (err) {
+      if (isInitial) {
+        setContent('');
+        setContentError((err as Error).message ?? 'Could not load file content.');
+      }
+    }
+  };
+
   const open = (filePath: string) => {
+    // Clear existing poll
+    if (pollRef.current) clearInterval(pollRef.current);
     setSelected(filePath);
     setContentError(null);
-    fetch(`/api/workspace/file?name=${encodeURIComponent(filePath)}`)
-      .then(r => {
-        if (!r.ok) {
-          return r.json().then(e => { throw new Error(e.error || 'Failed to load file'); });
-        }
-        return r.text();
-      })
-      .then(text => {
-        setContent(text);
-        setContentError(null);
-      })
-      .catch((err: Error) => {
-        setContent('');
-        setContentError(err.message ?? 'Could not load file content.');
-      });
+    setLiveSync(false);
+    void fetchContent(filePath, true);
+    // Start polling
+    pollRef.current = setInterval(() => void fetchContent(filePath, false), POLL_INTERVAL_MS);
   };
+
+  // Clean up poll on unmount
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const isMd = (p: string) => p.endsWith('.md');
 
@@ -127,6 +153,8 @@ export function FileExplorer() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ name: selected, content }),
     });
+    setServerContent(content); // mark local edits as saved
+    setLiveSync(true);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -157,7 +185,12 @@ export function FileExplorer() {
         {selected && (
           <>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-400 truncate">{selected}</span>
+              <span className="flex items-center gap-2 text-sm text-gray-400 truncate">
+                {selected}
+                {liveSync
+                  ? <span className="text-[10px] text-emerald-500 flex-shrink-0">● live</span>
+                  : <span className="text-[10px] text-amber-500 flex-shrink-0">● unsaved</span>}
+              </span>
               {isMd(selected) && (
                 <Button size="sm" onClick={save}>{saved ? 'Saved ✓' : 'Save'}</Button>
               )}
