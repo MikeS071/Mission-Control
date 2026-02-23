@@ -76,12 +76,19 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       }
       const data: HistoryResponse = await res.json();
       const normalized: ChatMessage[] = (data.messages ?? [])
-        .map((m: any) => ({
-          id: Number(m.id),
-          role: m.role,
-          content: String(m.content ?? ''),
-          createdAt: String(m.createdAt ?? ''),
-        }))
+        .map((m: any) => {
+          const roleRaw = String(m?.role ?? '').toLowerCase().trim();
+          const role: ChatMessage['role'] =
+            roleRaw === 'user' || roleRaw === 'assistant' || roleRaw === 'system'
+              ? (roleRaw as ChatMessage['role'])
+              : 'assistant';
+          return {
+            id: Number(m.id),
+            role,
+            content: String(m.content ?? ''),
+            createdAt: String(m.createdAt ?? ''),
+          };
+        })
         .filter((m) => Number.isFinite(m.id));
 
       // De-dupe by id, then by (role+content+near-time) to guard against
@@ -153,9 +160,14 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           const raw = JSON.parse(event.data as string) as any;
           const id = Number(raw?.id);
           if (!Number.isFinite(id)) return;
+          const roleRaw = String(raw?.role ?? '').toLowerCase().trim();
+          const role = (roleRaw === 'user' || roleRaw === 'assistant' || roleRaw === 'system')
+            ? (roleRaw as ChatMessage['role'])
+            : 'assistant';
+
           const msg: ChatMessage = {
             id,
-            role: raw.role,
+            role,
             content: String(raw.content ?? ''),
             createdAt: String(raw.createdAt ?? new Date().toISOString()),
           };
