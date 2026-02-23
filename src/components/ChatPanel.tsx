@@ -32,6 +32,7 @@ interface HistoryResponse {
 interface ChatResponse {
   reply: string;
   messageId?: number;
+  userMessageId?: number;
   error?: boolean;
 }
 
@@ -185,6 +186,16 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       }
 
       const data: ChatResponse = await res.json();
+
+      // Replace optimistic user message with confirmed DB ID so SSE deduplication works.
+      // Without this, the SSE-delivered copy (real ID) won't match the temp ID and renders twice.
+      if (data.userMessageId) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempUserMsg.id ? { ...m, id: data.userMessageId! } : m
+          )
+        );
+      }
 
       const assistantMsg: ChatMessage = {
         id: data.messageId ?? nextLocalId(),
