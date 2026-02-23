@@ -10,7 +10,9 @@ import { wsManager } from './src/lib/ws-manager';
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
-let handleUpgrade: ReturnType<typeof app.getUpgradeHandler> | null = null;
+// NOTE: avoid referencing getUpgradeHandler in a type position; Next's dev server
+// throws if certain init paths run before prepare().
+let handleUpgrade: any = null;
 
 const httpsPort = Number(process.env.PORT_HTTPS) || 3000;
 const httpPort  = Number(process.env.PORT_HTTP)  || 3001;
