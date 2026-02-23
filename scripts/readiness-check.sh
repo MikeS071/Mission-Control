@@ -57,12 +57,22 @@ green "Found $API_ROUTES exported API handlers"
 ((PASS++))
 
 # Check server is reachable
-if curl -sf "$BASE_URL/api/tasks" -H "Authorization: Bearer test" > /dev/null 2>&1 || \
-   curl -sf "$BASE_URL/api/tasks" > /dev/null 2>&1; then
+# Retry reachability a few times; dev server may be compiling on first hit.
+REACHABLE=0
+for i in 1 2 3 4 5; do
+  if curl -sf "$BASE_URL/api/tasks" -H "Authorization: Bearer test" --max-time 5 > /dev/null 2>&1 || \
+     curl -sf "$BASE_URL/api/tasks" --max-time 5 > /dev/null 2>&1; then
+    REACHABLE=1
+    break
+  fi
+  sleep 1
+done
+
+if [ "$REACHABLE" = "1" ]; then
   green "Dev server is reachable at $BASE_URL"
   ((PASS++))
 else
-  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/tasks" 2>/dev/null)
+  HTTP_STATUS=$(curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$BASE_URL/api/tasks" 2>/dev/null)
   if [ "$HTTP_STATUS" = "401" ] || [ "$HTTP_STATUS" = "403" ]; then
     green "Dev server reachable (auth required — expected)"
     ((PASS++))
