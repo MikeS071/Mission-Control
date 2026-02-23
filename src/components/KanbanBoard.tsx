@@ -723,7 +723,6 @@ const [rightWidth, setRightWidth] = useState(402);
         <StatsTile label="Saved via Routing" value={stats.saved} sub="vs direct API" color="border-teal-700" />
         <StatsTile label="Tasks This Week" value={stats.tasksThisWeek} color="border-purple-700" />
         <StatsTile label="Streak 🔥" value={stats.streak} sub={stats.streak !== '--' && stats.streak !== '0' ? 'days' : undefined} color="border-orange-700" />
-        <NaviStatusTile gatewayOk={gatewayOk} primaryAgentName={primaryAgentName} />
       </div>
 
       {/* 3-pane resizable layout */}

@@ -9,6 +9,14 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+// ── Agent status types (mirrored from KanbanBoard) ─────────────────────────
+type AgentStatus = 'working' | 'idle' | 'inactive';
+interface ActiveAgent {
+  agentName: string;
+  status: AgentStatus;
+  lastSeenAt: string;
+}
+
 interface ChatMessage {
   id: number;
   role: 'user' | 'assistant' | 'system';
@@ -38,6 +46,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [naviStatus, setNaviStatus] = useState<AgentStatus>('inactive');
+  const [naviLastSeen, setNaviLastSeen] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -120,6 +130,31 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     }
   }, [messages, loading]);
 
+  // ── Poll Navi agent status ────────────────────────────────────────────────
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/agents/active', { cache: 'no-store' });
+        if (!res.ok) return;
+        const agents = (await res.json()) as ActiveAgent[];
+        const navi = agents.find((a) =>
+          ['navi', (agentName ?? 'navi').toLowerCase()].includes(a.agentName.toLowerCase())
+        );
+        if (navi) {
+          setNaviStatus(navi.status);
+          setNaviLastSeen(navi.lastSeenAt);
+        } else {
+          // No agent record yet — treat as working if gateway is reachable
+          setNaviStatus('working');
+          setNaviLastSeen(null);
+        }
+      } catch { /* ignore */ }
+    };
+    void poll();
+    const id = setInterval(() => void poll(), 10_000);
+    return () => clearInterval(id);
+  }, [agentName]);
+
   // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async () => {
     const text = input.trim();
@@ -138,7 +173,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/chat/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
@@ -187,9 +222,45 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       style={{ background: '#0a1a12' }}
       className="flex flex-col h-full min-h-0 rounded-lg border border-gray-800 overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-800 flex items-center gap-2">
-        <span className="text-sm font-semibold text-white">{agentName ?? 'AI Assistant'}</span>
+      {/* Header — Navi status tile */}
+      <div className="flex-shrink-0 px-4 py-2.5 border-b border-gray-800 flex items-center gap-2.5">
+        {/* Status dot */}
+        <span
+          className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ring-2 ring-offset-1 ring-offset-[#0a1a12] ${
+            naviStatus === 'working'
+              ? 'bg-emerald-400 ring-emerald-600'
+              : naviStatus === 'idle'
+              ? 'bg-amber-400 ring-amber-600'
+              : 'bg-gray-600 ring-gray-700'
+          }`}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-semibold text-white leading-none">
+              {agentName ?? 'Navi'}
+            </span>
+            <span
+              className={`text-[10px] font-medium leading-none ${
+                naviStatus === 'working'
+                  ? 'text-emerald-400'
+                  : naviStatus === 'idle'
+                  ? 'text-amber-400'
+                  : 'text-gray-500'
+              }`}
+            >
+              {naviStatus === 'working'
+                ? 'Active'
+                : naviStatus === 'idle'
+                ? 'Idle'
+                : 'Offline'}
+            </span>
+          </div>
+          {naviLastSeen && (
+            <div className="text-[10px] text-gray-600 mt-0.5">
+              OpenClaw Gateway · via Telegram
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Message list */}
@@ -262,7 +333,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={loading}
-          placeholder="Message your AI assistant…"
+          placeholder="Message Navi…"
           className="flex-1 rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none focus:border-gray-500 focus:ring-0 disabled:opacity-50 transition-colors"
         />
         <button
