@@ -135,14 +135,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // Persist inbound
-  await db.insert(chatMessages).values({
-    tenantId: link.tenantId,
-    role: 'user',
-    content: text,
-    source: 'telegram',
-    externalId: msg.message_id,
-  });
+  // Persist inbound (idempotent)
+  try {
+    await db.insert(chatMessages).values({
+      tenantId: link.tenantId,
+      role: 'user',
+      content: text,
+      source: 'telegram',
+      externalId: msg.message_id,
+    });
+  } catch (err: any) {
+    // Unique index on (tenant_id, source, external_id) WHERE external_id IS NOT NULL
+    // makes Telegram ingress idempotent.
+    if (err?.code !== '23505') throw err;
+  }
 
   // UX: keep chat active without sending a noisy "Processing" message bubble.
   // Telegram supports chat actions (typing) which show an activity indicator.
