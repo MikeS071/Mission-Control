@@ -102,10 +102,11 @@ export async function POST(req: NextRequest) {
 
   // ── Call OpenClaw gateway ─────────────────────────────────────────────────
   // Use a stable per-tenant MC session so context persists across reloads.
-  const sessionKey = `web:mc:${tenantId}`;
+  // If the upstream session becomes corrupted (e.g. tool call id mismatch),
+  // retry once with a rotated session key.
+  const sessionKeyBase = `web:mc:${tenantId}`;
 
-  let reply = '';
-  try {
+  async function callGateway(sessionKey: string): Promise<{ ok: boolean; status?: number; errText?: string; reply?: string }> {
     const gwRes = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
       method: 'POST',
       headers: {
@@ -124,14 +125,38 @@ export async function POST(req: NextRequest) {
 
     if (!gwRes.ok) {
       const errText = await gwRes.text().catch(() => '');
-      console.error('[chat/gateway] Gateway error:', gwRes.status, errText);
-      // Fall back gracefully
-      reply = `[Gateway error ${gwRes.status}] I couldn't process that right now.`;
+      return { ok: false, status: gwRes.status, errText };
+    }
+
+    const data = (await gwRes.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
+    return { ok: true, reply };
+  }
+
+  let reply = '';
+  try {
+    const first = await callGateway(sessionKeyBase);
+    if (!first.ok) {
+      console.error('[chat/gateway] Gateway error:', first.status, first.errText);
+
+      // Retry once if the upstream complains about tool-call mismatch / corrupted session.
+      const isToolMismatch = (first.errText ?? '').includes('No tool call found') || (first.errText ?? '').includes('call_id');
+      if (isToolMismatch) {
+        const rotated = `${sessionKeyBase}:r1`;
+        const second = await callGateway(rotated);
+        if (second.ok) {
+          reply = second.reply ?? '';
+        } else {
+          console.error('[chat/gateway] Gateway retry error:', second.status, second.errText);
+          reply = `[Gateway error ${second.status}] I couldn't process that right now.`;
+        }
+      } else {
+        reply = `[Gateway error ${first.status}] I couldn't process that right now.`;
+      }
     } else {
-      const data = (await gwRes.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      reply = data.choices?.[0]?.message?.content?.trim() ?? '';
+      reply = first.reply ?? '';
     }
   } catch (err) {
     console.error('[chat/gateway] Fetch error:', err);
