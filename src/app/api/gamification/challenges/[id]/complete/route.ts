@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { challenges } from '@/db/schema';
 import { getTenantId } from '@/lib/tenant';
 import { awardXp } from '@/lib/xp';
+import { emitEvent } from '@/lib/activity';
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const tenantId = getTenantId(req);
@@ -32,6 +33,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     .returning();
 
   void awardXp(tenantId, updated.xpReward, 'challenge_won', String(updated.id));
+  void emitEvent(tenantId, 'challenge_completed', {
+    challengeName: updated.title,
+    challengeId:   updated.id,
+    xpReward:      updated.xpReward,
+  });
 
   return NextResponse.json(updated);
 }

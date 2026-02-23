@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = parseBody(BillingCheckoutSchema, await req.json().catch(() => ({})));
   if (!parsed.ok) return parsed.response;
-  const { plan } = parsed.data;
+  const { plan, seats } = parsed.data;
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
@@ -25,19 +25,30 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(stripeKey);
 
   const priceId = plan === 'pro' ? process.env.STRIPE_PRO_PRICE_ID : process.env.STRIPE_TEAM_PRICE_ID;
+
+  // Team plan is seat-based.
+  if (plan === 'team') {
+    const seatCount = seats ?? 0;
+    if (seatCount < 10) {
+      return NextResponse.json({ error: 'team plan requires seats >= 10' }, { status: 400 });
+    }
+  }
   if (!priceId) {
     return NextResponse.json({ error: 'Stripe price IDs are not configured.' }, { status: 500 });
   }
 
   // Use archonhq.ai/dashboard as the canonical redirect target
+  const quantity = plan === 'team' ? (seats ?? 1) : 1;
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity }],
     success_url: 'https://archonhq.ai/dashboard?billing=success',
     cancel_url: 'https://archonhq.ai/dashboard?billing=canceled',
     metadata: {
       tenantId: String(tenantId),
       plan,
+      ...(plan === 'team' ? { seats: String(seats ?? '') } : {}),
     },
     subscription_data: {
       metadata: {
