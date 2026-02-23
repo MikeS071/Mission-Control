@@ -84,6 +84,10 @@ export function FileExplorer() {
   const [saved, setSaved] = useState(false);
   const [liveSync, setLiveSync] = useState(false); // true when last poll matched
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const newFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch('/api/workspace/files')
@@ -144,6 +148,37 @@ export function FileExplorer() {
   // Clean up poll on unmount
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
+  // Focus input when the create form appears
+  useEffect(() => { if (creating) newFileInputRef.current?.focus(); }, [creating]);
+
+  const refreshFiles = () => {
+    fetch('/api/workspace/files')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setFiles(data); })
+      .catch(() => {});
+  };
+
+  const confirmCreate = async () => {
+    let name = newFileName.trim();
+    if (!name) return;
+    if (!name.endsWith('.md')) name = `${name}.md`;
+    setCreateError(null);
+    const res = await fetch('/api/workspace/file', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, content: '' }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({})) as { error?: string };
+      setCreateError(e.error ?? 'Create failed');
+      return;
+    }
+    setCreating(false);
+    setNewFileName('');
+    refreshFiles();
+    open(name);
+  };
+
   const isMd = (p: string) => p.endsWith('.md');
 
   const save = async () => {
@@ -162,7 +197,39 @@ export function FileExplorer() {
   return (
     <div className="flex gap-4 h-[70vh]">
       {/* Sidebar: file tree */}
-      <div className="w-56 flex-shrink-0 bg-gray-900 rounded p-2 overflow-y-auto">
+      <div className="w-56 flex-shrink-0 bg-gray-900 rounded p-2 overflow-y-auto flex flex-col gap-1">
+        {/* New file button */}
+        <button
+          onClick={() => { setCreating(true); setCreateError(null); setNewFileName(''); }}
+          className="flex items-center gap-1 w-full text-left text-xs px-2 py-1 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
+        >
+          <span className="text-base leading-none">+</span> New file
+        </button>
+
+        {/* Inline create form */}
+        {creating && (
+          <div className="px-2 flex flex-col gap-1">
+            <input
+              ref={newFileInputRef}
+              value={newFileName}
+              onChange={e => setNewFileName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') void confirmCreate();
+                if (e.key === 'Escape') { setCreating(false); setNewFileName(''); setCreateError(null); }
+              }}
+              placeholder="filename.md"
+              className="w-full rounded border border-gray-700 bg-gray-950 px-2 py-1 text-xs text-white placeholder-gray-600 outline-none focus:border-gray-500"
+            />
+            {createError && <span className="text-[10px] text-red-400">{createError}</span>}
+            <div className="flex gap-1">
+              <button onClick={() => void confirmCreate()} className="text-[10px] text-emerald-400 hover:text-emerald-300">Create</button>
+              <button onClick={() => { setCreating(false); setNewFileName(''); setCreateError(null); }} className="text-[10px] text-gray-500 hover:text-gray-300">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        <div className="border-t border-gray-800 my-1" />
+
         {fetchError ? (
           <div className="text-xs text-amber-400 px-2 py-3 leading-relaxed">{fetchError}</div>
         ) : files.length === 0 ? (
