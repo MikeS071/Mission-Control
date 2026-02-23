@@ -144,8 +144,9 @@ export async function POST(req: NextRequest) {
     externalId: msg.message_id,
   });
 
-  // UX: keep chat active
-  void telegramSendMessage(chatId, 'Processing…');
+  // UX: keep chat active without sending a noisy "Processing" message bubble.
+  // Telegram supports chat actions (typing) which show an activity indicator.
+  void telegramSendChatAction(chatId, 'typing');
 
   let typingTimer: NodeJS.Timeout | null = setInterval(() => {
     void telegramSendChatAction(chatId, 'typing');
