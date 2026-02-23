@@ -47,6 +47,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
   const [naviStatus, setNaviStatus] = useState<AgentStatus>('inactive');
   const [naviLastSeen, setNaviLastSeen] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -54,37 +55,30 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
 
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const res = await fetch('/api/chat/history?limit=50', { cache: 'no-store' });
+      if (!res.ok) {
+        const text = await res.text().catch(() => 'Unknown error');
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+      const data: HistoryResponse = await res.json();
+      setMessages(data.messages ?? []);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setHistoryError(msg);
+      console.error('[ChatPanel] Failed to load history:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
   // ── Load history on mount ─────────────────────────────────────────────────
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchHistory = async () => {
-      setHistoryLoading(true);
-      setHistoryError(null);
-      try {
-        const res = await fetch('/api/chat/history?limit=50');
-        if (!res.ok) {
-          const text = await res.text().catch(() => 'Unknown error');
-          throw new Error(`HTTP ${res.status}: ${text}`);
-        }
-        const data: HistoryResponse = await res.json();
-        if (!cancelled) {
-          setMessages(data.messages ?? []);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const msg = err instanceof Error ? err.message : String(err);
-          setHistoryError(msg);
-          console.error('[ChatPanel] Failed to load history:', err);
-        }
-      } finally {
-        if (!cancelled) setHistoryLoading(false);
-      }
-    };
-
-    fetchHistory();
-    return () => { cancelled = true; };
-  }, []);
+    void fetchHistory();
+  }, [fetchHistory]);
 
   // ── WebSocket — real-time message push ───────────────────────────────────
   const wsRef = useRef<WebSocket | null>(null);
@@ -114,6 +108,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        setWsConnected(true);
         reconnectDelayRef.current = 1_000; // reset backoff on success
       };
 
@@ -131,6 +126,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
       ws.onclose = () => {
         wsRef.current = null;
+        setWsConnected(false);
         if (unmountedRef.current) return;
         // Exponential backoff: 1s → 2s → 4s → … → 30s max
         reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30_000);
@@ -156,6 +152,13 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       wsRef.current?.close();
     };
   }, [connectWs]);
+
+  // ── Fallback poll when WS isn't connected (keeps MC chat fresh) ───────────
+  useEffect(() => {
+    if (wsConnected) return;
+    const id = setInterval(() => void fetchHistory(), 3_000);
+    return () => clearInterval(id);
+  }, [wsConnected, fetchHistory]);
 
   // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
