@@ -60,7 +60,7 @@ const MODEL_DEFAULTS = {
 
 const ALL_AGENT_MODELS = [
   'claude-haiku-3', 'claude-sonnet-4-6', 'claude-opus-4',
-  'gpt-4o-mini', 'gpt-4o', 'gpt-5.1-codex', 'gpt-5.3-codex',
+  'gpt-4o-mini', 'gpt-4o', 'gpt-5.1-codex', 'gpt-5.2', 'gpt-5.3-codex',
   'openrouter/auto', 'minimax/abab6.5s-chat',
   'moonshot-v1-8k', 'moonshot-v1-32k',
   'gemini-2.0-flash', 'gemini-2.0-pro',
