@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { events, tasks } from '@/db/schema';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { getTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
+import { emitEvent } from '@/lib/activity';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 import { parseBody, TaskPatchSchema } from '@/lib/validate';
 import { fireKanbanTrigger } from '@/lib/kanbanTrigger';
@@ -109,7 +110,36 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       }),
     });
 
-    if (task.status === 'done') void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
+    if (task.status === 'done') {
+      void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
+
+      // 6.5 tasks_burst — ≥10 tasks completed in the last 24h
+      void (async () => {
+        const [burst] = await db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(tasks)
+          .where(and(
+            eq(tasks.tenantId, tenantId),
+            eq(tasks.status, 'done'),
+            sql`${tasks.updatedAt} > NOW() - INTERVAL '24 hours'`,
+          ));
+        if ((burst?.count ?? 0) >= 10) {
+          void emitEvent(tenantId, 'tasks_burst', { taskCount: burst?.count ?? 10 });
+        }
+      })();
+
+      // 6.6 all_tasks_cleared — no non-done tasks remain
+      void (async () => {
+        const [remaining] = await db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(tasks)
+          .where(and(eq(tasks.tenantId, tenantId), ne(tasks.status, 'done')));
+        if ((remaining?.count ?? 1) === 0) {
+          void emitEvent(tenantId, 'all_tasks_cleared', { columnName: 'all columns' });
+        }
+      })();
+    }
+
     void sendTelegramMessage(`🔄 ${task.title}: ${before.status} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
 
     // Fire kanban trigger if moved to in_progress from another status
