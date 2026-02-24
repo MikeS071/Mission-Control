@@ -181,70 +181,23 @@ export async function POST(req: NextRequest) {
     void telegramSendChatAction(chatId, 'typing');
   }, 4500);
 
-  // Respond to Telegram immediately to avoid webhook timeouts/retries.
-  // Continue processing in the background (best-effort).
-  void (async () => {
-    try {
-      const sessionKey = `tg:${link.tenantId}:${telegramUserId}`;
+  // Reliability: do NOT rely on fire-and-forget inside the request lifecycle.
+  // Instead, enqueue the work in DB and let the retry worker process it.
+  await db
+    .update(telegramUpdates)
+    .set({
+      tenantId: link.tenantId,
+      telegramUserId,
+      status: 'queued',
+      error: null,
+      nextAttemptAt: new Date(),
+      lockedAt: null,
+      lockedBy: null,
+    })
+    .where(eq(telegramUpdates.updateId, update.update_id));
 
-      // Mark update as in-flight (so we can retry if the process dies)
-      await db
-        .update(telegramUpdates)
-        .set({ tenantId: link.tenantId, telegramUserId, status: 'ignored', lastAttemptAt: new Date() })
-        .where(eq(telegramUpdates.updateId, update.update_id));
-
-      const reply = await openclawChatCompletion({
-        sessionKey,
-        messages: [{ role: 'user', content: text }],
-      });
-
-      const [inserted] = await db
-        .insert(chatMessages)
-        .values({
-          tenantId: link.tenantId,
-          role: 'assistant',
-          content: reply,
-          source: 'telegram',
-        })
-        .returning({ id: chatMessages.id, createdAt: chatMessages.createdAt });
-
-      if (inserted?.id) {
-        wsManager.broadcast(link.tenantId, {
-          id: inserted.id,
-          role: 'assistant',
-          content: reply,
-          createdAt: inserted.createdAt.toISOString(),
-        });
-      }
-
-      await telegramSendMessage(chatId, reply);
-
-      await db
-        .update(telegramUpdates)
-        .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'forwarded' })
-        .where(eq(telegramUpdates.updateId, update.update_id));
-    } catch (err: any) {
-      // Mark for retry. We intentionally do NOT force Telegram to retry by returning non-200,
-      // because Telegram retries amplify duplicates. Instead, MC retries via background worker.
-      await db
-        .update(telegramUpdates)
-        .set({
-          tenantId: link.tenantId,
-          telegramUserId,
-          processedAt: null,
-          status: 'error',
-          error: String(err?.message ?? err),
-          nextAttemptAt: new Date(Date.now() + 30_000),
-        })
-        .where(eq(telegramUpdates.updateId, update.update_id));
-
-      // Let the user know we're retrying (minimal noise).
-      await telegramSendMessage(chatId, 'Got it — retrying now (the assistant may be slow).');
-    } finally {
-      if (typingTimer) clearInterval(typingTimer);
-      typingTimer = null;
-    }
-  })();
+  if (typingTimer) clearInterval(typingTimer);
+  typingTimer = null;
 
   return NextResponse.json({ ok: true });
   } catch (err) {
