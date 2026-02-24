@@ -13,7 +13,7 @@ if [ -f "$DEV_PID_FILE" ]; then
 fi
 
 # Kill anything still bound to dev ports (PID file can go stale)
-for port in 3003 3004; do
+for port in 3003 3004 3006; do
   pid=$(ss -ltnp 2>/dev/null | awk -v p=":$port" '$4 ~ p {match($0,/pid=([0-9]+)/,m); if(m[1]){print m[1]; exit}}')
   if [ -n "$pid" ]; then
     kill "$pid" 2>/dev/null || true
@@ -36,6 +36,7 @@ export NODE_ENV=development
 # Force legacy webpack dev until we stabilize turbopack root/caching.
 export NEXT_DISABLE_TURBOPACK=1
 export NEXT_TELEMETRY_DISABLED=1
+export PORT=3003
 export PORT_HTTPS=3004
 export PORT_HTTP=3003
 export HTTP_BIND=0.0.0.0
