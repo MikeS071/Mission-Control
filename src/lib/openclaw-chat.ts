@@ -36,7 +36,7 @@ export async function openclawChatHistory(params: {
   const sessionKey = sessionKeyForTenant(params.tenantId);
   const limit = Math.max(1, Math.min(200, params.limit ?? 80));
 
-  const payload = (await openclawGatewayCall('chat.history', { sessionKey, limit }, { timeoutMs: 15_000 })) as any;
+  const payload = (await openclawGatewayCall('chat.history', { sessionKey, limit }, { timeoutMs: 30_000 })) as any;
 
   const rawMessages: any[] = Array.isArray(payload?.messages) ? payload.messages : [];
 

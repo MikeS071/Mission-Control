@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import fs from 'node:fs';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -10,7 +11,14 @@ export type OpenClawGatewayCallOptions = {
 
 function getOpenClawBin(): string {
   // Prefer an explicit path if provided (container/runtime differences).
-  return process.env.OPENCLAW_BIN?.trim() || 'openclaw';
+  const explicit = process.env.OPENCLAW_BIN?.trim();
+  if (explicit) return explicit;
+
+  // Host default (this repo’s infra): openclaw is installed under ~/.local/bin.
+  const hostPath = '/home/openclaw/.local/bin/openclaw';
+  if (fs.existsSync(hostPath)) return hostPath;
+
+  return 'openclaw';
 }
 
 function parseJsonFromStdout(stdout: string): unknown {
