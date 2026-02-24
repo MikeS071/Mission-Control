@@ -33,21 +33,30 @@ export async function POST(req: NextRequest) {
     if (!update?.update_id) return NextResponse.json({ ok: true });
 
   // Idempotency: insert update_id; if already exists return 200.
+  // Also persist enough payload to allow retries if background processing dies.
+  const msg = update.message;
+  const chatId = msg?.chat?.id;
+  const telegramUserId = msg?.from?.id;
+  const text = (msg?.text ?? '').trim();
+
   try {
-    await db.insert(telegramUpdates).values({ updateId: update.update_id });
+    await db.insert(telegramUpdates).values({
+      updateId: update.update_id,
+      telegramChatId: chatId,
+      telegramUserId,
+      telegramMessageId: msg?.message_id,
+      text,
+      status: 'ignored',
+      attempts: 0,
+    });
   } catch {
     return NextResponse.json({ ok: true });
   }
 
-  const msg = update.message;
-  if (!msg?.chat?.id) return NextResponse.json({ ok: true });
+  if (!chatId) return NextResponse.json({ ok: true });
 
-  const telegramUserId = msg.from?.id;
   if (!telegramUserId) return NextResponse.json({ ok: true });
   if (msg.from?.is_bot) return NextResponse.json({ ok: true });
-
-  const chatId = msg.chat.id;
-  const text = (msg.text ?? '').trim();
 
   // /start <token>
   if (text.toLowerCase().startsWith('/start')) {
@@ -178,6 +187,12 @@ export async function POST(req: NextRequest) {
     try {
       const sessionKey = `tg:${link.tenantId}:${telegramUserId}`;
 
+      // Mark update as in-flight (so we can retry if the process dies)
+      await db
+        .update(telegramUpdates)
+        .set({ tenantId: link.tenantId, telegramUserId, status: 'ignored', lastAttemptAt: new Date() })
+        .where(eq(telegramUpdates.updateId, update.update_id));
+
       const reply = await openclawChatCompletion({
         sessionKey,
         messages: [{ role: 'user', content: text }],
@@ -209,11 +224,22 @@ export async function POST(req: NextRequest) {
         .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'forwarded' })
         .where(eq(telegramUpdates.updateId, update.update_id));
     } catch (err: any) {
-      await telegramSendMessage(chatId, 'Sorry — something went wrong.');
+      // Mark for retry. We intentionally do NOT force Telegram to retry by returning non-200,
+      // because Telegram retries amplify duplicates. Instead, MC retries via background worker.
       await db
         .update(telegramUpdates)
-        .set({ tenantId: link.tenantId, telegramUserId, processedAt: new Date(), status: 'error', error: String(err?.message ?? err) })
+        .set({
+          tenantId: link.tenantId,
+          telegramUserId,
+          processedAt: null,
+          status: 'error',
+          error: String(err?.message ?? err),
+          nextAttemptAt: new Date(Date.now() + 30_000),
+        })
         .where(eq(telegramUpdates.updateId, update.update_id));
+
+      // Let the user know we're retrying (minimal noise).
+      await telegramSendMessage(chatId, 'Got it — retrying now (the assistant may be slow).');
     } finally {
       if (typingTimer) clearInterval(typingTimer);
       typingTimer = null;
