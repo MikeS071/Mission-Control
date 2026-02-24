@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveTenantId } from '@/lib/tenant';
 import { openclawChatHistory } from '@/lib/openclaw-chat';
 
+function parseConvId(req: NextRequest): string | null {
+  const raw = req.headers.get('x-mc-conv-id');
+  if (!raw) return null;
+  const s = raw.trim();
+  if (!/^[a-zA-Z0-9_-]{6,64}$/.test(s)) return null;
+  return s;
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -17,9 +25,10 @@ export async function GET(req: NextRequest) {
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const limit = parseLimit(req.nextUrl.searchParams.get('limit'));
+  const convId = parseConvId(req);
 
   try {
-    const { messages } = await openclawChatHistory({ tenantId, limit });
+    const { messages } = await openclawChatHistory({ tenantId, convId, limit });
     return NextResponse.json({ messages });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

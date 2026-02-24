@@ -3,6 +3,14 @@ import { z } from 'zod';
 import { resolveTenantId } from '@/lib/tenant';
 import { openclawChatSend } from '@/lib/openclaw-chat';
 
+function parseConvId(req: NextRequest): string | null {
+  const raw = req.headers.get('x-mc-conv-id');
+  if (!raw) return null;
+  const s = raw.trim();
+  if (!/^[a-zA-Z0-9_-]{6,64}$/.test(s)) return null;
+  return s;
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -27,9 +35,10 @@ export async function POST(req: NextRequest) {
 
   const message = parsed.data.message.trim();
   const idempotencyKey = parsed.data.idempotencyKey ?? makeIdempotencyKey();
+  const convId = parseConvId(req);
 
   try {
-    const { runId, status } = await openclawChatSend({ tenantId, message, idempotencyKey });
+    const { runId, status } = await openclawChatSend({ tenantId, convId, message, idempotencyKey });
     return NextResponse.json({ ok: true, runId, status, idempotencyKey });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

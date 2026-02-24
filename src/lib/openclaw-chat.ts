@@ -7,8 +7,10 @@ export type OpenClawUiMessage = {
   timestamp: number;
 };
 
-function sessionKeyForTenant(tenantId: number): string {
-  return `agent:main:webchat:tenant:${tenantId}`;
+function sessionKeyForTenant(tenantId: number, convId?: string | null): string {
+  const base = `agent:main:webchat:tenant:${tenantId}`;
+  if (!convId) return base;
+  return `${base}:conv:${convId}`;
 }
 
 function extractTextBlocks(content: any): string {
@@ -37,9 +39,10 @@ function normalizeRole(role: unknown): OpenClawUiMessage['role'] | null {
 
 export async function openclawChatHistory(params: {
   tenantId: number;
+  convId?: string | null;
   limit?: number;
 }): Promise<{ messages: OpenClawUiMessage[] }> {
-  const sessionKey = sessionKeyForTenant(params.tenantId);
+  const sessionKey = sessionKeyForTenant(params.tenantId, params.convId);
   const limit = Math.max(1, Math.min(200, params.limit ?? 80));
 
   const payload = (await openclawGatewayCall('chat.history', { sessionKey, limit }, { timeoutMs: 30_000 })) as any;
@@ -53,6 +56,9 @@ export async function openclawChatHistory(params: {
 
       const text = extractTextBlocks(m?.content);
       const ts = Number(m?.timestamp);
+
+      // Hide MC-internal user prompts from the transcript UI.
+      if (role === 'user' && text.trimStart().startsWith('[[mc:')) return null;
 
       const msg: OpenClawUiMessage = {
         role,
@@ -69,10 +75,11 @@ export async function openclawChatHistory(params: {
 
 export async function openclawChatSend(params: {
   tenantId: number;
+  convId?: string | null;
   message: string;
   idempotencyKey: string;
 }): Promise<{ runId: string; status: string }> {
-  const sessionKey = sessionKeyForTenant(params.tenantId);
+  const sessionKey = sessionKeyForTenant(params.tenantId, params.convId);
 
   const payload = (await openclawGatewayCall(
     'chat.send',

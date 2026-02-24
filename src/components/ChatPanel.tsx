@@ -57,6 +57,25 @@ function isNearDuplicate(a: UiMessage, b: UiMessage): boolean {
   return delta < 2_000;
 }
 
+const CONV_STORAGE_KEY = 'mc-chat-conv-id:v1';
+
+function isValidConvId(s: string): boolean {
+  return /^[a-zA-Z0-9_-]{6,64}$/.test(s);
+}
+
+function makeConvId(): string {
+  // url-safe, compact
+  return `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+const NEW_CONVERSATION_PROMPT = `[[mc:init]]
+Start a new conversation.
+
+In your first response, include this exact line verbatim:
+load memory so we can continue from previous session and print status with recommended next steps
+
+Then do it: load memory (silently; do not dump raw memory entries) and print a status summary with recommended next steps.`;
+
 export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [input, setInput] = useState('');
@@ -77,12 +96,43 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const refreshingRef = useRef(false);
   const unmountedRef = useRef(false);
 
+  const convIdRef = useRef<string | null>(null);
+  const [, setConvId] = useState<string | null>(null); // UI doesn't render it, but keep state for debugging
+
+  const buildHeaders = useCallback(
+    (includeContentType?: boolean): Record<string, string> => {
+      const h: Record<string, string> = {};
+      if (includeContentType) h['Content-Type'] = 'application/json';
+
+      const convId = convIdRef.current;
+      if (convId) h['x-mc-conv-id'] = convId;
+
+      return h;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(CONV_STORAGE_KEY);
+      if (stored && isValidConvId(stored)) {
+        convIdRef.current = stored;
+        setConvId(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const refreshHistory = useCallback(async (): Promise<UiMessage[] | null> => {
     if (refreshingRef.current) return null;
     refreshingRef.current = true;
 
     try {
-      const res = await fetch('/api/openclaw/chat/history?limit=120', { cache: 'no-store' });
+      const res = await fetch('/api/openclaw/chat/history?limit=120', {
+        cache: 'no-store',
+        headers: buildHeaders(),
+      });
       if (!res.ok) {
         const t = await res.text().catch(() => '');
         const trimmed = t.trim();
@@ -215,7 +265,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       try {
         const res = await fetch('/api/openclaw/chat/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildHeaders(true),
           body: JSON.stringify({ message }),
         });
 
@@ -260,8 +310,68 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [refreshHistory],
+    [refreshHistory, buildHeaders],
   );
+
+  const startNewConversation = useCallback(async () => {
+    const newId = makeConvId();
+
+    try {
+      window.localStorage.setItem(CONV_STORAGE_KEY, newId);
+    } catch {
+      // ignore
+    }
+
+    convIdRef.current = newId;
+    setConvId(newId);
+
+    // Reset UI
+    stickToBottomRef.current = true;
+    setMessages([]);
+    setInput('');
+    setHistoryError(null);
+    setHistoryLoading(true);
+
+    setPendingCount((n) => n + 1);
+    const startedAt = Date.now();
+
+    try {
+      const res = await fetch('/api/openclaw/chat/send', {
+        method: 'POST',
+        headers: buildHeaders(true),
+        body: JSON.stringify({ message: NEW_CONVERSATION_PROMPT }),
+      });
+
+      if (!res.ok) {
+        const t = await res.text().catch(() => '');
+        const trimmed = t.trim();
+        const brief =
+          trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')
+            ? 'Bad gateway / proxy error (HTML response)'
+            : trimmed;
+        throw new Error(`HTTP ${res.status}: ${brief.slice(0, 240)}`);
+      }
+
+      // Poll history until assistant responds.
+      const deadline = Date.now() + 90_000;
+      while (!unmountedRef.current && Date.now() < deadline) {
+        const latest = await refreshHistory();
+        if (latest && latest.some((m) => m.role === 'assistant' && m.timestamp >= startedAt)) {
+          break;
+        }
+        await sleep(1_250);
+      }
+
+      await refreshHistory();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setHistoryError(msg);
+      setHistoryLoading(false);
+    } finally {
+      setPendingCount((n) => Math.max(0, n - 1));
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [buildHeaders, refreshHistory]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -312,9 +422,9 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           <button
             className="rounded-md px-2 py-1 text-xs font-semibold text-white border border-gray-700 hover:border-gray-600"
             style={{ background: '#142e1f' }}
-            onClick={() => void send('/new')}
+            onClick={() => void startNewConversation()}
             aria-label="Start new conversation"
-            title="New conversation (/new)"
+            title="New conversation"
           >
             New
           </button>
