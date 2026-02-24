@@ -8,7 +8,7 @@
  *
  * Notes:
  * - Single conversation view (no MC threads)
- * - Stable OpenClaw session key per tenant (enforced server-side)
+ * - Stable OpenClaw session key per conversation (tenant + x-mc-conv-id, enforced server-side)
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -112,18 +112,6 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     [],
   );
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(CONV_STORAGE_KEY);
-      if (stored && isValidConvId(stored)) {
-        convIdRef.current = stored;
-        setConvId(stored);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
   const refreshHistory = useCallback(async (): Promise<UiMessage[] | null> => {
     if (refreshingRef.current) return null;
     refreshingRef.current = true;
@@ -190,16 +178,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       setHistoryLoading(false);
       refreshingRef.current = false;
     }
-  }, []);
-
-  // Initial history load
-  useEffect(() => {
-    unmountedRef.current = false;
-    void refreshHistory();
-    return () => {
-      unmountedRef.current = true;
-    };
-  }, [refreshHistory]);
+  }, [buildHeaders]);
 
   // Background refresh (best-effort): keeps UI current if other clients inject.
   useEffect(() => {
@@ -372,6 +351,32 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [buildHeaders, refreshHistory]);
+
+  // Initial conversation load
+  // - If a conv id exists in localStorage: resume that conversation
+  // - Else (first login / first visit): auto-run the New init prompt
+  useEffect(() => {
+    unmountedRef.current = false;
+
+    let stored: string | null = null;
+    try {
+      stored = window.localStorage.getItem(CONV_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    if (stored && isValidConvId(stored)) {
+      convIdRef.current = stored;
+      setConvId(stored);
+      void refreshHistory();
+    } else {
+      void startNewConversation();
+    }
+
+    return () => {
+      unmountedRef.current = true;
+    };
+  }, [refreshHistory, startNewConversation]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
