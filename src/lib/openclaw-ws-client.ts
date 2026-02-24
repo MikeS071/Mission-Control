@@ -95,11 +95,13 @@ export class OpenClawWsClient {
     this.connectTimeoutMs = opts.connectTimeoutMs ?? 5_000;
     this.requestTimeoutMs = opts.requestTimeoutMs ?? 15_000;
 
-    this.clientId = opts.clientId ?? 'mission-control';
+    // IMPORTANT: client.id and client.mode are schema-enforced enumerations by the gateway.
+    // Use a known id/mode so connect isn't rejected.
+    this.clientId = opts.clientId ?? 'gateway-client';
     this.clientDisplayName = opts.clientDisplayName ?? 'Mission Control';
     this.clientVersion = opts.clientVersion ?? '0.1.0';
     this.clientPlatform = opts.clientPlatform ?? `node ${process.version}`;
-    this.clientMode = opts.clientMode ?? 'ui';
+    this.clientMode = opts.clientMode ?? 'backend';
   }
 
   /**
@@ -146,8 +148,9 @@ export class OpenClawWsClient {
           id: connectId,
           method: 'connect',
           params: {
-            minProtocol: 2,
-            maxProtocol: 2,
+            // Gateway protocol is v3 in current OpenClaw.
+            minProtocol: 3,
+            maxProtocol: 3,
             client: {
               id: this.clientId,
               displayName: this.clientDisplayName,
@@ -156,7 +159,14 @@ export class OpenClawWsClient {
               mode: this.clientMode,
               instanceId: 'mc',
             },
+            role: 'operator',
+            scopes: ['operator.read', 'operator.write'],
+            caps: [],
+            commands: [],
+            permissions: {},
             auth: this.token ? { token: this.token } : undefined,
+            locale: 'en-US',
+            userAgent: `mission-control/${this.clientVersion}`,
           },
         };
         ws.send(JSON.stringify(frame));
