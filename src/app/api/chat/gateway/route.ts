@@ -21,66 +21,8 @@ import { bumpThreadUpdatedAt, resolveThreadId } from '@/lib/chat-threads';
 const GATEWAY_URL    = process.env.OPENCLAW_GATEWAY_URL ?? process.env.GATEWAY_URL ?? 'http://127.0.0.1:18789';
 const GATEWAY_TOKEN  = process.env.OPENCLAW_GATEWAY_TOKEN;
 const API_SECRET     = process.env.API_SECRET; // optional: server-to-server auth bypass for smoke tests
-const TG_BOT_TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
-const TG_CHAT_ID     = process.env.TELEGRAM_CHAT_ID;
-
 if (!GATEWAY_TOKEN) {
   console.error('[chat/gateway] OPENCLAW_GATEWAY_TOKEN is not set — requests will fail auth');
-}
-
-/**
- * Send a message to the Telegram channel — fire-and-forget, never throws.
- * No parse_mode: plain text only. User messages are uncontrolled input and
- * will break Markdown parsing, causing silent 400s from the Telegram API.
- */
-async function sendToTelegram(text: string): Promise<void> {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
-    console.warn('[chat/gateway] sendToTelegram: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set');
-    return;
-  }
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TG_CHAT_ID, text }),
-      signal: AbortSignal.timeout(3_000),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      console.error(`[chat/gateway] Telegram send failed ${res.status}: ${body}`);
-    }
-  } catch (err) {
-    console.error('[chat/gateway] Telegram send error:', err);
-  }
-}
-
-/**
- * Telegram typing indicator (`sendChatAction`).
- * Must be repeated every few seconds while we wait for the gateway.
- */
-async function sendTelegramTyping(): Promise<void> {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
-  try {
-    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendChatAction`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TG_CHAT_ID, action: 'typing' }),
-      signal: AbortSignal.timeout(2_000),
-    });
-  } catch {
-    // best-effort only
-  }
-}
-
-function startTelegramTyping(): () => void {
-  // Initial poke so it feels instant.
-  void sendTelegramTyping();
-
-  const interval = setInterval(() => {
-    void sendTelegramTyping();
-  }, 4_500);
-
-  return () => clearInterval(interval);
 }
 
 const CONTEXT_LIMIT = 10;
@@ -142,10 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 });
   }
 
-  // ── Mirror user message to Telegram immediately (latency UX) ──────────────
-  // NOTE: Telegram bots cannot impersonate the human sender; this is just a
-  // text prefix to visually distinguish MC-mirrored user messages.
-  void sendToTelegram(`👤 ${userContent}`);
+  // (Telegram mirroring removed — MC chat is now OpenClaw-native)
 
   // ── Build conversation context ────────────────────────────────────────────
   const history = await db
@@ -181,8 +120,8 @@ export async function POST(req: NextRequest) {
   // session key to avoid poisoned sessions causing "No tool call found...".
   const sessionKeyBase = `web:mc:${tenantId}:m${userMsgId}`;
 
-  // Telegram native typing indicator while gateway is processing.
-  const stopTelegramTyping = startTelegramTyping();
+  // (Telegram typing removed)
+  const stopTelegramTyping = () => {};
 
   async function callGateway(sessionKey: string): Promise<{ ok: boolean; status?: number; errText?: string; reply?: string }> {
     const gwRes = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
@@ -275,9 +214,7 @@ export async function POST(req: NextRequest) {
     stopTelegramTyping();
   }
 
-  // ── Mirror assistant reply to Telegram ────────────────────────────────────
-  // (User message was mirrored immediately after insert.)
-  void sendToTelegram(reply);
+  // (Telegram mirroring removed)
 
   const isDev = (process.env.NODE_ENV ?? 'development') === 'development';
 
