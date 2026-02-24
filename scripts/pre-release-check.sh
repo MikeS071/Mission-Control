@@ -10,6 +10,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
+# Clean stale Next-generated TS types (these can reference removed route files and fail tsc).
+# Safe to run even when dev server is up; avoids nuking full .next by default.
+rm -rf .next/types .next/dev/types 2>/dev/null || true
+
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
