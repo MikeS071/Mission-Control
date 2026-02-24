@@ -1,4 +1,4 @@
-import { getOpenClawWsClient } from './openclaw-ws-client';
+import { openclawGatewayCall } from './openclaw-gateway-cli';
 
 export type OpenClawUiMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -33,11 +33,10 @@ export async function openclawChatHistory(params: {
   tenantId: number;
   limit?: number;
 }): Promise<{ messages: OpenClawUiMessage[] }> {
-  const client = getOpenClawWsClient();
   const sessionKey = sessionKeyForTenant(params.tenantId);
   const limit = Math.max(1, Math.min(200, params.limit ?? 80));
 
-  const payload = (await client.call('chat.history', { sessionKey, limit }, 15_000)) as any;
+  const payload = (await openclawGatewayCall('chat.history', { sessionKey, limit }, { timeoutMs: 15_000 })) as any;
 
   const rawMessages: any[] = Array.isArray(payload?.messages) ? payload.messages : [];
 
@@ -62,17 +61,17 @@ export async function openclawChatSend(params: {
   message: string;
   idempotencyKey: string;
 }): Promise<{ runId: string; status: string }> {
-  const client = getOpenClawWsClient();
   const sessionKey = sessionKeyForTenant(params.tenantId);
 
-  const payload = (await client.call(
+  const payload = (await openclawGatewayCall(
     'chat.send',
     {
       sessionKey,
       message: params.message,
       idempotencyKey: params.idempotencyKey,
+      deliver: false,
     },
-    30_000,
+    { timeoutMs: 30_000 },
   )) as any;
 
   return {
