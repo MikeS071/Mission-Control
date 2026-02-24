@@ -11,7 +11,8 @@
     "billing",
     "billing-stripe",
     "activity-feed",
-    "agent-stats",
+    "chat-threads",
+    "agent-stats", 
     "auth-provider",
     "waitlist"
   ]
