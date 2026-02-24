@@ -71,6 +71,10 @@ function makeConvId(): string {
 const NEW_CONVERSATION_PROMPT = `[[mc:init]]
 Start a new conversation.
 
+IMPORTANT:
+- Do NOT output your reasoning.
+- Do NOT prefix anything with "Reasoning:".
+
 In your first response, include this exact line verbatim:
 load memory so we can continue from previous session and print status with recommended next steps
 

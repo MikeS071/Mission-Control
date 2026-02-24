@@ -73,6 +73,15 @@ export async function openclawChatHistory(params: {
   return { messages };
 }
 
+function wrapMcUserMessage(message: string): string {
+  const trimmed = message.trimStart();
+  if (trimmed.startsWith('[[mc:')) return message;
+
+  // Guardrail: never show chain-of-thought / reasoning meta in the UI.
+  // This is stored in the gateway transcript as a user message, but MC hides [[mc:...]] entries.
+  return `[[mc:guard]]\nDo not output your reasoning. Do not prefix with \"Reasoning:\".\nReply with just the answer.\n\n${message}`;
+}
+
 export async function openclawChatSend(params: {
   tenantId: number;
   convId?: string | null;
@@ -85,7 +94,7 @@ export async function openclawChatSend(params: {
     'chat.send',
     {
       sessionKey,
-      message: params.message,
+      message: wrapMcUserMessage(params.message),
       idempotencyKey: params.idempotencyKey,
       deliver: false,
     },
