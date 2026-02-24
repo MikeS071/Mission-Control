@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { chatMessages, telegramLinks, telegramLinkTokens, telegramUpdates, users } from '@/db/schema';
+import { chatMessages, telegramLinks, telegramLinkTokens, telegramUpdates } from '@/db/schema';
 import { openclawChatCompletion } from '@/lib/openclaw-gateway';
 import { authorizeInbound } from '@/lib/policy';
 import { telegramSendChatAction, telegramSendMessage } from '@/lib/telegram-bot';
 import { isMcTelegramBridgeEnabled } from '@/lib/telegram-ingress';
+import { wsManager } from '@/lib/ws-manager';
 import { wsManager } from '@/lib/ws-manager';
 
 type TelegramUpdate = {
