@@ -18,11 +18,37 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # ── Args ──────────────────────────────────────────────────────────────────────
-BASE_URL="http://localhost:3002"
-for arg in "$@"; do
-  [[ "$arg" == "--prod" ]]  && BASE_URL="https://archonhq.ai"
-  [[ "$arg" =~ ^--base=?  ]] && BASE_URL="${arg#--base}"
-  [[ "$arg" =~ ^--base$   ]] && { shift; BASE_URL="${1:-$BASE_URL}"; }
+# Default: dev server
+BASE_URL="http://127.0.0.1:3003"
+
+# Supported:
+#   --prod
+#   --base <url> | --base=<url>
+#   <url> (positional)
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --prod)
+      BASE_URL="https://archonhq.ai"
+      shift
+      ;;
+    --base)
+      shift
+      BASE_URL="${1:-$BASE_URL}"
+      shift || true
+      ;;
+    --base=*)
+      BASE_URL="${1#--base=}"
+      shift
+      ;;
+    --*)
+      echo "Unknown arg: $1" >&2
+      exit 2
+      ;;
+    *)
+      BASE_URL="$1"
+      shift
+      ;;
+  esac
 done
 
 # ── Counters & helpers ────────────────────────────────────────────────────────
@@ -40,7 +66,8 @@ http() {
   local URL="${BASE_URL}${ROUTE}"
   local CODE
   CODE=$(curl -4 -sk -o /dev/null -w "%{http_code}" -X "$METHOD" "$URL" \
-    -m 10 "$@" 2>/dev/null || echo "000")
+    -m 10 "$@" 2>/dev/null || true)
+  CODE="${CODE:-000}"
   if [[ "$CODE" == "$EXPECTED" ]]; then
     pass "$METHOD $ROUTE → $CODE"
   else
@@ -54,7 +81,8 @@ http_not() {
   local URL="${BASE_URL}${ROUTE}"
   local CODE
   CODE=$(curl -4 -sk -o /dev/null -w "%{http_code}" -X "$METHOD" "$URL" \
-    -m 10 2>/dev/null || echo "000")
+    -m 10 2>/dev/null || true)
+  CODE="${CODE:-000}"
   if [[ "$CODE" != "$FORBIDDEN" ]]; then
     pass "$METHOD $ROUTE → $CODE (not $FORBIDDEN)"
   else
@@ -144,7 +172,8 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 section "3. Server Reachable"
 # ─────────────────────────────────────────────────────────────────────────────
-SERVER_CODE=$(curl -4 -sk -o /dev/null -w "%{http_code}" "$BASE_URL" -m 10 2>/dev/null || echo "000")
+SERVER_CODE=$(curl -4 -sk -o /dev/null -w "%{http_code}" "$BASE_URL" -m 10 2>/dev/null || true)
+SERVER_CODE="${SERVER_CODE:-000}"
 if [[ "$SERVER_CODE" == "200" ]]; then
   pass "Server at $BASE_URL → 200"
 else
