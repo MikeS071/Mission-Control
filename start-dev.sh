@@ -39,7 +39,9 @@ export NEXT_TELEMETRY_DISABLED=1
 export PORT=3003
 export PORT_HTTPS=3004
 export PORT_HTTP=3003
-export HTTP_BIND=0.0.0.0
+# Bind IPv6 dual-stack so Cloudflared ingress (which often dials ::1 for localhost) works reliably.
+# Node on Linux typically accepts IPv4-mapped connections too when bound to ::.
+export HTTP_BIND=::
 export NEXTAUTH_URL=https://dev.archonhq.ai
 
 # Dev mode: Next.js compiles on demand — no pre-build needed.
