@@ -44,7 +44,13 @@ function normalizeChatMessage(raw: unknown): ChatMessage | null {
       : 'assistant';
 
   const threadIdRaw = (r as any).threadId;
-  const threadId = typeof threadIdRaw === 'number' && Number.isFinite(threadIdRaw) ? threadIdRaw : null;
+  let threadId: number | null = null;
+  if (typeof threadIdRaw === 'number' && Number.isFinite(threadIdRaw)) {
+    threadId = threadIdRaw;
+  } else if (typeof threadIdRaw === 'string') {
+    const n = parseInt(threadIdRaw, 10);
+    if (Number.isFinite(n) && n > 0) threadId = n;
+  }
 
   return {
     id,
@@ -370,12 +376,12 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
             // When sending from this client we optimistically append a local user message
             // with a negative id; WS can deliver the real DB row before the HTTP response
             // returns, which would otherwise show two copies for a moment.
-            if (msg.role === 'user' && msg.threadId && selectedThreadId && msg.threadId === selectedThreadId) {
+            if (msg.role === 'user' && selectedThreadId && (!msg.threadId || msg.threadId === selectedThreadId)) {
               const now = Date.now();
               const idx = prev.findIndex((m) => {
                 if (m.id >= 0) return false;
                 if (m.role !== 'user') return false;
-                if ((m.threadId ?? null) !== (msg.threadId ?? null)) return false;
+                if ((m.threadId ?? null) !== selectedThreadId) return false;
                 if (m.content !== msg.content) return false;
                 const t = Date.parse(m.createdAt);
                 if (!Number.isFinite(t)) return false;
@@ -384,7 +390,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
               if (idx >= 0) {
                 const out = prev.slice();
-                out[idx] = msg;
+                out[idx] = { ...msg, threadId: selectedThreadId };
                 // Final pass: de-dupe by id in case something else already inserted it.
                 const seen = new Set<string>();
                 return out.filter((m) => {
