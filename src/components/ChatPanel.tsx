@@ -361,6 +361,37 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           setMessages((prev) => {
             const key = String(msg.id);
             if (prev.some((m) => String(m.id) === key)) return prev;
+
+            // Special case: prevent a brief double-render of the sender's own message.
+            // When sending from this client we optimistically append a local user message
+            // with a negative id; WS can deliver the real DB row before the HTTP response
+            // returns, which would otherwise show two copies for a moment.
+            if (msg.role === 'user' && msg.threadId && selectedThreadId && msg.threadId === selectedThreadId) {
+              const now = Date.now();
+              const idx = prev.findIndex((m) => {
+                if (m.id >= 0) return false;
+                if (m.role !== 'user') return false;
+                if ((m.threadId ?? null) !== (msg.threadId ?? null)) return false;
+                if (m.content !== msg.content) return false;
+                const t = Date.parse(m.createdAt);
+                if (!Number.isFinite(t)) return false;
+                return now - t < 30_000;
+              });
+
+              if (idx >= 0) {
+                const out = prev.slice();
+                out[idx] = msg;
+                // Final pass: de-dupe by id in case something else already inserted it.
+                const seen = new Set<string>();
+                return out.filter((m) => {
+                  const k = String(m.id);
+                  if (seen.has(k)) return false;
+                  seen.add(k);
+                  return true;
+                });
+              }
+            }
+
             if (prev.some((m) => isNearDuplicate(m, msg))) return prev;
             return [...prev, msg];
           });
