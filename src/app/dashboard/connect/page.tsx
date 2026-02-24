@@ -487,6 +487,10 @@ export default function ConnectGatewayPage() {
                           alert(data?.error ?? 'Failed to create link token');
                           return;
                         }
+                        if (res.status === 409) {
+                          alert('MC Telegram bridge is disabled (mode=openclaw).');
+                          return;
+                        }
                         if (!data.deepLinkUrl) {
                           alert('TELEGRAM_BOT_USERNAME not set on server');
                           return;
