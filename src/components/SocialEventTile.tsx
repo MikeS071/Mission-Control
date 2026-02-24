@@ -96,14 +96,15 @@ function ReactionBar({
   );
 
   function toggle(key: ReactionKey) {
-    setMine((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      setCounts((c) => ({
-        ...c,
-        [key]: Math.max(0, (c[key] ?? 0) + (next[key] ? 1 : -1)),
-      }));
-      return next;
-    });
+    // IMPORTANT: keep updater functions pure (no nested setState side effects),
+    // otherwise React Strict Mode may invoke updater twice and double-increment.
+    const willActivate = !mine[key];
+
+    setMine((prev) => ({ ...prev, [key]: willActivate }));
+    setCounts((prev) => ({
+      ...prev,
+      [key]: Math.max(0, (prev[key] ?? 0) + (willActivate ? 1 : -1)),
+    }));
   }
 
   return (

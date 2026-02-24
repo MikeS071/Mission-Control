@@ -55,12 +55,16 @@ export function SocialFeed() {
 
     sse.addEventListener('activity.reaction.updated', (e) => {
       try {
-        const { eventId, reactions } = JSON.parse((e as MessageEvent).data) as {
+        const payload = JSON.parse((e as MessageEvent).data) as {
           eventId: string;
-          reactions: ActivityEvent['reactions'];
+          reactions?: ActivityEvent['reactions'];
+          counts?: ActivityEvent['reactions'];
         };
+        const reactions = payload.reactions ?? payload.counts;
+        if (!payload.eventId || !reactions) return;
+
         setEvents((prev) =>
-          prev.map((ev) => (ev.id === eventId ? { ...ev, reactions } : ev))
+          prev.map((ev) => (ev.id === payload.eventId ? { ...ev, reactions } : ev))
         );
       } catch { /* ignore malformed */ }
     });
