@@ -1,6 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+export type ReactionCounts = { hype: number; respect: number; tribute: number };
 
 export type ActivityEvent = {
   id: string;
@@ -9,15 +11,18 @@ export type ActivityEvent = {
   description: string;
   icon: string;
   createdAt: string;
-  reactions: { hype: number; respect: number; tribute: number };
+  reactions?: ReactionCounts;
+  commentCount?: number;
 };
 
-type ReactionKey = keyof ActivityEvent['reactions'];
+type ReactionKey = keyof ReactionCounts;
 
-type Comment = {
+type ApiComment = {
   id: string;
-  author: string;
-  content: string;
+  eventId: string;
+  tenantId: number;
+  tenantName: string;
+  body: string;
   createdAt: string;
 };
 
@@ -71,19 +76,26 @@ function ReactionPill({
 
 function ReactionBar({
   initial,
-  onOpenComments,
+  commentCount,
+  onToggleComments,
   commentsOpen,
 }: {
-  initial: ActivityEvent['reactions'];
-  onOpenComments: () => void;
+  initial: ReactionCounts;
+  commentCount: number;
+  onToggleComments: () => void;
   commentsOpen: boolean;
 }) {
-  const [counts, setCounts] = useState(initial);
+  const [counts, setCounts] = useState<ReactionCounts>(initial);
   const [mine, setMine] = useState<Record<ReactionKey, boolean>>({
     hype: false,
     respect: false,
     tribute: false,
   });
+
+  // Keep local counts in sync if parent updates via SSE/pagination.
+  useEffect(() => {
+    setCounts(initial);
+  }, [initial.hype, initial.respect, initial.tribute]);
 
   const defs = useMemo(
     () =>
@@ -122,46 +134,90 @@ function ReactionBar({
 
       <button
         type="button"
-        onClick={onOpenComments}
-        className="ml-auto text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+        onClick={onToggleComments}
+        aria-label={commentsOpen ? 'Hide comments' : 'Show comments'}
+        aria-expanded={commentsOpen}
+        title={commentsOpen ? 'Hide comments' : 'Show comments'}
+        className={
+          `ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] transition-colors ` +
+          (commentsOpen
+            ? 'text-gray-200 bg-gray-800/60 hover:bg-gray-800'
+            : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/30')
+        }
       >
-        💬 {commentsOpen ? 'Hide' : 'Comment'}
+        <span className="leading-none">💬</span>
+        <span className={commentCount > 0 ? 'text-gray-400' : 'text-gray-700'}>{commentCount}</span>
       </button>
     </div>
   );
 }
 
-function CommentThread() {
-  const [comments, setComments] = useState<Comment[]>([]);
+function CommentThread({ eventId }: { eventId: string }) {
+  const [comments, setComments] = useState<ApiComment[]>([]);
   const [draft, setDraft] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
 
-  function add() {
-    const content = draft.trim();
-    if (!content) return;
+  useEffect(() => {
+    const ctrl = new AbortController();
+    setLoading(true);
 
-    setComments((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        author: 'You',
-        content,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setDraft('');
+    fetch(`/api/activity/comments?eventId=${encodeURIComponent(eventId)}`, {
+      cache: 'no-store',
+      signal: ctrl.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as { comments: ApiComment[] };
+      })
+      .then((data) => {
+        if (data?.comments) setComments(data.comments);
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => setLoading(false));
+
+    return () => ctrl.abort();
+  }, [eventId]);
+
+  async function add() {
+    const body = draft.trim();
+    if (!body || posting) return;
+
+    setPosting(true);
+    try {
+      const res = await fetch('/api/activity/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, body }),
+      });
+
+      if (!res.ok) return;
+      const data = (await res.json()) as { ok: boolean; comment?: ApiComment };
+
+      if (data.comment) {
+        setComments((prev) => [...prev, data.comment!]);
+        setDraft('');
+      }
+    } finally {
+      setPosting(false);
+    }
   }
 
   return (
     <div className="space-y-2">
-      {comments.length > 0 ? (
+      {loading ? (
+        <p className="text-[10px] text-gray-700">Loading comments…</p>
+      ) : comments.length > 0 ? (
         <div className="space-y-1">
           {comments.map((c) => (
             <div key={c.id} className="rounded-md border border-gray-800 bg-black/20 px-2 py-1">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[10px] font-medium text-gray-300">{c.author}</span>
+                <span className="text-[10px] font-medium text-gray-300">{c.tenantName}</span>
                 <span className="text-[10px] text-gray-600">{timeAgo(c.createdAt)}</span>
               </div>
-              <div className="text-[11px] text-gray-400 whitespace-pre-wrap">{c.content}</div>
+              <div className="text-[11px] text-gray-400 whitespace-pre-wrap">{c.body}</div>
             </div>
           ))}
         </div>
@@ -176,7 +232,7 @@ function CommentThread() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              add();
+              void add();
             }
           }}
           rows={2}
@@ -185,25 +241,25 @@ function CommentThread() {
         />
         <button
           type="button"
-          onClick={add}
+          onClick={() => void add()}
+          disabled={posting}
           title="Post comment"
           aria-label="Post comment"
-          className="h-7 w-7 rounded-md border border-gray-800 bg-gray-900 text-[11px] text-gray-300 hover:border-gray-600 flex items-center justify-center"
+          className="h-7 w-7 rounded-md border border-gray-800 bg-gray-900 text-[11px] text-gray-300 hover:border-gray-600 flex items-center justify-center disabled:opacity-50"
         >
           ➤
         </button>
       </div>
-
-      <p className="text-[10px] text-gray-700">
-        Step 8: local-only UI — persistence + multi-user sync comes later.
-      </p>
     </div>
   );
 }
 
 export function SocialEventTile({ event }: { event: ActivityEvent }) {
   const [commentsOpen, setCommentsOpen] = useState(false);
+
   const ago = timeAgo(event.createdAt);
+  const reactions: ReactionCounts = event.reactions ?? { hype: 0, respect: 0, tribute: 0 };
+  const commentCount = event.commentCount ?? 0;
 
   return (
     <div className="rounded-lg border border-gray-800 bg-gray-900/70 px-3 py-2.5 space-y-1.5">
@@ -212,9 +268,7 @@ export function SocialEventTile({ event }: { event: ActivityEvent }) {
         <span className="text-base leading-none mt-0.5 flex-shrink-0">{event.icon}</span>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-1 flex-wrap">
-            <span className="text-[11px] font-semibold text-gray-200 truncate">
-              {event.displayName}
-            </span>
+            <span className="text-[11px] font-semibold text-gray-200 truncate">{event.displayName}</span>
             <span className="text-[10px] text-gray-600 flex-shrink-0">{ago}</span>
           </div>
           <p className="text-[11px] text-gray-400 leading-relaxed">{event.description}</p>
@@ -224,16 +278,17 @@ export function SocialEventTile({ event }: { event: ActivityEvent }) {
       {/* ReactionBar */}
       <div className="pl-7">
         <ReactionBar
-          initial={event.reactions}
+          initial={reactions}
+          commentCount={commentCount}
           commentsOpen={commentsOpen}
-          onOpenComments={() => setCommentsOpen((v) => !v)}
+          onToggleComments={() => setCommentsOpen((v) => !v)}
         />
       </div>
 
       {/* CommentThread */}
       {commentsOpen && (
         <div className="pl-7 pt-2 border-t border-gray-800">
-          <CommentThread />
+          <CommentThread eventId={event.id} />
         </div>
       )}
     </div>

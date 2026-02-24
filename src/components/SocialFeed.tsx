@@ -47,7 +47,12 @@ export function SocialFeed() {
 
     sse.addEventListener('activity.event.created', (e) => {
       try {
-        const event = JSON.parse((e as MessageEvent).data) as ActivityEvent;
+        const raw = JSON.parse((e as MessageEvent).data) as ActivityEvent;
+        const event: ActivityEvent = {
+          ...raw,
+          reactions: raw.reactions ?? { hype: 0, respect: 0, tribute: 0 },
+          commentCount: raw.commentCount ?? 0,
+        };
         setPendingEvents((prev) => [event, ...prev]);
         setPendingCount((c) => c + 1);
       } catch { /* ignore malformed */ }
@@ -66,6 +71,24 @@ export function SocialFeed() {
         setEvents((prev) =>
           prev.map((ev) => (ev.id === payload.eventId ? { ...ev, reactions } : ev))
         );
+        setPendingEvents((prev) =>
+          prev.map((ev) => (ev.id === payload.eventId ? { ...ev, reactions } : ev))
+        );
+      } catch { /* ignore malformed */ }
+    });
+
+    sse.addEventListener('activity.comment.created', (e) => {
+      try {
+        const payload = JSON.parse((e as MessageEvent).data) as { eventId: string };
+        if (!payload.eventId) return;
+
+        const bump = (ev: ActivityEvent) =>
+          ev.id === payload.eventId
+            ? { ...ev, commentCount: (ev.commentCount ?? 0) + 1 }
+            : ev;
+
+        setEvents((prev) => prev.map(bump));
+        setPendingEvents((prev) => prev.map(bump));
       } catch { /* ignore malformed */ }
     });
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, desc, eq, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { activityEvents, activityReactions } from '@/db/schema';
+import { activityComments, activityEvents, activityReactions } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 
 const querySchema = z.object({
@@ -66,9 +66,28 @@ export async function GET(req: NextRequest) {
     if (row.reactionType === 'tribute') c.tribute = row.count;
   }
 
+  // Attach per-event comment counts in one query
+  const commentCounts =
+    eventIds.length > 0
+      ? await db
+          .select({
+            eventId: activityComments.eventId,
+            count:   sql<number>`COUNT(*)::int`,
+          })
+          .from(activityComments)
+          .where(sql`${activityComments.eventId} = ANY(ARRAY[${sql.join(eventIds.map((id) => sql`${id}::uuid`), sql`, `)}])`)
+          .groupBy(activityComments.eventId)
+      : [];
+
+  const commentCountMap = new Map<string, number>();
+  for (const row of commentCounts) {
+    commentCountMap.set(row.eventId, row.count);
+  }
+
   const enriched = events.map((e) => ({
     ...e,
     reactions: countsMap.get(e.id) ?? { hype: 0, respect: 0, tribute: 0 },
+    commentCount: commentCountMap.get(e.id) ?? 0,
   }));
 
   return NextResponse.json({
