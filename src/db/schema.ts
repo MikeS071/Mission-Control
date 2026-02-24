@@ -344,10 +344,24 @@ export const telegramUpdates = pgTable('telegram_updates', {
   updateId: bigint('update_id', { mode: 'number' }).primaryKey(),
   tenantId: integer('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
   telegramUserId: bigint('telegram_user_id', { mode: 'number' }),
+
+  // Payload we need for retries / audit
+  telegramChatId: bigint('telegram_chat_id', { mode: 'number' }),
+  telegramMessageId: bigint('telegram_message_id', { mode: 'number' }),
+  text: text('text'),
+
+  // Processing metadata
   receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
   processedAt: timestamp('processed_at', { withTimezone: true }),
   status: text('status').notNull().default('ignored'), // ignored|linked|forwarded|denied|error
   error: text('error'),
+
+  // Retry controls (auto-restart capability)
+  attempts: integer('attempts').notNull().default(0),
+  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
+  nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }),
+  lockedAt: timestamp('locked_at', { withTimezone: true }),
+  lockedBy: text('locked_by'),
 });
 
 // ── Activity feed ─────────────────────────────────────────────────────────────

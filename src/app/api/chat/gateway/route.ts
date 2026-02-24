@@ -82,6 +82,7 @@ function startTelegramTyping(): () => void {
 }
 
 const CONTEXT_LIMIT = 10;
+const MAX_CONTEXT_CHARS = 12_000;
 
 export async function POST(req: NextRequest) {
   if (!GATEWAY_TOKEN) {
@@ -148,10 +149,25 @@ export async function POST(req: NextRequest) {
     .orderBy(desc(chatMessages.createdAt))
     .limit(CONTEXT_LIMIT + 1);
 
-  const contextMessages = history
+  // Keep context bounded so prompts don't explode and cause 30–60s latency spikes.
+  // We cap by both message count and total characters.
+  const chronological = history
     .reverse()
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+  let totalChars = 0;
+  const contextMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  // Take from the end (most recent) backwards until we hit the cap, then re-reverse.
+  for (let i = chronological.length - 1; i >= 0; i--) {
+    const m = chronological[i];
+    const len = (m.content ?? '').length;
+    if (contextMessages.length >= CONTEXT_LIMIT) break;
+    if (totalChars + len > MAX_CONTEXT_CHARS && contextMessages.length > 0) break;
+    totalChars += len;
+    contextMessages.push(m);
+  }
+  contextMessages.reverse();
 
   // ── Call OpenClaw gateway ─────────────────────────────────────────────────
   // IMPORTANT: OpenClaw may persist tool-call state per session key.

@@ -5,6 +5,7 @@ import next from 'next';
 import { parse } from 'url';
 import { WebSocketServer } from 'ws';
 import { startHeartbeatWorker } from './src/lib/heartbeat';
+import { startTelegramRetryWorker } from './src/lib/telegram-retry-worker';
 import { wsManager } from './src/lib/ws-manager';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -81,6 +82,7 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
 app.prepare().then(() => {
   handleUpgrade = app.getUpgradeHandler();
   startHeartbeatWorker();
+  startTelegramRetryWorker();
 
   const handler = (req: any, res: any) => {
     const parsedUrl = parse(req.url!, true);
