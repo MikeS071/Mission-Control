@@ -1,7 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { challenges, streaks, xpLedger } from '@/db/schema';
-import { xpToRank } from '@/lib/arena';
 import { emitEvent } from '@/lib/activity';
 
 export const XP_RULES = {
@@ -24,10 +23,6 @@ const STREAK_MILESTONES = new Set([7, 30, 100]);
 
 export async function awardXp(tenantId: number, points: number, reason: string, refId?: string) {
   try {
-    // Capture XP before insert to detect rank-up
-    const xpBefore = await getTenantTotalXp(tenantId);
-    const rankBefore = xpToRank(xpBefore);
-
     await db.insert(xpLedger).values({
       tenantId,
       userEmail: 'system',
@@ -35,16 +30,6 @@ export async function awardXp(tenantId: number, points: number, reason: string, 
       reason,
       refId: refId ?? null,
     });
-
-    // Emit xp_rank_up if rank threshold crossed
-    const rankAfter = xpToRank(xpBefore + points);
-    if (rankAfter.rank.id !== rankBefore.rank.id) {
-      void emitEvent(tenantId, 'xp_rank_up', {
-        agentName: 'system',
-        oldRank:   rankBefore.rank.label,
-        newRank:   rankAfter.rank.label,
-      });
-    }
 
     const today = utcDay();
     const [existing] = await db
