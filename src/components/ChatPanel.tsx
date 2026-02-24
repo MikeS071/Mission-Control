@@ -22,6 +22,7 @@ interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: string;
+  threadId?: number | null;
 }
 
 interface HistoryResponse {
@@ -42,11 +43,21 @@ function normalizeChatMessage(raw: unknown): ChatMessage | null {
       ? (roleRaw as ChatMessage['role'])
       : 'assistant';
 
+  const threadIdRaw = (r as any).threadId;
+  let threadId: number | null = null;
+  if (typeof threadIdRaw === 'number' && Number.isFinite(threadIdRaw)) {
+    threadId = threadIdRaw;
+  } else if (typeof threadIdRaw === 'string') {
+    const n = parseInt(threadIdRaw, 10);
+    if (Number.isFinite(n) && n > 0) threadId = n;
+  }
+
   return {
     id,
     role,
     content: String(r.content ?? ''),
     createdAt: String(r.createdAt ?? ''),
+    threadId,
   };
 }
 
@@ -64,6 +75,7 @@ interface ChatResponse {
   reply: string;
   messageId?: number;
   userMessageId?: number;
+  threadId?: number;
   error?: boolean;
 }
 
@@ -72,7 +84,27 @@ function nextLocalId(): number {
   return localIdCounter--;
 }
 
+type ChatThread = {
+  id: number;
+  title: string;
+  updatedAt?: string;
+  createdAt?: string;
+};
+
+type ThreadsResponse = {
+  threads: ChatThread[];
+};
+
+type ThreadResponse = {
+  thread: ChatThread;
+};
+
 export function ChatPanel({ agentName }: { agentName?: string } = {}) {
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
+  const [editingThreadId, setEditingThreadId] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
@@ -87,16 +119,20 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
 
+  // Auto-scroll behaviour
+  const awaitingReplyRef = useRef(false);
+  const awaitingReplyThreadIdRef = useRef<number | null>(null);
+
   const stickToBottomRef = useRef(true);
   const lastScrollTopRef = useRef(0);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (threadId: number) => {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const res = await fetch('/api/chat/history?limit=80', { cache: 'no-store' });
+      const res = await fetch(`/api/chat/history?limit=80&threadId=${encodeURIComponent(String(threadId))}`, { cache: 'no-store' });
       if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${res.status}: ${text}`);
@@ -124,7 +160,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       }
 
       setMessages(pass2);
-      setHasMore((data.messages ?? []).length >= 200);
+      setHasMore((data.messages ?? []).length >= 80);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setHistoryError(msg);
@@ -132,6 +168,58 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     } finally {
       setHistoryLoading(false);
     }
+  }, []);
+
+  const fetchThreads = useCallback(async () => {
+    const res = await fetch('/api/chat/threads', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data: ThreadsResponse = await res.json();
+    const list = (data.threads ?? []).filter((t) => typeof t?.id === 'number');
+    setThreads(list);
+    return list;
+  }, []);
+
+  const createThread = useCallback(async (title?: string) => {
+    const res = await fetch('/api/chat/threads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data: ThreadResponse = await res.json();
+    const thread = data.thread;
+    setThreads((prev) => [thread, ...prev]);
+    return thread;
+  }, []);
+
+  const renameThread = useCallback(async (id: number, title: string) => {
+    const res = await fetch(`/api/chat/threads/${encodeURIComponent(String(id))}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data: ThreadResponse = await res.json();
+    const thread = data.thread;
+    setThreads((prev) => prev.map((x) => (x.id === id ? thread : x)));
+    return thread;
+  }, []);
+
+  const deleteThread = useCallback(async (id: number) => {
+    const res = await fetch(`/api/chat/threads/${encodeURIComponent(String(id))}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    setThreads((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const loadOlder = useCallback(async () => {
@@ -151,7 +239,10 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
     setLoadingOlder(true);
     try {
-      const res = await fetch(`/api/chat/history?limit=80&beforeId=${encodeURIComponent(String(beforeId))}`, {
+      const threadId = selectedThreadId;
+      if (!threadId) return;
+
+      const res = await fetch(`/api/chat/history?limit=80&beforeId=${encodeURIComponent(String(beforeId))}&threadId=${encodeURIComponent(String(threadId))}`, {
         cache: 'no-store',
       });
       if (!res.ok) {
@@ -195,12 +286,33 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     } finally {
       setLoadingOlder(false);
     }
-  }, [hasMore, loadingOlder, messages, messagesRef]);
+  }, [hasMore, loadingOlder, messages, messagesRef, selectedThreadId]);
 
-  // ── Load history on mount ─────────────────────────────────────────────────
+  // ── Load threads on mount ───────────────────────────────────────────────
   useEffect(() => {
-    void fetchHistory();
-  }, [fetchHistory]);
+    (async () => {
+      try {
+        const list = await fetchThreads();
+        let initial = list[0];
+        if (!initial) {
+          initial = await createThread('Main');
+        }
+        setSelectedThreadId(initial.id);
+      } catch (err) {
+        console.error('[ChatPanel] Failed to init threads:', err);
+      }
+    })();
+  }, [fetchThreads, createThread]);
+
+  // If thread changes, reload history.
+  useEffect(() => {
+    if (!selectedThreadId) return;
+    // Reset scroll behavior for new thread
+    initialScrollDone.current = false;
+    stickToBottomRef.current = true;
+    setMessages([]);
+    void fetchHistory(selectedThreadId);
+  }, [selectedThreadId, fetchHistory]);
 
   // ── WebSocket — real-time message push ───────────────────────────────────
   const wsRef = useRef<WebSocket | null>(null);
@@ -244,9 +356,52 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
             ...base,
             createdAt: base.createdAt || new Date().toISOString(),
           };
+
+          // Thread filtering: ignore messages for other threads.
+          if (selectedThreadId && msg.threadId && msg.threadId !== selectedThreadId) {
+            // Still bump ordering so the thread rises to the top.
+            setThreads((prev) => {
+              const next = prev.map((t) => (t.id === msg.threadId ? { ...t, updatedAt: new Date().toISOString() } : t));
+              next.sort((a, b) => String(b.updatedAt ?? b.createdAt ?? '').localeCompare(String(a.updatedAt ?? a.createdAt ?? '')));
+              return next;
+            });
+            return;
+          }
+
           setMessages((prev) => {
             const key = String(msg.id);
             if (prev.some((m) => String(m.id) === key)) return prev;
+
+            // Special case: prevent a brief double-render of the sender's own message.
+            // When sending from this client we optimistically append a local user message
+            // with a negative id; WS can deliver the real DB row before the HTTP response
+            // returns, which would otherwise show two copies for a moment.
+            if (msg.role === 'user' && selectedThreadId && (!msg.threadId || msg.threadId === selectedThreadId)) {
+              const now = Date.now();
+              const idx = prev.findIndex((m) => {
+                if (m.id >= 0) return false;
+                if (m.role !== 'user') return false;
+                if ((m.threadId ?? null) !== selectedThreadId) return false;
+                if (m.content !== msg.content) return false;
+                const t = Date.parse(m.createdAt);
+                if (!Number.isFinite(t)) return false;
+                return now - t < 30_000;
+              });
+
+              if (idx >= 0) {
+                const out = prev.slice();
+                out[idx] = { ...msg, threadId: selectedThreadId };
+                // Final pass: de-dupe by id in case something else already inserted it.
+                const seen = new Set<string>();
+                return out.filter((m) => {
+                  const k = String(m.id);
+                  if (seen.has(k)) return false;
+                  seen.add(k);
+                  return true;
+                });
+              }
+            }
+
             if (prev.some((m) => isNearDuplicate(m, msg))) return prev;
             return [...prev, msg];
           });
@@ -272,7 +427,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30_000);
       reconnectTimerRef.current = setTimeout(() => void connectWs(), reconnectDelayRef.current);
     }
-  }, []);
+  }, [selectedThreadId]);
 
   useEffect(() => {
     unmountedRef.current = false;
@@ -287,28 +442,49 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   // ── Fallback poll when WS isn't connected (keeps MC chat fresh) ───────────
   useEffect(() => {
     if (wsConnected) return;
-    const id = setInterval(() => void fetchHistory(), 3_000);
+    if (!selectedThreadId) return;
+    const id = setInterval(() => void fetchHistory(selectedThreadId), 3_000);
     return () => clearInterval(id);
-  }, [wsConnected, fetchHistory]);
+  }, [wsConnected, fetchHistory, selectedThreadId]);
 
   // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
     const el = messagesRef.current;
     if (!el) return;
 
+    const scrollToBottom = () => {
+      const node = messagesRef.current;
+      if (!node) return;
+      node.scrollTop = node.scrollHeight;
+    };
+
     // Always jump to bottom on first paint (history load)
     if (!initialScrollDone.current) {
-      el.scrollTop = el.scrollHeight;
+      scrollToBottom();
       initialScrollDone.current = true;
       stickToBottomRef.current = true;
       return;
     }
 
-    // Only auto-scroll when a NEW message arrives *and* the user is at the bottom.
-    // (Do not couple to `loading` — that causes annoying "snap to bottom" while
-    // the user is trying to scroll up during a reply.)
+    const last = messages[messages.length - 1];
+
+    // After sending a message, we generally want to follow the assistant reply.
+    // If the user scrolled up while waiting, awaitingReplyRef is cleared.
+    if (
+      awaitingReplyRef.current &&
+      last?.role === 'assistant' &&
+      (!awaitingReplyThreadIdRef.current || last.threadId === awaitingReplyThreadIdRef.current)
+    ) {
+      stickToBottomRef.current = true;
+      awaitingReplyRef.current = false;
+      awaitingReplyThreadIdRef.current = null;
+      requestAnimationFrame(scrollToBottom);
+      return;
+    }
+
+    // Only auto-scroll when a new message arrives and the user is at the bottom.
     if (stickToBottomRef.current) {
-      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(scrollToBottom);
     }
   }, [messages]);
 
@@ -346,6 +522,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
     // User is actively sending → keep us pinned to bottom
     stickToBottomRef.current = true;
+    awaitingReplyRef.current = true;
+    awaitingReplyThreadIdRef.current = selectedThreadId;
 
     // Optimistic user message
     const tempUserMsg: ChatMessage = {
@@ -353,15 +531,19 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       role: 'user',
       content: text,
       createdAt: new Date().toISOString(),
+      threadId: selectedThreadId,
     };
     setMessages((prev) => [...prev, tempUserMsg]);
     setPendingCount((n) => n + 1);
 
     try {
+      const threadId = selectedThreadId;
+      if (!threadId) throw new Error('No thread selected');
+
       const res = await fetch('/api/chat/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, threadId }),
       });
 
       if (!res.ok) {
@@ -371,14 +553,22 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
       const data: ChatResponse = await res.json();
 
-      // Replace optimistic user message with confirmed DB ID so SSE deduplication works.
-      // Without this, the SSE-delivered copy (real ID) won't match the temp ID and renders twice.
+      // Replace optimistic user message with confirmed DB ID.
+      // NOTE: WS may deliver the same message before this replacement runs.
+      // We de-dupe by final id to prevent double-renders.
       if (data.userMessageId) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempUserMsg.id ? { ...m, id: data.userMessageId! } : m
-          )
-        );
+        setMessages((prev) => {
+          const seen = new Set<string>();
+          const out: ChatMessage[] = [];
+          for (const m of prev) {
+            const next = m.id === tempUserMsg.id ? { ...m, id: data.userMessageId!, threadId: data.threadId ?? m.threadId } : m;
+            const k = String(next.id);
+            if (seen.has(k)) continue;
+            seen.add(k);
+            out.push(next);
+          }
+          return out;
+        });
       }
 
       const assistantMsg: ChatMessage = {
@@ -386,8 +576,17 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         role: 'assistant',
         content: data.reply,
         createdAt: new Date().toISOString(),
+        threadId: data.threadId ?? selectedThreadId,
       };
-      setMessages((prev) => [...prev, assistantMsg]);
+
+      // WS may deliver the same assistant reply before this line runs.
+      // Guard against duplicate inserts.
+      setMessages((prev) => {
+        const key = String(assistantMsg.id);
+        if (prev.some((m) => String(m.id) === key)) return prev;
+        if (prev.some((m) => isNearDuplicate(m, assistantMsg))) return prev;
+        return [...prev, assistantMsg];
+      });
     } catch (err) {
       console.error('[ChatPanel] Send failed:', err);
       const errMsg: ChatMessage = {
@@ -395,6 +594,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         role: 'assistant',
         content: 'Failed to get a response. Please try again.',
         createdAt: new Date().toISOString(),
+        threadId: selectedThreadId,
       };
       setMessages((prev) => [...prev, errMsg]);
     } finally {
@@ -402,7 +602,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       // Refocus input after send
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [input]);
+  }, [input, selectedThreadId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -418,7 +618,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       style={{ background: '#0a1a12' }}
       className="flex flex-col h-full min-h-0 rounded-lg border border-gray-800 overflow-hidden"
     >
-      {/* Header — Navi status tile */}
+      {/* Header — Navi status tile + thread picker */}
       <div className="flex-shrink-0 px-4 py-2.5 border-b border-gray-800 flex items-center gap-2.5">
         {/* Status dot */}
         <span
@@ -430,6 +630,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
               : 'bg-gray-600 ring-gray-700'
           }`}
         />
+
+        {/* Left: agent label */}
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-semibold text-white leading-none">
@@ -457,6 +659,112 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
             </div>
           )}
         </div>
+
+        {/* Right: thread controls */}
+        <div className="flex items-center gap-2">
+          {editingThreadId && editingThreadId === selectedThreadId ? (
+            <input
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const id = editingThreadId;
+                  const title = editingTitle.trim();
+                  if (!id || !title) return;
+                  void renameThread(id, title)
+                    .then(() => {
+                      setEditingThreadId(null);
+                      setEditingTitle('');
+                    })
+                    .catch((err) => {
+                      console.error('[ChatPanel] rename thread failed:', err);
+                    });
+                }
+                if (e.key === 'Escape') {
+                  setEditingThreadId(null);
+                  setEditingTitle('');
+                }
+              }}
+              onBlur={() => {
+                setEditingThreadId(null);
+                setEditingTitle('');
+              }}
+              className="w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white outline-none focus:border-gray-500"
+              placeholder="Thread title"
+              autoFocus
+            />
+          ) : (
+            <select
+              value={selectedThreadId ?? ''}
+              onChange={(e) => setSelectedThreadId(Number(e.target.value) || null)}
+              className="w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white outline-none focus:border-gray-500"
+              aria-label="Select chat thread"
+            >
+              {threads.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            className="rounded-md px-2 py-1 text-xs font-semibold text-white border border-gray-700 hover:border-gray-600"
+            style={{ background: '#142e1f' }}
+            onClick={() => {
+              void createThread('New thread')
+                .then((t) => setSelectedThreadId(t.id))
+                .catch((err) => console.error('[ChatPanel] create thread failed:', err));
+            }}
+            aria-label="Create new thread"
+            title="New thread"
+          >
+            +
+          </button>
+
+          <button
+            className="rounded-md px-2 py-1 text-xs font-semibold text-white border border-gray-700 hover:border-gray-600 disabled:opacity-50"
+            style={{ background: '#142e1f' }}
+            disabled={!selectedThreadId}
+            onClick={() => {
+              if (!selectedThreadId) return;
+              const t = threads.find((x) => x.id === selectedThreadId);
+              setEditingThreadId(selectedThreadId);
+              setEditingTitle((t?.title ?? '').trim());
+            }}
+            aria-label="Rename thread"
+            title="Rename"
+          >
+            Rename
+          </button>
+
+          <button
+            className="rounded-md px-2 py-1 text-xs font-semibold text-red-300 border border-gray-700 hover:border-gray-600 disabled:opacity-50"
+            style={{ background: '#142e1f' }}
+            disabled={!selectedThreadId}
+            onClick={() => {
+              const id = selectedThreadId;
+              if (!id) return;
+              if (!window.confirm('Delete this thread and all its messages?')) return;
+              void deleteThread(id)
+                .then(async () => {
+                  const remaining = threads.filter((t) => t.id !== id);
+                  if (remaining[0]?.id) {
+                    setSelectedThreadId(remaining[0].id);
+                  } else {
+                    const t = await createThread('Main');
+                    setSelectedThreadId(t.id);
+                  }
+                })
+                .catch((err) => console.error('[ChatPanel] delete thread failed:', err));
+            }}
+            aria-label="Delete thread"
+            title="Delete"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       {/* Message list */}
@@ -471,11 +779,15 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           lastScrollTopRef.current = nextTop;
 
           // If the user scrolls up at all, immediately disable auto-stick.
+          // Also: if they scroll during an in-flight send, treat that as opting out
+          // of auto-following the upcoming assistant reply.
           if (nextTop < prevTop) {
             stickToBottomRef.current = false;
+            if (awaitingReplyRef.current) awaitingReplyRef.current = false;
           } else {
             const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
             stickToBottomRef.current = distFromBottom < 20;
+            if (awaitingReplyRef.current && distFromBottom > 80) awaitingReplyRef.current = false;
           }
 
           // Infinite scroll: when near the top, fetch older messages.

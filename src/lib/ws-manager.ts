@@ -21,6 +21,7 @@ export interface WsChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: string;
+  threadId?: number | null;
 }
 
 type TokenPayload = {

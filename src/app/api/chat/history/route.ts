@@ -15,6 +15,7 @@ import { and, desc, eq, lt } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
+import { resolveThreadId } from '@/lib/chat-threads';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -30,6 +31,8 @@ export async function GET(req: NextRequest) {
   const beforeId = rawBeforeId ? parseInt(rawBeforeId, 10) : null;
   const hasBefore = Number.isFinite(beforeId as any) && (beforeId as number) > 0;
 
+  const threadId = await resolveThreadId(tenantId, url.searchParams.get('threadId'));
+
   let rows: Array<{ id: number; role: string; content: string; createdAt: Date }>;
   try {
     rows = await db
@@ -38,12 +41,17 @@ export async function GET(req: NextRequest) {
         role: chatMessages.role,
         content: chatMessages.content,
         createdAt: chatMessages.createdAt,
+        threadId: chatMessages.threadId,
       })
       .from(chatMessages)
       .where(
         hasBefore
-          ? and(eq(chatMessages.tenantId, tenantId), lt(chatMessages.id, beforeId as number))
-          : eq(chatMessages.tenantId, tenantId)
+          ? and(
+              eq(chatMessages.tenantId, tenantId),
+              eq(chatMessages.threadId, threadId),
+              lt(chatMessages.id, beforeId as number)
+            )
+          : and(eq(chatMessages.tenantId, tenantId), eq(chatMessages.threadId, threadId))
       )
       .orderBy(desc(chatMessages.id))
       .limit(limit);

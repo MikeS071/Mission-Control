@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { wsManager } from '@/lib/ws-manager';
+import { bumpThreadUpdatedAt, resolveThreadId } from '@/lib/chat-threads';
 
 const INBOUND_SECRET = process.env.MC_INBOUND_SECRET;
 
@@ -40,12 +41,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { tenantId, role, content, source, externalId } = (body ?? {}) as {
+  const { tenantId, role, content, source, externalId, threadId } = (body ?? {}) as {
     tenantId?: unknown;
     role?: unknown;
     content?: unknown;
     source?: unknown;
     externalId?: unknown;
+    threadId?: unknown;
   };
 
   if (typeof tenantId !== 'number' || !Number.isInteger(tenantId)) {
@@ -72,19 +74,25 @@ export async function POST(req: NextRequest) {
     extId = Math.floor(externalId);
   }
 
+  // ── Thread resolution ────────────────────────────────────────────────────
+  const effectiveThreadId = await resolveThreadId(tenantId, threadId);
+
   // ── Persist (idempotent for external sources) ─────────────────────────────
   try {
     const trimmedContent = content.trim();
     const [inserted] = await db
       .insert(chatMessages)
-      .values({ tenantId, role, content: trimmedContent, source: src, externalId: extId })
+      .values({ tenantId, threadId: effectiveThreadId, role, content: trimmedContent, source: src, externalId: extId })
       .returning({ id: chatMessages.id });
+
+    void bumpThreadUpdatedAt(effectiveThreadId);
 
     wsManager.broadcast(tenantId, {
       id: inserted.id,
       role: role as 'user' | 'assistant',
       content: trimmedContent,
       createdAt: new Date().toISOString(),
+      threadId: effectiveThreadId,
     });
 
     return NextResponse.json({ ok: true, messageId: inserted.id });
