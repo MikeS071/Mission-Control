@@ -173,6 +173,12 @@ function CommentThread() {
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              add();
+            }
+          }}
           rows={2}
           placeholder="Write a comment…"
           className="min-h-[40px] flex-1 resize-none rounded-md border border-gray-800 bg-gray-950 px-2 py-1 text-[11px] text-gray-200 placeholder:text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
@@ -180,9 +186,11 @@ function CommentThread() {
         <button
           type="button"
           onClick={add}
-          className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-[11px] text-gray-300 hover:border-gray-600"
+          title="Post comment"
+          aria-label="Post comment"
+          className="h-7 w-7 rounded-md border border-gray-800 bg-gray-900 text-[11px] text-gray-300 hover:border-gray-600 flex items-center justify-center"
         >
-          Post
+          ➤
         </button>
       </div>
 
