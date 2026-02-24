@@ -80,7 +80,12 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       const res = await fetch('/api/openclaw/chat/history?limit=120', { cache: 'no-store' });
       if (!res.ok) {
         const t = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status}: ${t}`);
+        const trimmed = t.trim();
+        const brief =
+          trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')
+            ? 'Bad gateway / proxy error (HTML response)'
+            : trimmed;
+        throw new Error(`HTTP ${res.status}: ${brief.slice(0, 240)}`);
       }
       const data: HistoryResponse = await res.json();
       const incoming = Array.isArray(data.messages) ? data.messages : [];
@@ -185,7 +190,12 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
         if (!res.ok) {
           const t = await res.text().catch(() => 'Request failed');
-          throw new Error(`HTTP ${res.status}: ${t}`);
+          const trimmed = t.trim();
+          const brief =
+            trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')
+              ? 'Bad gateway / proxy error (HTML response)'
+              : trimmed;
+          throw new Error(`HTTP ${res.status}: ${brief.slice(0, 240)}`);
         }
 
         const data: SendResponse = await res.json();
