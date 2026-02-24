@@ -6,8 +6,9 @@
  * instead of a standalone LLM. Stores both user message and assistant reply
  * in chat_messages so the existing SSE stream picks them up.
  *
- * Session key: stable per-tenant MC session ("web:mc:<tenantId>") so
- * conversation context persists across MC page loads.
+ * Session key: per-message (`web:mc:<tenantId>:m<userMessageId>`) to avoid
+ * poisoned long-lived sessions. Conversation context is still preserved via
+ * DB history, which we send on every request.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { desc, eq } from 'drizzle-orm';
@@ -16,7 +17,7 @@ import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 import { wsManager } from '@/lib/ws-manager';
 
-const GATEWAY_URL    = process.env.GATEWAY_URL            ?? 'http://127.0.0.1:18789';
+const GATEWAY_URL    = process.env.OPENCLAW_GATEWAY_URL ?? process.env.GATEWAY_URL ?? 'http://127.0.0.1:18789';
 const GATEWAY_TOKEN  = process.env.OPENCLAW_GATEWAY_TOKEN;
 const API_SECRET     = process.env.API_SECRET; // optional: server-to-server auth bypass for smoke tests
 const TG_BOT_TOKEN   = process.env.TELEGRAM_BOT_TOKEN;
@@ -208,15 +209,8 @@ export async function POST(req: NextRequest) {
   }
 
   let reply = '';
-  let typingTimer: NodeJS.Timeout | null = null;
   let debugError: any = undefined;
   try {
-    // Telegram UX: show typing indicator while OpenClaw is working
-    void sendTelegramTyping();
-    typingTimer = setInterval(() => {
-      void sendTelegramTyping();
-    }, 4500);
-
     const first = await callGateway(sessionKeyBase);
     if (!first.ok) {
       debugError = { kind: 'gateway_http', status: first.status, errText: first.errText };
@@ -254,8 +248,7 @@ export async function POST(req: NextRequest) {
       reply = 'Gateway unreachable — check that the OpenClaw gateway is running.';
     }
   } finally {
-    if (typingTimer) clearInterval(typingTimer);
-    typingTimer = null;
+    // startTelegramTyping() owns the typing loop; it's stopped after we persist the assistant reply.
   }
 
   if (!reply) reply = '…';
