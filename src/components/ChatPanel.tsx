@@ -113,6 +113,10 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const messagesRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
 
+  // Auto-scroll behaviour
+  const awaitingReplyRef = useRef(false);
+  const awaitingReplyThreadIdRef = useRef<number | null>(null);
+
   const stickToBottomRef = useRef(true);
   const lastScrollTopRef = useRef(0);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -442,19 +446,39 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     const el = messagesRef.current;
     if (!el) return;
 
+    const scrollToBottom = () => {
+      const node = messagesRef.current;
+      if (!node) return;
+      node.scrollTop = node.scrollHeight;
+    };
+
     // Always jump to bottom on first paint (history load)
     if (!initialScrollDone.current) {
-      el.scrollTop = el.scrollHeight;
+      scrollToBottom();
       initialScrollDone.current = true;
       stickToBottomRef.current = true;
       return;
     }
 
-    // Only auto-scroll when a NEW message arrives *and* the user is at the bottom.
-    // (Do not couple to `loading` — that causes annoying "snap to bottom" while
-    // the user is trying to scroll up during a reply.)
+    const last = messages[messages.length - 1];
+
+    // After sending a message, we generally want to follow the assistant reply.
+    // If the user scrolled up while waiting, awaitingReplyRef is cleared.
+    if (
+      awaitingReplyRef.current &&
+      last?.role === 'assistant' &&
+      (!awaitingReplyThreadIdRef.current || last.threadId === awaitingReplyThreadIdRef.current)
+    ) {
+      stickToBottomRef.current = true;
+      awaitingReplyRef.current = false;
+      awaitingReplyThreadIdRef.current = null;
+      requestAnimationFrame(scrollToBottom);
+      return;
+    }
+
+    // Only auto-scroll when a new message arrives and the user is at the bottom.
     if (stickToBottomRef.current) {
-      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(scrollToBottom);
     }
   }, [messages]);
 
@@ -492,6 +516,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
     // User is actively sending → keep us pinned to bottom
     stickToBottomRef.current = true;
+    awaitingReplyRef.current = true;
+    awaitingReplyThreadIdRef.current = selectedThreadId;
 
     // Optimistic user message
     const tempUserMsg: ChatMessage = {
@@ -747,11 +773,15 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           lastScrollTopRef.current = nextTop;
 
           // If the user scrolls up at all, immediately disable auto-stick.
+          // Also: if they scroll during an in-flight send, treat that as opting out
+          // of auto-following the upcoming assistant reply.
           if (nextTop < prevTop) {
             stickToBottomRef.current = false;
+            if (awaitingReplyRef.current) awaitingReplyRef.current = false;
           } else {
             const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
             stickToBottomRef.current = distFromBottom < 20;
+            if (awaitingReplyRef.current && distFromBottom > 80) awaitingReplyRef.current = false;
           }
 
           // Infinite scroll: when near the top, fetch older messages.
