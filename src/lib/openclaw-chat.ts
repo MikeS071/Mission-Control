@@ -1,7 +1,7 @@
 import { openclawGatewayCall } from './openclaw-gateway-cli';
 
 export type OpenClawUiMessage = {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   /** extracted concatenated text blocks */
   text: string;
   timestamp: number;
@@ -23,10 +23,16 @@ function extractTextBlocks(content: any): string {
   return parts.join('');
 }
 
-function normalizeRole(role: unknown): OpenClawUiMessage['role'] {
-  const r = String(role ?? '').toLowerCase().trim();
-  if (r === 'user' || r === 'assistant' || r === 'system') return r;
-  return 'assistant';
+function normalizeRole(role: unknown): OpenClawUiMessage['role'] | null {
+  const r = String(role ?? '').trim();
+  if (!r) return null;
+
+  // Only surface user/assistant to MC Chat UI.
+  // Explicitly hide toolCall/toolResult and other internal roles.
+  const lower = r.toLowerCase();
+  if (lower === 'user') return 'user';
+  if (lower === 'assistant') return 'assistant';
+  return null;
 }
 
 export async function openclawChatHistory(params: {
@@ -43,15 +49,20 @@ export async function openclawChatHistory(params: {
   const messages: OpenClawUiMessage[] = rawMessages
     .map((m) => {
       const role = normalizeRole(m?.role);
+      if (!role) return null;
+
       const text = extractTextBlocks(m?.content);
       const ts = Number(m?.timestamp);
-      return {
+
+      const msg: OpenClawUiMessage = {
         role,
         text,
         timestamp: Number.isFinite(ts) ? ts : Date.now(),
-      } satisfies OpenClawUiMessage;
+      };
+
+      return msg;
     })
-    .filter((m) => m.text.trim().length > 0);
+    .filter((m): m is OpenClawUiMessage => !!m && m.text.trim().length > 0);
 
   return { messages };
 }

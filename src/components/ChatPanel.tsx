@@ -49,7 +49,12 @@ function sleep(ms: number): Promise<void> {
 function isNearDuplicate(a: UiMessage, b: UiMessage): boolean {
   if (a.role !== b.role) return false;
   if (a.text !== b.text) return false;
-  return Math.abs(a.timestamp - b.timestamp) < 2_000;
+
+  // Gateway timestamps vs optimistic UI timestamps can differ.
+  // Be more tolerant for user messages to avoid duplicates/flicker.
+  const delta = Math.abs(a.timestamp - b.timestamp);
+  if (a.role === 'user') return delta < 5 * 60_000;
+  return delta < 2_000;
 }
 
 export function ChatPanel({ agentName }: { agentName?: string } = {}) {
@@ -98,7 +103,33 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         out.push(m);
       }
 
-      setMessages(out);
+      setMessages((prev) => {
+        // Merge new history with any optimistic messages that haven't landed in history yet.
+        if (out.length === 0) return prev;
+
+        const merged: UiMessage[] = [...out];
+        const lastTs = out[out.length - 1]?.timestamp ?? 0;
+
+        for (const m of prev) {
+          const isNewerThanHistory = m.timestamp > lastTs - 2_000;
+          if (!isNewerThanHistory) continue;
+          if (merged.some((x) => isNearDuplicate(x, m))) continue;
+          merged.push(m);
+        }
+
+        // Ensure stable order
+        merged.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Final de-dupe pass (cheap, small list)
+        const deduped: UiMessage[] = [];
+        for (const m of merged) {
+          if (deduped.some((x) => isNearDuplicate(x, m))) continue;
+          deduped.push(m);
+        }
+
+        return deduped.slice(-250);
+      });
+
       setHistoryError(null);
       return out;
     } catch (err) {
@@ -211,6 +242,9 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
           }
           await sleep(1_250);
         }
+
+        // One last refresh to swap optimistic user timestamp for gateway timestamp if needed.
+        await refreshHistory();
       } catch (err) {
         console.error('[ChatPanel] Send failed:', err);
         setMessages((prev) => [
