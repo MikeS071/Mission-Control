@@ -6,6 +6,7 @@ import { authorizeInbound } from '@/lib/policy';
 import { telegramSendChatAction, telegramSendMessage } from '@/lib/telegram-bot';
 import { isMcTelegramBridgeEnabled } from '@/lib/telegram-ingress';
 import { wsManager } from '@/lib/ws-manager';
+import { bumpThreadUpdatedAt, getOrCreateDefaultThreadId } from '@/lib/chat-threads';
 
 type TelegramUpdate = {
   update_id: number;
@@ -150,11 +151,14 @@ export async function POST(req: NextRequest) {
     if (!text) return NextResponse.json({ ok: true });
 
     // Persist inbound (idempotent) + broadcast to live MC chat
+    const threadId = await getOrCreateDefaultThreadId(link.tenantId);
+
     try {
       const [inserted] = await db
         .insert(chatMessages)
         .values({
           tenantId: link.tenantId,
+          threadId,
           role: 'user',
           content: text,
           source: 'telegram',
@@ -162,12 +166,15 @@ export async function POST(req: NextRequest) {
         })
         .returning({ id: chatMessages.id, createdAt: chatMessages.createdAt });
 
+      void bumpThreadUpdatedAt(threadId);
+
       if (inserted?.id) {
         wsManager.broadcast(link.tenantId, {
           id: inserted.id,
           role: 'user',
           content: text,
           createdAt: inserted.createdAt.toISOString(),
+          threadId,
         });
       }
     } catch (err: any) {

@@ -11,11 +11,12 @@
  * DB history, which we send on every request.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 import { wsManager } from '@/lib/ws-manager';
+import { bumpThreadUpdatedAt, resolveThreadId } from '@/lib/chat-threads';
 
 const GATEWAY_URL    = process.env.OPENCLAW_GATEWAY_URL ?? process.env.GATEWAY_URL ?? 'http://127.0.0.1:18789';
 const GATEWAY_TOKEN  = process.env.OPENCLAW_GATEWAY_TOKEN;
@@ -117,21 +118,25 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
-  const { message } = (body ?? {}) as { message?: unknown };
+  const { message, threadId } = (body ?? {}) as { message?: unknown; threadId?: unknown };
   if (!message || typeof message !== 'string' || !message.trim()) {
     return NextResponse.json({ error: 'message is required' }, { status: 400 });
   }
   const userContent = message.trim();
+
+  const effectiveThreadId = await resolveThreadId(tenantId, threadId);
+
 
   // ── Persist user message ──────────────────────────────────────────────────
   let userMsgId: number;
   try {
     const [ins] = await db
       .insert(chatMessages)
-      .values({ tenantId, role: 'user', content: userContent })
+      .values({ tenantId, threadId: effectiveThreadId, role: 'user', content: userContent })
       .returning({ id: chatMessages.id });
     userMsgId = ins.id;
-    wsManager.broadcast(tenantId, { id: userMsgId, role: 'user', content: userContent, createdAt: new Date().toISOString() });
+    void bumpThreadUpdatedAt(effectiveThreadId);
+    wsManager.broadcast(tenantId, { id: userMsgId, role: 'user', content: userContent, createdAt: new Date().toISOString(), threadId: effectiveThreadId });
   } catch (err) {
     console.error('[chat/gateway] DB insert user msg:', err);
     return NextResponse.json({ error: 'DB error' }, { status: 500 });
@@ -146,7 +151,7 @@ export async function POST(req: NextRequest) {
   const history = await db
     .select({ role: chatMessages.role, content: chatMessages.content })
     .from(chatMessages)
-    .where(eq(chatMessages.tenantId, tenantId))
+    .where(and(eq(chatMessages.tenantId, tenantId), eq(chatMessages.threadId, effectiveThreadId)))
     .orderBy(desc(chatMessages.createdAt))
     .limit(CONTEXT_LIMIT + 1);
 
@@ -258,10 +263,11 @@ export async function POST(req: NextRequest) {
   try {
     const [ins] = await db
       .insert(chatMessages)
-      .values({ tenantId, role: 'assistant', content: reply })
+      .values({ tenantId, threadId: effectiveThreadId, role: 'assistant', content: reply })
       .returning({ id: chatMessages.id });
     assistantMsgId = ins.id;
-    wsManager.broadcast(tenantId, { id: assistantMsgId, role: 'assistant', content: reply, createdAt: new Date().toISOString() });
+    void bumpThreadUpdatedAt(effectiveThreadId);
+    wsManager.broadcast(tenantId, { id: assistantMsgId, role: 'assistant', content: reply, createdAt: new Date().toISOString(), threadId: effectiveThreadId });
   } catch (err) {
     console.error('[chat/gateway] DB insert assistant msg:', err);
     // Non-fatal — reply was already computed
@@ -279,6 +285,7 @@ export async function POST(req: NextRequest) {
     reply,
     userMessageId: userMsgId,
     messageId: assistantMsgId,
+    threadId: effectiveThreadId,
     ...(isDev ? { debugError } : {}),
   });
 }

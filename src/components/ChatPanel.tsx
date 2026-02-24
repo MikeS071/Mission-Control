@@ -22,6 +22,7 @@ interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: string;
+  threadId?: number | null;
 }
 
 interface HistoryResponse {
@@ -42,11 +43,15 @@ function normalizeChatMessage(raw: unknown): ChatMessage | null {
       ? (roleRaw as ChatMessage['role'])
       : 'assistant';
 
+  const threadIdRaw = (r as any).threadId;
+  const threadId = typeof threadIdRaw === 'number' && Number.isFinite(threadIdRaw) ? threadIdRaw : null;
+
   return {
     id,
     role,
     content: String(r.content ?? ''),
     createdAt: String(r.createdAt ?? ''),
+    threadId,
   };
 }
 
@@ -64,6 +69,7 @@ interface ChatResponse {
   reply: string;
   messageId?: number;
   userMessageId?: number;
+  threadId?: number;
   error?: boolean;
 }
 
@@ -72,7 +78,27 @@ function nextLocalId(): number {
   return localIdCounter--;
 }
 
+type ChatThread = {
+  id: number;
+  title: string;
+  updatedAt?: string;
+  createdAt?: string;
+};
+
+type ThreadsResponse = {
+  threads: ChatThread[];
+};
+
+type ThreadResponse = {
+  thread: ChatThread;
+};
+
 export function ChatPanel({ agentName }: { agentName?: string } = {}) {
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
+  const [editingThreadId, setEditingThreadId] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
@@ -92,11 +118,11 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (threadId: number) => {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const res = await fetch('/api/chat/history?limit=80', { cache: 'no-store' });
+      const res = await fetch(`/api/chat/history?limit=80&threadId=${encodeURIComponent(String(threadId))}`, { cache: 'no-store' });
       if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown error');
         throw new Error(`HTTP ${res.status}: ${text}`);
@@ -124,7 +150,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       }
 
       setMessages(pass2);
-      setHasMore((data.messages ?? []).length >= 200);
+      setHasMore((data.messages ?? []).length >= 80);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setHistoryError(msg);
@@ -132,6 +158,58 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     } finally {
       setHistoryLoading(false);
     }
+  }, []);
+
+  const fetchThreads = useCallback(async () => {
+    const res = await fetch('/api/chat/threads', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data: ThreadsResponse = await res.json();
+    const list = (data.threads ?? []).filter((t) => typeof t?.id === 'number');
+    setThreads(list);
+    return list;
+  }, []);
+
+  const createThread = useCallback(async (title?: string) => {
+    const res = await fetch('/api/chat/threads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data: ThreadResponse = await res.json();
+    const thread = data.thread;
+    setThreads((prev) => [thread, ...prev]);
+    return thread;
+  }, []);
+
+  const renameThread = useCallback(async (id: number, title: string) => {
+    const res = await fetch(`/api/chat/threads/${encodeURIComponent(String(id))}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    const data: ThreadResponse = await res.json();
+    const thread = data.thread;
+    setThreads((prev) => prev.map((x) => (x.id === id ? thread : x)));
+    return thread;
+  }, []);
+
+  const deleteThread = useCallback(async (id: number) => {
+    const res = await fetch(`/api/chat/threads/${encodeURIComponent(String(id))}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${t}`);
+    }
+    setThreads((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const loadOlder = useCallback(async () => {
@@ -151,7 +229,10 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
     setLoadingOlder(true);
     try {
-      const res = await fetch(`/api/chat/history?limit=80&beforeId=${encodeURIComponent(String(beforeId))}`, {
+      const threadId = selectedThreadId;
+      if (!threadId) return;
+
+      const res = await fetch(`/api/chat/history?limit=80&beforeId=${encodeURIComponent(String(beforeId))}&threadId=${encodeURIComponent(String(threadId))}`, {
         cache: 'no-store',
       });
       if (!res.ok) {
@@ -195,12 +276,33 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
     } finally {
       setLoadingOlder(false);
     }
-  }, [hasMore, loadingOlder, messages, messagesRef]);
+  }, [hasMore, loadingOlder, messages, messagesRef, selectedThreadId]);
 
-  // ── Load history on mount ─────────────────────────────────────────────────
+  // ── Load threads on mount ───────────────────────────────────────────────
   useEffect(() => {
-    void fetchHistory();
-  }, [fetchHistory]);
+    (async () => {
+      try {
+        const list = await fetchThreads();
+        let initial = list[0];
+        if (!initial) {
+          initial = await createThread('Main');
+        }
+        setSelectedThreadId(initial.id);
+      } catch (err) {
+        console.error('[ChatPanel] Failed to init threads:', err);
+      }
+    })();
+  }, [fetchThreads, createThread]);
+
+  // If thread changes, reload history.
+  useEffect(() => {
+    if (!selectedThreadId) return;
+    // Reset scroll behavior for new thread
+    initialScrollDone.current = false;
+    stickToBottomRef.current = true;
+    setMessages([]);
+    void fetchHistory(selectedThreadId);
+  }, [selectedThreadId, fetchHistory]);
 
   // ── WebSocket — real-time message push ───────────────────────────────────
   const wsRef = useRef<WebSocket | null>(null);
@@ -244,6 +346,18 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
             ...base,
             createdAt: base.createdAt || new Date().toISOString(),
           };
+
+          // Thread filtering: ignore messages for other threads.
+          if (selectedThreadId && msg.threadId && msg.threadId !== selectedThreadId) {
+            // Still bump ordering so the thread rises to the top.
+            setThreads((prev) => {
+              const next = prev.map((t) => (t.id === msg.threadId ? { ...t, updatedAt: new Date().toISOString() } : t));
+              next.sort((a, b) => String(b.updatedAt ?? b.createdAt ?? '').localeCompare(String(a.updatedAt ?? a.createdAt ?? '')));
+              return next;
+            });
+            return;
+          }
+
           setMessages((prev) => {
             const key = String(msg.id);
             if (prev.some((m) => String(m.id) === key)) return prev;
@@ -272,7 +386,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30_000);
       reconnectTimerRef.current = setTimeout(() => void connectWs(), reconnectDelayRef.current);
     }
-  }, []);
+  }, [selectedThreadId]);
 
   useEffect(() => {
     unmountedRef.current = false;
@@ -287,9 +401,10 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
   // ── Fallback poll when WS isn't connected (keeps MC chat fresh) ───────────
   useEffect(() => {
     if (wsConnected) return;
-    const id = setInterval(() => void fetchHistory(), 3_000);
+    if (!selectedThreadId) return;
+    const id = setInterval(() => void fetchHistory(selectedThreadId), 3_000);
     return () => clearInterval(id);
-  }, [wsConnected, fetchHistory]);
+  }, [wsConnected, fetchHistory, selectedThreadId]);
 
   // ── Auto-scroll on new messages ───────────────────────────────────────────
   useEffect(() => {
@@ -353,15 +468,19 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       role: 'user',
       content: text,
       createdAt: new Date().toISOString(),
+      threadId: selectedThreadId,
     };
     setMessages((prev) => [...prev, tempUserMsg]);
     setPendingCount((n) => n + 1);
 
     try {
+      const threadId = selectedThreadId;
+      if (!threadId) throw new Error('No thread selected');
+
       const res = await fetch('/api/chat/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, threadId }),
       });
 
       if (!res.ok) {
@@ -386,6 +505,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         role: 'assistant',
         content: data.reply,
         createdAt: new Date().toISOString(),
+        threadId: data.threadId ?? selectedThreadId,
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
@@ -402,7 +522,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       // Refocus input after send
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [input]);
+  }, [input, selectedThreadId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -418,7 +538,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
       style={{ background: '#0a1a12' }}
       className="flex flex-col h-full min-h-0 rounded-lg border border-gray-800 overflow-hidden"
     >
-      {/* Header — Navi status tile */}
+      {/* Header — Navi status tile + thread picker */}
       <div className="flex-shrink-0 px-4 py-2.5 border-b border-gray-800 flex items-center gap-2.5">
         {/* Status dot */}
         <span
@@ -430,6 +550,8 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
               : 'bg-gray-600 ring-gray-700'
           }`}
         />
+
+        {/* Left: agent label */}
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-semibold text-white leading-none">
@@ -456,6 +578,112 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
               OpenClaw Gateway · via Telegram
             </div>
           )}
+        </div>
+
+        {/* Right: thread controls */}
+        <div className="flex items-center gap-2">
+          {editingThreadId && editingThreadId === selectedThreadId ? (
+            <input
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const id = editingThreadId;
+                  const title = editingTitle.trim();
+                  if (!id || !title) return;
+                  void renameThread(id, title)
+                    .then(() => {
+                      setEditingThreadId(null);
+                      setEditingTitle('');
+                    })
+                    .catch((err) => {
+                      console.error('[ChatPanel] rename thread failed:', err);
+                    });
+                }
+                if (e.key === 'Escape') {
+                  setEditingThreadId(null);
+                  setEditingTitle('');
+                }
+              }}
+              onBlur={() => {
+                setEditingThreadId(null);
+                setEditingTitle('');
+              }}
+              className="w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white outline-none focus:border-gray-500"
+              placeholder="Thread title"
+              autoFocus
+            />
+          ) : (
+            <select
+              value={selectedThreadId ?? ''}
+              onChange={(e) => setSelectedThreadId(Number(e.target.value) || null)}
+              className="w-36 rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-white outline-none focus:border-gray-500"
+              aria-label="Select chat thread"
+            >
+              {threads.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            className="rounded-md px-2 py-1 text-xs font-semibold text-white border border-gray-700 hover:border-gray-600"
+            style={{ background: '#142e1f' }}
+            onClick={() => {
+              void createThread('New thread')
+                .then((t) => setSelectedThreadId(t.id))
+                .catch((err) => console.error('[ChatPanel] create thread failed:', err));
+            }}
+            aria-label="Create new thread"
+            title="New thread"
+          >
+            +
+          </button>
+
+          <button
+            className="rounded-md px-2 py-1 text-xs font-semibold text-white border border-gray-700 hover:border-gray-600 disabled:opacity-50"
+            style={{ background: '#142e1f' }}
+            disabled={!selectedThreadId}
+            onClick={() => {
+              if (!selectedThreadId) return;
+              const t = threads.find((x) => x.id === selectedThreadId);
+              setEditingThreadId(selectedThreadId);
+              setEditingTitle((t?.title ?? '').trim());
+            }}
+            aria-label="Rename thread"
+            title="Rename"
+          >
+            Rename
+          </button>
+
+          <button
+            className="rounded-md px-2 py-1 text-xs font-semibold text-red-300 border border-gray-700 hover:border-gray-600 disabled:opacity-50"
+            style={{ background: '#142e1f' }}
+            disabled={!selectedThreadId}
+            onClick={() => {
+              const id = selectedThreadId;
+              if (!id) return;
+              if (!window.confirm('Delete this thread and all its messages?')) return;
+              void deleteThread(id)
+                .then(async () => {
+                  const remaining = threads.filter((t) => t.id !== id);
+                  if (remaining[0]?.id) {
+                    setSelectedThreadId(remaining[0].id);
+                  } else {
+                    const t = await createThread('Main');
+                    setSelectedThreadId(t.id);
+                  }
+                })
+                .catch((err) => console.error('[ChatPanel] delete thread failed:', err));
+            }}
+            aria-label="Delete thread"
+            title="Delete"
+          >
+            Delete
+          </button>
         </div>
       </div>
 

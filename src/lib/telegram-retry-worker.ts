@@ -2,6 +2,7 @@ import { and, eq, isNull, lt, lte, sql } from 'drizzle-orm';
 import os from 'os';
 import { db } from '@/lib/db';
 import { chatMessages, telegramLinks, telegramUpdates } from '@/db/schema';
+import { bumpThreadUpdatedAt, getOrCreateDefaultThreadId } from '@/lib/chat-threads';
 import { openclawChatCompletion } from '@/lib/openclaw-gateway';
 import { telegramSendChatAction, telegramSendMessage } from '@/lib/telegram-bot';
 import { wsManager } from '@/lib/ws-manager';
@@ -62,10 +63,14 @@ async function processOne(updateId: number): Promise<void> {
     });
 
     // Persist assistant reply
+    const threadId = await getOrCreateDefaultThreadId(link.tenantId);
+
     const [inserted] = await db
       .insert(chatMessages)
-      .values({ tenantId: link.tenantId, role: 'assistant', content: reply, source: 'telegram' })
+      .values({ tenantId: link.tenantId, threadId, role: 'assistant', content: reply, source: 'telegram' })
       .returning({ id: chatMessages.id, createdAt: chatMessages.createdAt });
+
+    void bumpThreadUpdatedAt(threadId);
 
     if (inserted?.id) {
       wsManager.broadcast(link.tenantId, {
@@ -73,6 +78,7 @@ async function processOne(updateId: number): Promise<void> {
         role: 'assistant',
         content: reply,
         createdAt: inserted.createdAt.toISOString(),
+        threadId,
       });
     }
 

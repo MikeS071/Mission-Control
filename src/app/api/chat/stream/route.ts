@@ -14,6 +14,7 @@ import { and, desc, eq, gt } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
+import { resolveThreadId } from '@/lib/chat-threads';
 
 const POLL_INTERVAL_MS = 3000;
 // Legacy endpoint: older clients may still connect. Keep it open longer to
@@ -25,6 +26,9 @@ export async function GET(req: NextRequest) {
   if (!tenantId) {
     return new Response('Unauthorized', { status: 401 });
   }
+
+  const url = new URL(req.url);
+  const threadId = await resolveThreadId(tenantId, url.searchParams.get('threadId'));
 
   const encoder = new TextEncoder();
   let lastMessageId = 0;
@@ -46,8 +50,12 @@ export async function GET(req: NextRequest) {
             .from(chatMessages)
             .where(
               lastMessageId > 0
-                ? and(eq(chatMessages.tenantId, tenantId), gt(chatMessages.id, lastMessageId))
-                : eq(chatMessages.tenantId, tenantId)
+                ? and(
+                    eq(chatMessages.tenantId, tenantId),
+                    eq(chatMessages.threadId, threadId),
+                    gt(chatMessages.id, lastMessageId)
+                  )
+                : and(eq(chatMessages.tenantId, tenantId), eq(chatMessages.threadId, threadId))
             )
             .orderBy(desc(chatMessages.createdAt))
             .limit(10);
@@ -59,6 +67,7 @@ export async function GET(req: NextRequest) {
               role: msg.role,
               content: msg.content,
               createdAt: msg.createdAt.toISOString(),
+              threadId,
             });
             controller.enqueue(encoder.encode(`data: ${data}\n\n`));
             lastMessageId = Math.max(lastMessageId, msg.id);

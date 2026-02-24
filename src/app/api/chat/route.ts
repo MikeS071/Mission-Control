@@ -15,11 +15,12 @@
  *  6. Return { reply, messageId }
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 import { wsManager } from '@/lib/ws-manager';
+import { bumpThreadUpdatedAt, resolveThreadId } from '@/lib/chat-threads';
 
 const SYSTEM_PROMPT =
   'You are an AI assistant integrated into ArchonHQ Mission Control. ' +
@@ -48,22 +49,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { message } = body as { message?: unknown };
+  const { message, threadId } = body as { message?: unknown; threadId?: unknown };
   if (!message || typeof message !== 'string' || !message.trim()) {
     return NextResponse.json({ error: 'message is required and must be a non-empty string' }, { status: 400 });
   }
 
   const userContent = message.trim();
 
+  const effectiveThreadId = await resolveThreadId(tenantId, threadId);
+
+
   // ── Save user message ─────────────────────────────────────────────────────
   let userMsgId: number;
   try {
     const [inserted] = await db
       .insert(chatMessages)
-      .values({ tenantId, role: 'user', content: userContent })
+      .values({ tenantId, threadId: effectiveThreadId, role: 'user', content: userContent })
       .returning({ id: chatMessages.id });
     userMsgId = inserted.id;
-    wsManager.broadcast(tenantId, { id: userMsgId, role: 'user', content: userContent, createdAt: new Date().toISOString() });
+    void bumpThreadUpdatedAt(effectiveThreadId);
+    wsManager.broadcast(tenantId, { id: userMsgId, role: 'user', content: userContent, createdAt: new Date().toISOString(), threadId: effectiveThreadId });
   } catch (err) {
     console.error('[chat] Failed to save user message:', err);
     return NextResponse.json({ error: 'Database error saving message' }, { status: 500 });
@@ -76,7 +81,7 @@ export async function POST(req: NextRequest) {
     const recent = await db
       .select({ role: chatMessages.role, content: chatMessages.content, id: chatMessages.id })
       .from(chatMessages)
-      .where(eq(chatMessages.tenantId, tenantId))
+      .where(and(eq(chatMessages.tenantId, tenantId), eq(chatMessages.threadId, effectiveThreadId)))
       .orderBy(desc(chatMessages.createdAt))
       .limit(CONTEXT_MESSAGES + 1);
 
@@ -145,14 +150,15 @@ export async function POST(req: NextRequest) {
   try {
     const [inserted] = await db
       .insert(chatMessages)
-      .values({ tenantId, role: 'assistant', content: reply })
+      .values({ tenantId, threadId: effectiveThreadId, role: 'assistant', content: reply })
       .returning({ id: chatMessages.id });
     assistantMsgId = inserted.id;
-    wsManager.broadcast(tenantId, { id: assistantMsgId, role: 'assistant', content: reply, createdAt: new Date().toISOString() });
+    void bumpThreadUpdatedAt(effectiveThreadId);
+    wsManager.broadcast(tenantId, { id: assistantMsgId, role: 'assistant', content: reply, createdAt: new Date().toISOString(), threadId: effectiveThreadId });
   } catch (err) {
     console.error('[chat] Failed to save assistant reply:', err);
     // Non-fatal: still return the reply to the user
   }
 
-  return NextResponse.json({ reply, messageId: assistantMsgId });
+  return NextResponse.json({ reply, messageId: assistantMsgId, threadId: effectiveThreadId });
 }
