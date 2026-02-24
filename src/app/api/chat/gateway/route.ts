@@ -208,8 +208,15 @@ export async function POST(req: NextRequest) {
   }
 
   let reply = '';
+  let typingTimer: NodeJS.Timeout | null = null;
   let debugError: any = undefined;
   try {
+    // Telegram UX: show typing indicator while OpenClaw is working
+    void sendTelegramTyping();
+    typingTimer = setInterval(() => {
+      void sendTelegramTyping();
+    }, 4500);
+
     const first = await callGateway(sessionKeyBase);
     if (!first.ok) {
       debugError = { kind: 'gateway_http', status: first.status, errText: first.errText };
@@ -246,6 +253,9 @@ export async function POST(req: NextRequest) {
     } else {
       reply = 'Gateway unreachable — check that the OpenClaw gateway is running.';
     }
+  } finally {
+    if (typingTimer) clearInterval(typingTimer);
+    typingTimer = null;
   }
 
   if (!reply) reply = '…';
