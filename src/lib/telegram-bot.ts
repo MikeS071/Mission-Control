@@ -7,9 +7,10 @@ export async function telegramSendMessage(chatId: number | string, text: string)
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text }),
+      signal: AbortSignal.timeout(3_000),
     });
   } catch {
-    // fire-and-forget
+    // best-effort
   }
 }
 
@@ -20,8 +21,9 @@ export async function telegramSendChatAction(chatId: number | string, action: 't
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, action }),
+      signal: AbortSignal.timeout(2_000),
     });
   } catch {
-    // fire-and-forget
+    // best-effort
   }
 }

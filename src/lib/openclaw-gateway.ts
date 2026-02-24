@@ -7,10 +7,15 @@ export async function openclawChatCompletion(params: {
   sessionKey: string;
   messages: OpenClawChatMessage[];
   maxTokens?: number;
+  timeoutMs?: number;
 }): Promise<string> {
   const url = process.env.OPENCLAW_GATEWAY_URL ?? 'http://127.0.0.1:18789';
   const token = process.env.OPENCLAW_GATEWAY_TOKEN;
   if (!token) throw new Error('OPENCLAW_GATEWAY_TOKEN missing');
+
+  const timeoutMs = params.timeoutMs ?? 120_000;
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
 
   const res = await fetch(`${url}/v1/chat/completions`, {
     method: 'POST',
@@ -25,8 +30,8 @@ export async function openclawChatCompletion(params: {
       messages: params.messages,
       max_tokens: params.maxTokens ?? 1024,
     }),
-    signal: AbortSignal.timeout(120_000),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(t));
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');

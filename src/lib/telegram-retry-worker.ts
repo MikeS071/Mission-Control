@@ -51,11 +51,14 @@ async function processOne(updateId: number): Promise<void> {
   const typingTimer = setInterval(() => void telegramSendChatAction(chatId, 'typing'), 4500);
 
   try {
-    const sessionKey = `tg:${link.tenantId}:${u.telegramUserId}`;
+    // Use a per-update session key to avoid a poisoned long-lived session
+    // stalling all subsequent Telegram messages.
+    const sessionKey = `tg:${link.tenantId}:${u.telegramUserId}:upd${u.updateId}`;
     const reply = await openclawChatCompletion({
       sessionKey,
       messages: [{ role: 'user', content: u.text }],
       maxTokens: 768,
+      timeoutMs: 30_000,
     });
 
     // Persist assistant reply
@@ -143,7 +146,7 @@ export function startTelegramRetryWorker(): void {
         .from(telegramUpdates)
         .where(
           and(
-            eq(telegramUpdates.status, 'error'),
+            sql`${telegramUpdates.status} in ('queued','error')`,
             lte(telegramUpdates.nextAttemptAt, now),
             isNull(telegramUpdates.lockedAt),
           ),
@@ -159,9 +162,24 @@ export function startTelegramRetryWorker(): void {
         .set({ lockedAt: new Date(), lockedBy: WORKER_ID })
         .where(eq(telegramUpdates.updateId, due.updateId));
 
-      await processOne(due.updateId);
-    } catch (err) {
-      console.error('[telegram-retry-worker] tick error:', err);
+      // Hard timeout guard: if anything inside processOne hangs (network/undici/etc),
+      // we still unlock and reschedule so the system can self-heal.
+      await Promise.race([
+        processOne(due.updateId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('retry worker timeout')), 45_000)),
+      ]);
+    } catch (err: any) {
+      console.error('[telegram-retry-worker] tick error:', err?.message ?? err);
+
+      // Best-effort unlock on any unexpected failure.
+      try {
+        await db
+          .update(telegramUpdates)
+          .set({ lockedAt: null, lockedBy: null, status: 'error', error: String(err?.message ?? err), nextAttemptAt: new Date(Date.now() + 30_000) })
+          .where(and(eq(telegramUpdates.lockedBy, WORKER_ID), eq(telegramUpdates.status, 'queued')));
+      } catch {
+        // ignore
+      }
     }
   };
 
