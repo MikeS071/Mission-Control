@@ -152,7 +152,15 @@ function ReactionBar({
   );
 }
 
-function CommentThread({ eventId }: { eventId: string }) {
+function CommentThread({
+  eventId,
+  onCountKnown,
+  onCommentAdded,
+}: {
+  eventId: string;
+  onCountKnown?: (count: number) => void;
+  onCommentAdded?: () => void;
+}) {
   const [comments, setComments] = useState<ApiComment[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
@@ -171,7 +179,10 @@ function CommentThread({ eventId }: { eventId: string }) {
         return (await res.json()) as { comments: ApiComment[] };
       })
       .then((data) => {
-        if (data?.comments) setComments(data.comments);
+        if (data?.comments) {
+          setComments(data.comments);
+          onCountKnown?.(data.comments.length);
+        }
       })
       .catch(() => {
         // ignore
@@ -199,6 +210,7 @@ function CommentThread({ eventId }: { eventId: string }) {
       if (data.comment) {
         setComments((prev) => [...prev, data.comment!]);
         setDraft('');
+        onCommentAdded?.();
       }
     } finally {
       setPosting(false);
@@ -214,10 +226,13 @@ function CommentThread({ eventId }: { eventId: string }) {
           {comments.map((c) => (
             <div key={c.id} className="rounded-md border border-gray-800 bg-black/20 px-2 py-1">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[10px] font-medium text-gray-300">{c.tenantName}</span>
-                <span className="text-[10px] text-gray-600">{timeAgo(c.createdAt)}</span>
+                <div className="min-w-0 flex-1 text-[11px] text-gray-400 whitespace-pre-wrap break-words">
+                  <span className="text-[10px] font-medium text-gray-300">{c.tenantName}</span>
+                  <span className="text-gray-600"> </span>
+                  <span className="text-[11px] text-gray-400">{c.body}</span>
+                </div>
+                <span className="text-[10px] text-gray-600 flex-shrink-0">{timeAgo(c.createdAt)}</span>
               </div>
-              <div className="text-[11px] text-gray-400 whitespace-pre-wrap">{c.body}</div>
             </div>
           ))}
         </div>
@@ -259,7 +274,11 @@ export function SocialEventTile({ event }: { event: ActivityEvent }) {
 
   const ago = timeAgo(event.createdAt);
   const reactions: ReactionCounts = event.reactions ?? { hype: 0, respect: 0, tribute: 0 };
-  const commentCount = event.commentCount ?? 0;
+
+  const [commentCount, setCommentCount] = useState(event.commentCount ?? 0);
+  useEffect(() => {
+    setCommentCount(event.commentCount ?? 0);
+  }, [event.commentCount]);
 
   return (
     <div className="rounded-lg border border-gray-800 bg-gray-900/70 px-3 py-2.5 space-y-1.5">
@@ -288,7 +307,11 @@ export function SocialEventTile({ event }: { event: ActivityEvent }) {
       {/* CommentThread */}
       {commentsOpen && (
         <div className="pl-7 pt-2 border-t border-gray-800">
-          <CommentThread eventId={event.id} />
+          <CommentThread
+            eventId={event.id}
+            onCountKnown={(n) => setCommentCount((prev) => Math.max(prev, n))}
+            onCommentAdded={() => setCommentCount((c) => c + 1)}
+          />
         </div>
       )}
     </div>
