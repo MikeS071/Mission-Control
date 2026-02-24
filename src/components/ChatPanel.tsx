@@ -490,14 +490,22 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
 
       const data: ChatResponse = await res.json();
 
-      // Replace optimistic user message with confirmed DB ID so SSE deduplication works.
-      // Without this, the SSE-delivered copy (real ID) won't match the temp ID and renders twice.
+      // Replace optimistic user message with confirmed DB ID.
+      // NOTE: WS may deliver the same message before this replacement runs.
+      // We de-dupe by final id to prevent double-renders.
       if (data.userMessageId) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempUserMsg.id ? { ...m, id: data.userMessageId! } : m
-          )
-        );
+        setMessages((prev) => {
+          const seen = new Set<string>();
+          const out: ChatMessage[] = [];
+          for (const m of prev) {
+            const next = m.id === tempUserMsg.id ? { ...m, id: data.userMessageId!, threadId: data.threadId ?? m.threadId } : m;
+            const k = String(next.id);
+            if (seen.has(k)) continue;
+            seen.add(k);
+            out.push(next);
+          }
+          return out;
+        });
       }
 
       const assistantMsg: ChatMessage = {
@@ -507,7 +515,15 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         createdAt: new Date().toISOString(),
         threadId: data.threadId ?? selectedThreadId,
       };
-      setMessages((prev) => [...prev, assistantMsg]);
+
+      // WS may deliver the same assistant reply before this line runs.
+      // Guard against duplicate inserts.
+      setMessages((prev) => {
+        const key = String(assistantMsg.id);
+        if (prev.some((m) => String(m.id) === key)) return prev;
+        if (prev.some((m) => isNearDuplicate(m, assistantMsg))) return prev;
+        return [...prev, assistantMsg];
+      });
     } catch (err) {
       console.error('[ChatPanel] Send failed:', err);
       const errMsg: ChatMessage = {
@@ -515,6 +531,7 @@ export function ChatPanel({ agentName }: { agentName?: string } = {}) {
         role: 'assistant',
         content: 'Failed to get a response. Please try again.',
         createdAt: new Date().toISOString(),
+        threadId: selectedThreadId,
       };
       setMessages((prev) => [...prev, errMsg]);
     } finally {
