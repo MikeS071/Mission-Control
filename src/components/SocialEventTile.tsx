@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export type ActivityEvent = {
   id: string;
@@ -10,6 +10,15 @@ export type ActivityEvent = {
   icon: string;
   createdAt: string;
   reactions: { hype: number; respect: number; tribute: number };
+};
+
+type ReactionKey = keyof ActivityEvent['reactions'];
+
+type Comment = {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: string;
 };
 
 function timeAgo(dateStr: string): string {
@@ -32,24 +41,154 @@ function ReactionPill({
   emoji,
   label,
   count,
+  active,
+  onClick,
 }: {
   emoji: string;
   label: string;
   count: number;
+  active: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
       type="button"
       title={label}
-      className={`flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${
-        count > 0
-          ? 'border-gray-600 bg-gray-800 text-gray-300'
-          : 'border-gray-800 bg-transparent text-gray-600 hover:border-gray-600 hover:text-gray-400'
+      onClick={onClick}
+      className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${
+        active
+          ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-200'
+          : count > 0
+            ? 'border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500'
+            : 'border-gray-800 bg-transparent text-gray-600 hover:border-gray-600 hover:text-gray-400'
       }`}
     >
-      {emoji}
+      <span className="leading-none">{emoji}</span>
       {count > 0 && <span>{count}</span>}
     </button>
+  );
+}
+
+function ReactionBar({
+  initial,
+  onOpenComments,
+  commentsOpen,
+}: {
+  initial: ActivityEvent['reactions'];
+  onOpenComments: () => void;
+  commentsOpen: boolean;
+}) {
+  const [counts, setCounts] = useState(initial);
+  const [mine, setMine] = useState<Record<ReactionKey, boolean>>({
+    hype: false,
+    respect: false,
+    tribute: false,
+  });
+
+  const defs = useMemo(
+    () =>
+      [
+        { key: 'hype' as const, emoji: '🔥', label: 'Hype' },
+        { key: 'respect' as const, emoji: '💪', label: 'Respect' },
+        { key: 'tribute' as const, emoji: '⚡', label: 'Tribute' },
+      ],
+    [],
+  );
+
+  function toggle(key: ReactionKey) {
+    setMine((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      setCounts((c) => ({
+        ...c,
+        [key]: Math.max(0, (c[key] ?? 0) + (next[key] ? 1 : -1)),
+      }));
+      return next;
+    });
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {defs.map((d) => (
+        <ReactionPill
+          key={d.key}
+          emoji={d.emoji}
+          label={d.label}
+          count={counts[d.key]}
+          active={mine[d.key]}
+          onClick={() => toggle(d.key)}
+        />
+      ))}
+
+      <button
+        type="button"
+        onClick={onOpenComments}
+        className="ml-auto text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+      >
+        💬 {commentsOpen ? 'Hide' : 'Comment'}
+      </button>
+    </div>
+  );
+}
+
+function CommentThread() {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [draft, setDraft] = useState('');
+
+  function add() {
+    const content = draft.trim();
+    if (!content) return;
+
+    setComments((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        author: 'You',
+        content,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    setDraft('');
+  }
+
+  return (
+    <div className="space-y-2">
+      {comments.length > 0 ? (
+        <div className="space-y-1">
+          {comments.map((c) => (
+            <div key={c.id} className="rounded-md border border-gray-800 bg-black/20 px-2 py-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[10px] font-medium text-gray-300">{c.author}</span>
+                <span className="text-[10px] text-gray-600">{timeAgo(c.createdAt)}</span>
+              </div>
+              <div className="text-[11px] text-gray-400 whitespace-pre-wrap">{c.content}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[10px] text-gray-600">No comments yet. Be the first.</p>
+      )}
+
+      <div className="flex items-start gap-2">
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={2}
+          placeholder="Write a comment…"
+          className="min-h-[40px] flex-1 resize-none rounded-md border border-gray-800 bg-gray-950 px-2 py-1 text-[11px] text-gray-200 placeholder:text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+        />
+        <button
+          type="button"
+          onClick={add}
+          className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-[11px] text-gray-300 hover:border-gray-600"
+        >
+          Post
+        </button>
+      </div>
+
+      <p className="text-[10px] text-gray-700">
+        Step 8: local-only UI — persistence + multi-user sync comes later.
+      </p>
+    </div>
   );
 }
 
@@ -73,24 +212,19 @@ export function SocialEventTile({ event }: { event: ActivityEvent }) {
         </div>
       </div>
 
-      {/* Stub ReactionBar */}
-      <div className="flex items-center gap-1.5 pl-7">
-        <ReactionPill emoji="🔥" label="Hype" count={event.reactions.hype} />
-        <ReactionPill emoji="💪" label="Respect" count={event.reactions.respect} />
-        <ReactionPill emoji="⚡" label="Tribute" count={event.reactions.tribute} />
-        <button
-          type="button"
-          onClick={() => setCommentsOpen((v) => !v)}
-          className="ml-auto text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
-        >
-          💬 {commentsOpen ? 'Hide' : 'Comment'}
-        </button>
+      {/* ReactionBar */}
+      <div className="pl-7">
+        <ReactionBar
+          initial={event.reactions}
+          commentsOpen={commentsOpen}
+          onOpenComments={() => setCommentsOpen((v) => !v)}
+        />
       </div>
 
-      {/* Stub CommentThread */}
+      {/* CommentThread */}
       {commentsOpen && (
-        <div className="pl-7 pt-1 border-t border-gray-800">
-          <p className="text-[10px] text-gray-600">Comments coming in Step 8…</p>
+        <div className="pl-7 pt-2 border-t border-gray-800">
+          <CommentThread />
         </div>
       )}
     </div>
