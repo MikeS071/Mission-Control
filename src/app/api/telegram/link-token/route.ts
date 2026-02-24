@@ -5,8 +5,13 @@ import { db } from '@/lib/db';
 import { users, telegramLinkTokens } from '@/db/schema';
 import { auth } from '@/lib/auth';
 import { resolveTenantId } from '@/lib/tenant';
+import { isMcTelegramBridgeEnabled } from '@/lib/telegram-ingress';
 
 export async function POST(req: NextRequest) {
+  if (!isMcTelegramBridgeEnabled()) {
+    return NextResponse.json({ error: 'MC Telegram bridge is disabled (MC_TELEGRAM_INGRESS_MODE=openclaw).' }, { status: 409 });
+  }
+
   const tenantId = await resolveTenantId(req);
   const session = await auth();
   const email = session?.user?.email;

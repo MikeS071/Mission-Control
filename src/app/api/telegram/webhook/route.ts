@@ -5,6 +5,7 @@ import { chatMessages, telegramLinks, telegramLinkTokens, telegramUpdates, users
 import { openclawChatCompletion } from '@/lib/openclaw-gateway';
 import { authorizeInbound } from '@/lib/policy';
 import { telegramSendChatAction, telegramSendMessage } from '@/lib/telegram-bot';
+import { isMcTelegramBridgeEnabled } from '@/lib/telegram-ingress';
 import { wsManager } from '@/lib/ws-manager';
 
 type TelegramUpdate = {
