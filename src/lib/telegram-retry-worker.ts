@@ -58,7 +58,7 @@ async function processOne(updateId: number): Promise<void> {
       sessionKey,
       messages: [{ role: 'user', content: u.text }],
       maxTokens: 768,
-      timeoutMs: 30_000,
+      timeoutMs: 90_000,
     });
 
     // Persist assistant reply
@@ -166,7 +166,7 @@ export function startTelegramRetryWorker(): void {
       // we still unlock and reschedule so the system can self-heal.
       await Promise.race([
         processOne(due.updateId),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('retry worker timeout')), 45_000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('retry worker timeout')), 120_000)),
       ]);
     } catch (err: any) {
       console.error('[telegram-retry-worker] tick error:', err?.message ?? err);
