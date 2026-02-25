@@ -15,6 +15,24 @@ jobs:
     name: Lint / Build / Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mission_control_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mission_control_test
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,3 +61,6 @@ jobs:
           name: coverage
           path: coverage
           if-no-files-found: ignore
+
+      - name: Integration (DB migrations + smoke)
+        run: npm run test:integration

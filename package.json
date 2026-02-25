@@ -13,7 +13,8 @@
     "stripe:setup": "tsx scripts/stripe-setup.ts",
     "test:billing": "bash scripts/test-billing.sh",
     "test": "jest",
-    "test:coverage": "jest --coverage --ci"
+    "test:coverage": "jest --coverage --ci",
+    "test:integration": "bash scripts/test-integration.sh"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
