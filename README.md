@@ -55,7 +55,7 @@ npm run dev
 | `npm run migrate` | Run Drizzle schema migrations |
 | `npm run test` | Run unit tests |
 | `bash scripts/regression-test.sh` | Full 87-test regression suite |
-| `bash scripts/pre-release-check.sh` | Pre-merge gate (TS, Stripe, Coolify, infra) |
+| `bash scripts/pre-release-check.sh` | Pre-merge gate (TS, Stripe, infra) |
 
 ## Repository structure
 

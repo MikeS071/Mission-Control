@@ -87,7 +87,7 @@ Pre-release check (mandatory before every dev to main merge):
 bash scripts/pre-release-check.sh
 ```
 
-This runs regression first, then checks git state, env leaks in source files, TypeScript, Coolify env vars, Stripe prices, and production HTTP status.
+This runs regression first, then checks git state, env leaks in source files, TypeScript, deployment env sanity, Stripe prices, and production HTTP status.
 
 ---
 

@@ -92,7 +92,7 @@ jobs:
             echo "==> Swapping containers (brief gap ~2s on CF path)"
             docker rm -f archonhq-staging 2>/dev/null || true
             # Force-remove current container (handles --restart unless-stopped race)
-            docker rm -f archonhq ***REDACTED_CONTAINER*** 2>/dev/null || true
+            docker rm -f archonhq archonhq 2>/dev/null || true
 
             docker run -d --name archonhq \
               --network coolify \
