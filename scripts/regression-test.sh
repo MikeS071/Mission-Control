@@ -195,12 +195,17 @@ for TABLE in $REQUIRED_TABLES; do
 done
 
 # newsletter_issues has content (at least 1 issue)
-ISSUE_COUNT=$(psql "$DB_URL" -t -c \
-  "SELECT COUNT(*) FROM newsletter_issues" 2>/dev/null | tr -d ' ' || echo "0")
-if [[ "${ISSUE_COUNT:-0}" -ge 1 ]]; then
-  pass "DB newsletter_issues: $ISSUE_COUNT issue(s) seeded"
+# (full profile only — CI/quick runs shouldn't require seeded newsletter data)
+if [[ "$PROFILE" == "full" ]]; then
+  ISSUE_COUNT=$(psql "$DB_URL" -t -c \
+    "SELECT COUNT(*) FROM newsletter_issues" 2>/dev/null | tr -d ' ' || echo "0")
+  if [[ "${ISSUE_COUNT:-0}" -ge 1 ]]; then
+    pass "DB newsletter_issues: $ISSUE_COUNT issue(s) seeded"
+  else
+    fail "DB newsletter_issues: empty — run send-newsletter.py --send to seed"
+  fi
 else
-  fail "DB newsletter_issues: empty — run send-newsletter.py --send to seed"
+  skip "DB newsletter_issues seed check (full profile only)"
 fi
 
 fi
