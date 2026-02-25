@@ -19,20 +19,41 @@ interface VPSStatusResponse {
   status: string;
 }
 
-function generateInstallScript(tenantName: string, tenantEmail: string): string {
+function bashSingleQuote(value: string): string {
+  // Safely wrap a string for bash: '...'
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+function getStarterRepo(plan: CreateVPSParams['plan']): string {
+  return plan === 'archon' ? 'MikeS071/archon-starter' : 'MikeS071/openclaw-starter';
+}
+
+function generateInstallScript(params: {
+  plan: CreateVPSParams['plan'];
+  tenantName: string;
+  tenantEmail: string;
+  timezone: string;
+}): string {
+  const repo = getStarterRepo(params.plan);
+  const vpsInstallUrl = `https://raw.githubusercontent.com/${repo}/main/vps-install.sh`;
+
   return `#!/bin/bash
-# Archon OpenClaw provisioning script
+set -euo pipefail
+
+# OpenClaw provisioning bootstrap (DigitalOcean user_data)
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq && apt-get install -y curl git nodejs npm
-npm install -g openclaw
-openclaw init --non-interactive
-# Inject tenant config
-cat > /home/openclaw/.openclaw/workspace/USER.md << 'EOF'
-# USER.md
-Name: ${tenantName}
-Email: ${tenantEmail}
-EOF
-openclaw gateway start
+
+# Ensure curl exists so we can fetch the repo installer
+apt-get update -qq
+apt-get install -y curl
+
+export OPENCLAW_USER_NAME=${bashSingleQuote(params.tenantName)}
+export OPENCLAW_TIMEZONE=${bashSingleQuote(params.timezone)}
+export OPENCLAW_WORK_EMAIL=${bashSingleQuote(params.tenantEmail)}
+export OPENCLAW_PERSONAL_EMAIL=""
+export OPENCLAW_X_HANDLE=""
+
+curl -fsSL "${vpsInstallUrl}" | bash
 `;
 }
 
@@ -70,7 +91,12 @@ export async function createVPS(params: CreateVPSParams): Promise<{ instanceId: 
     // Create droplet via DigitalOcean API
     const dropletName = `archon-tenant-${tenantId}-${Date.now()}`;
     const size = plan === 'archon' ? 's-2vcpu-4gb' : 's-1vcpu-2gb';
-    const installScript = generateInstallScript(tenant.name, tenantEmail);
+    const installScript = generateInstallScript({
+      plan,
+      tenantName: tenant.name,
+      tenantEmail,
+      timezone: 'UTC',
+    });
 
     const response = await fetch(`${DO_API_BASE}/droplets`, {
       method: 'POST',

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createVPS } from '@/lib/provisioning';
 import { db } from '@/lib/db';
-import { tenants } from '@/db/schema';
+import { tenants, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
@@ -39,9 +39,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    // Get tenant owner's email (from the tenant's owner user)
-    // For now, we'll use a placeholder - you may need to join with users table
-    const tenantEmail = session.user.email; // Placeholder
+    // Resolve tenant owner's email
+    let tenantEmail = session.user.email;
+    if (tenant.ownerUserId) {
+      const [owner] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, tenant.ownerUserId))
+        .limit(1);
+
+      if (owner?.email) tenantEmail = owner.email;
+    }
 
     // Create VPS
     const result = await createVPS({
