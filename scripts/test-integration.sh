@@ -10,13 +10,13 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
 fi
 
 echo "[integration] waiting for postgres..."
-node scripts/test-integration-wait.js
+npx tsx scripts/test-integration-wait.ts
 
 echo "[integration] applying drizzle migrations..."
 # Apply migrations from drizzle/migrations via drizzle-kit migrate
 npx drizzle-kit migrate --config drizzle.config.ts
 
 echo "[integration] DB smoke checks..."
-node scripts/test-integration-smoke.js
+npx tsx scripts/test-integration-smoke.ts
 
 echo "[integration] ok"

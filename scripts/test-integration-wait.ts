@@ -1,10 +1,10 @@
-const { Client } = require('pg');
+import { Client } from 'pg';
 
-async function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function main() {
+async function main(): Promise<void> {
   const url = process.env.DATABASE_URL;
   if (!url) {
     console.error('DATABASE_URL missing');
@@ -12,7 +12,7 @@ async function main() {
   }
 
   const deadline = Date.now() + 60_000;
-  let lastErr = null;
+  let lastErr: unknown = null;
 
   while (Date.now() < deadline) {
     const client = new Client({ connectionString: url });
@@ -26,7 +26,9 @@ async function main() {
       lastErr = err;
       try {
         await client.end();
-      } catch {}
+      } catch {
+        // ignore
+      }
       await sleep(1500);
     }
   }
@@ -36,4 +38,4 @@ async function main() {
   process.exit(1);
 }
 
-main();
+void main();

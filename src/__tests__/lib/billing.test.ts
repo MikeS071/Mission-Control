@@ -28,11 +28,11 @@ describe('billing helpers', () => {
     delete process.env.STRIPE_SECRET_KEY;
   });
 
-  function mockSelectWithLimit(rows: any[]) {
+  function mockSelectWithLimit(rows: unknown[]) {
     const limit = jest.fn().mockResolvedValue(rows);
     const where = jest.fn().mockReturnValue({ limit });
     const from = jest.fn().mockReturnValue({ where });
-    mockedDb.select.mockReturnValueOnce({ from } as any);
+    mockedDb.select.mockReturnValueOnce({ from } as unknown as ReturnType<MockDb['select']>);
   }
 
   function mockInsertChain() {
@@ -45,7 +45,7 @@ describe('billing helpers', () => {
         resolve(undefined);
       },
     });
-    mockedDb.insert.mockReturnValueOnce({ values } as any);
+    mockedDb.insert.mockReturnValueOnce({ values } as unknown as ReturnType<MockDb['insert']>);
     return { values, onConflictDoUpdate, returning };
   }
 
@@ -55,7 +55,7 @@ describe('billing helpers', () => {
     };
     const where = jest.fn().mockReturnValue(whereResult);
     const set = jest.fn().mockReturnValue({ where });
-    mockedDb.update.mockReturnValueOnce({ set } as any);
+    mockedDb.update.mockReturnValueOnce({ set } as unknown as ReturnType<MockDb['update']>);
     return { set, where };
   }
 

@@ -1,5 +1,7 @@
 import { createServer as createHttpsServer } from 'https';
 import { createServer as createHttpServer } from 'http';
+import type { IncomingMessage, ServerResponse } from 'http';
+import type { Socket } from 'net';
 import { readFileSync } from 'fs';
 import next from 'next';
 import { parse } from 'url';
@@ -11,11 +13,11 @@ import { wsManager } from './src/lib/ws-manager';
 const dev = process.env.NODE_ENV !== 'production';
 // Turbopack is currently unstable on this host (cache/root inference issues).
 // Force webpack in development mode for stability.
-const app = next({ dev, ...(dev ? { webpack: true } : {}) } as any);
+const app = next({ dev, ...(dev ? { webpack: true } : {}) } as Parameters<typeof next>[0]);
 const handle = app.getRequestHandler();
 // NOTE: avoid referencing getUpgradeHandler in a type position; Next's dev server
 // throws if certain init paths run before prepare().
-let handleUpgrade: any = null;
+let handleUpgrade: ReturnType<typeof app.getUpgradeHandler> | null = null;
 
 const httpsPort = Number(process.env.PORT_HTTPS) || 3000;
 const httpPort  = Number(process.env.PORT_HTTP)  || 3001;
@@ -35,7 +37,7 @@ function attachWebSocketServer(server: ReturnType<typeof createHttpServer | type
     // Next.js dev HMR websocket(s)
     if (dev && pathname && pathname.startsWith('/_next/')) {
       if (handleUpgrade) {
-        handleUpgrade(req as any, socket as any, head as any);
+        handleUpgrade(req, socket as Socket, head);
       } else {
         socket.destroy();
       }
@@ -84,7 +86,7 @@ app.prepare().then(() => {
   startHeartbeatWorker();
   startTelegramRetryWorker();
 
-  const handler = (req: any, res: any) => {
+  const handler = (req: IncomingMessage, res: ServerResponse) => {
     const parsedUrl = parse(req.url!, true);
     handle(req, res, parsedUrl);
   };
