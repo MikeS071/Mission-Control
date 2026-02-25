@@ -1,7 +1,7 @@
 'use client';
 
-import { FormEvent, Suspense, useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { FormEvent, Suspense, useEffect, useState } from 'react';
+import { getCsrfToken, signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -23,6 +23,24 @@ function SignInPageInner() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [csrfToken, setCsrfToken] = useState<string>('');
+
+  useEffect(() => {
+    let mounted = true;
+    getCsrfToken()
+      .then((token) => {
+        if (!mounted) return;
+        setCsrfToken(typeof token === 'string' ? token : '');
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setCsrfToken('');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
 
   const handlePasswordSignIn = async (event: FormEvent) => {
     event.preventDefault();
@@ -143,14 +161,18 @@ function SignInPageInner() {
           <div className="h-px flex-1" style={{ background: 'rgba(45,212,122,0.12)' }} />
         </div>
 
-        <button
-          type="button"
-          onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-          className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-[#1f1f1f] shadow-sm transition hover:bg-gray-50 hover:-translate-y-px"
-        >
-          <GoogleLogo />
-          <span>Sign in with Google</span>
-        </button>
+        <form method="post" action="/api/auth/signin/google">
+          <input type="hidden" name="csrfToken" value={csrfToken} />
+          <input type="hidden" name="callbackUrl" value="/dashboard" />
+          <button
+            type="submit"
+            disabled={!csrfToken}
+            className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-[#1f1f1f] shadow-sm transition hover:bg-gray-50 hover:-translate-y-px disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <GoogleLogo />
+            <span>Sign in with Google</span>
+          </button>
+        </form>
       </div>
     </main>
   );
