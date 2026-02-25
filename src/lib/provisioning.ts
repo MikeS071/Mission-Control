@@ -24,8 +24,10 @@ function bashSingleQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
-function getStarterRepo(plan: CreateVPSParams['plan']): string {
-  return plan === 'archon' ? 'MikeS071/archon-starter' : 'MikeS071/openclaw-starter';
+function getStarterRepo(): string {
+  // Private starter used for all tiers in Mission Control provisioning.
+  // TODO: rename repo to MikeS071/openclaw-archon once created.
+  return 'MikeS071/archon-starter';
 }
 
 function generateInstallScript(params: {
@@ -34,7 +36,7 @@ function generateInstallScript(params: {
   tenantEmail: string;
   timezone: string;
 }): string {
-  const repo = getStarterRepo(params.plan);
+  const repo = getStarterRepo();
   const vpsInstallUrl = `https://raw.githubusercontent.com/${repo}/main/vps-install.sh`;
 
   return `#!/bin/bash
@@ -46,6 +48,7 @@ export DEBIAN_FRONTEND=noninteractive
 export OPENCLAW_USER_NAME=${bashSingleQuote(params.tenantName)}
 export OPENCLAW_TIMEZONE=${bashSingleQuote(params.timezone)}
 export OPENCLAW_WORK_EMAIL=${bashSingleQuote(params.tenantEmail)}
+export OPENCLAW_TIER=${bashSingleQuote(params.plan)}
 export OPENCLAW_PERSONAL_EMAIL=""
 export OPENCLAW_X_HANDLE=""
 
