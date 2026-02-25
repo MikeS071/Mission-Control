@@ -8,11 +8,14 @@ const config: Config = {
   },
   testMatch: ['**/__tests__/**/*.test.ts'],
   collectCoverageFrom: [
-    'src/lib/tenant.ts',
-    'src/lib/billing.ts',
-    'src/lib/xp.ts',
-    'src/lib/streak.ts',
+    'src/lib/**/*.{ts,tsx}',
+    'src/db/**/*.{ts,tsx}',
+    'src/app/api/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/index.{ts,tsx}',
   ],
+  coverageReporters: ['text-summary', 'lcov'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/.next/', '/dist/'],
 };
 
 export default config;
