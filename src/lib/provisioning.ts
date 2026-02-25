@@ -43,17 +43,23 @@ set -euo pipefail
 # OpenClaw provisioning bootstrap (DigitalOcean user_data)
 export DEBIAN_FRONTEND=noninteractive
 
-# Ensure curl exists so we can fetch the repo installer
-apt-get update -qq
-apt-get install -y curl
-
 export OPENCLAW_USER_NAME=${bashSingleQuote(params.tenantName)}
 export OPENCLAW_TIMEZONE=${bashSingleQuote(params.timezone)}
 export OPENCLAW_WORK_EMAIL=${bashSingleQuote(params.tenantEmail)}
 export OPENCLAW_PERSONAL_EMAIL=""
 export OPENCLAW_X_HANDLE=""
 
-curl -fsSL "${vpsInstallUrl}" | bash
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL "${vpsInstallUrl}" | bash
+elif command -v wget >/dev/null 2>&1; then
+  wget -qO- "${vpsInstallUrl}" | bash
+else
+  echo "curl/wget missing; attempting to install curl..."
+  apt-get update -qq || true
+  apt-get install -y curl || true
+  command -v curl >/dev/null 2>&1 || { echo "Failed to install curl"; exit 1; }
+  curl -fsSL "${vpsInstallUrl}" | bash
+fi
 `;
 }
 
