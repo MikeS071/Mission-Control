@@ -19,7 +19,13 @@ cd "$REPO_ROOT"
 
 # ── Args ──────────────────────────────────────────────────────────────────────
 # Default: dev server
-BASE_URL="http://127.0.0.1:3003"
+BASE_URL="${MC_TEST_BASE_URL:-http://127.0.0.1:3003}"
+# Default profile: full suite
+PROFILE="full"
+
+# Optional JSON output file (summary)
+JSON_OUT=""
+
 
 # Supported:
 #   --prod
@@ -38,6 +44,24 @@ while [[ $# -gt 0 ]]; do
       ;;
     --base=*)
       BASE_URL="${1#--base=}"
+      shift
+      ;;
+    --profile)
+      shift
+      PROFILE="${1:-$PROFILE}"
+      shift || true
+      ;;
+    --profile=*)
+      PROFILE="${1#--profile=}"
+      shift
+      ;;
+    --json-out)
+      shift
+      JSON_OUT="${1:-}"
+      shift || true
+      ;;
+    --json-out=*)
+      JSON_OUT="${1#--json-out=}"
       shift
       ;;
     --*)
@@ -123,9 +147,19 @@ echo "════════════════════════�
 echo "  ArchonHQ Regression Test"
 echo "  Target: $BASE_URL"
 echo "  $(date -u '+%Y-%m-%d %H:%M UTC')"
+# ── Profile validation ─────────────────────────────────────────────────────
+case "$PROFILE" in
+  full|contracts|smoke) ;;
+  *)
+    echo "Invalid --profile '$PROFILE' (expected full|contracts|smoke)" >&2
+    exit 2
+    ;;
+esac
+
 echo "════════════════════════════════════════════════"
 
 # ─────────────────────────────────────────────────────────────────────────────
+if [[ "$PROFILE" != "smoke" ]]; then
 section "1. TypeScript Build"
 # ─────────────────────────────────────────────────────────────────────────────
 TSC_OUT=$(npx tsc --noEmit 2>&1 || true)
@@ -169,6 +203,8 @@ else
   fail "DB newsletter_issues: empty — run send-newsletter.py --send to seed"
 fi
 
+fi
+
 # ─────────────────────────────────────────────────────────────────────────────
 section "3. Server Reachable"
 # ─────────────────────────────────────────────────────────────────────────────
@@ -199,6 +235,7 @@ http 200 GET "/unsubscribe?status=ok&email=test%40test.com"
 http 200 GET "/unsubscribe?status=already&email=test%40test.com"
 
 # ─────────────────────────────────────────────────────────────────────────────
+if [[ "$PROFILE" != "smoke" ]]; then
 section "5. Auth-Protected Pages (unauthenticated → redirect, not 500)"
 # ─────────────────────────────────────────────────────────────────────────────
 # Dashboard pages redirect to /signin (307/302) — must NOT return 200 or 500
@@ -293,6 +330,7 @@ body_contains GET "/api/openapi" "openapi"
 body_contains GET "/api/openapi" "paths"
 
 # ─────────────────────────────────────────────────────────────────────────────
+if [[ "$PROFILE" == "full" ]]; then
 section "10. Newsletter System"
 # ─────────────────────────────────────────────────────────────────────────────
 NEWSLETTER_SCRIPT="$REPO_ROOT/automation/newsletter/send-newsletter.py"
@@ -385,6 +423,8 @@ ss -tlnp 2>/dev/null | grep -q ":3003 " \
   && pass "Port 3003: listening (dev server running)" \
   || warn "Port 3003: not listening (dev server not running — OK in prod)"
 
+fi
+
 # ─────────────────────────────────────────────────────────────────────────────
 section "13. Content Integrity"
 # ─────────────────────────────────────────────────────────────────────────────
@@ -397,7 +437,13 @@ for f in $CHANGED; do
   [[ -f "$f" ]] || continue
   HITS=$(grep -En \
     'localhost:[0-9]{4}|127\.0\.0\.1:[0-9]{4}|dev\.archonhq\.ai' \
-    "$f" 2>/dev/null | grep -v "process\.env" | grep -v "useState(" | grep -v "|| '" | grep -v "placeholder=" || true)
+    "$f" 2>/dev/null \
+      | grep -v "process\.env" \
+      | grep -v "useState(" \
+      | grep -v "|| '" \
+      | grep -v "placeholder=" \
+      | grep -Ev '^[0-9]+:\s*(//|/\*|\*)' \
+      || true)
   if [[ -n "$HITS" ]]; then
     fail "Hardcoded env value in $f: $(echo "$HITS" | head -1)"
     FOUND_LEAK=true
@@ -444,6 +490,7 @@ for PRIVATE_PATH in "/api/billing/checkout" "/api/billing/portal" "/api/billing/
 done
 
 # ─────────────────────────────────────────────────────────────────────────────
+if [[ "$PROFILE" == "full" ]]; then
 section "15. AiPipe Integration"
 # ─────────────────────────────────────────────────────────────────────────────
 # Check AiPipe files exist
@@ -564,8 +611,39 @@ fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Final Summary
+fi
+
+fi
+
 # ─────────────────────────────────────────────────────────────────────────────
 TOTAL=$((PASS + FAIL + SKIP))
+
+# Optional JSON summary output
+if [[ -n "$JSON_OUT" ]]; then
+  export BASE_URL PROFILE PASS FAIL SKIP
+  FAILURES_JSON=$(python3 - "${FAILURES[@]}" <<'PY'
+import json,sys
+print(json.dumps(sys.argv[1:]))
+PY
+)
+  export FAILURES_JSON
+
+  python3 - <<'PY' >"$JSON_OUT"
+import json,os,datetime
+out={
+  "base_url": os.environ.get("BASE_URL",""),
+  "profile": os.environ.get("PROFILE",""),
+  "pass": int(os.environ.get("PASS","0")),
+  "fail": int(os.environ.get("FAIL","0")),
+  "skip": int(os.environ.get("SKIP","0")),
+  "total": int(os.environ.get("PASS","0"))+int(os.environ.get("FAIL","0"))+int(os.environ.get("SKIP","0")),
+  "failures": json.loads(os.environ.get("FAILURES_JSON","[]")),
+  "generated_at_utc": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+}
+print(json.dumps(out,indent=2))
+PY
+fi
+
 echo ""
 echo "════════════════════════════════════════════════"
 echo "  Results: $PASS passed · $FAIL failed · $SKIP skipped / $TOTAL total"

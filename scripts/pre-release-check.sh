@@ -4,8 +4,7 @@
 #
 # Usage:
 #   bash scripts/pre-release-check.sh
-#   bash scripts/pre-release-check.sh --fix-coolify   # auto-delete Coolify dupes
-#
+# #
 # Exit codes: 0 = all clear, 1 = failures found
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -17,8 +16,6 @@ rm -rf .next/types .next/dev/types 2>/dev/null || true
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-FIX_COOLIFY=false
-[[ "${1:-}" == "--fix-coolify" ]] && FIX_COOLIFY=true
 
 PASS=0
 FAIL=0
@@ -39,9 +36,25 @@ echo ""
 
 # ── 0. Regression test suite (mandatory first gate) ──────────────────────────
 echo "── 0. Regression Suite"
-REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" --base http://localhost:3002 2>&1)
+MC_TEST_BASE_URL="${MC_TEST_BASE_URL:-http://localhost:3002}"
+MC_REGRESSION_PROFILE="${MC_REGRESSION_PROFILE:-full}"
+REGR_JSON=$(mktemp)
+set +e
+REGR_OUT=$(bash "$REPO_ROOT/scripts/regression-test.sh" --base "$MC_TEST_BASE_URL" --profile "$MC_REGRESSION_PROFILE" --json-out "$REGR_JSON" 2>&1)
 REGR_EXIT=$?
-REGR_SUMMARY=$(echo "$REGR_OUT" | grep "Results:")
+set -e
+REGR_SUMMARY=$(python3 - "$REGR_JSON" <<'PY'
+import json,sys
+p=sys.argv[1]
+try:
+  d=json.load(open(p))
+  print("{} passed · {} failed · {} skipped / {} total (profile={})".format(
+    d.get('pass',0), d.get('fail',0), d.get('skip',0), d.get('total',0), d.get('profile','')
+  ))
+except Exception:
+  print("(no JSON summary)")
+PY
+)
 if [[ "$REGR_EXIT" -eq 0 ]]; then
   green "Regression suite passed — $REGR_SUMMARY"
 else
@@ -113,91 +126,10 @@ fi
 
 echo ""
 
-# ── 4. Coolify env var audit ──────────────────────────────────────────────────
-echo "── 4. Coolify env vars"
+# ── 4. Deployment env audit (Coolify decommissioned) ─────────────────────────
+echo "── 4. Deployment env"
 
-COOLIFY_TOKEN=""
-COOLIFY_APP_UUID=""
-
-# Try .env.local first, then Coolify itself
-if [[ -f .env.local ]]; then
-  COOLIFY_TOKEN=$(grep "^COOLIFY_API_TOKEN=" .env.local 2>/dev/null | cut -d= -f2 || true)
-  COOLIFY_APP_UUID=$(grep "^COOLIFY_APP_UUID=" .env.local 2>/dev/null | cut -d= -f2 || true)
-fi
-
-# Fallback to known values
-COOLIFY_TOKEN="${COOLIFY_TOKEN:-***REDACTED***}"
-COOLIFY_APP_UUID="${COOLIFY_APP_UUID:-***REDACTED_APP***}"
-COOLIFY_URL="http://***REDACTED_IP***:8000"
-
-ENVS_JSON=$(curl -sf "$COOLIFY_URL/api/v1/applications/$COOLIFY_APP_UUID/envs" \
-  -H "Authorization: Bearer $COOLIFY_TOKEN" 2>/dev/null || echo "[]")
-
-if [[ "$ENVS_JSON" == "[]" ]]; then
-  yellow "Could not reach Coolify API — skipping env check"
-else
-  # Check for duplicates
-  DUPES=$(echo "$ENVS_JSON" | python3 -c "
-import json,sys
-from collections import defaultdict
-data = json.load(sys.stdin)
-by_key = defaultdict(list)
-for e in data:
-    by_key[e['key']].append({'uuid': e['uuid'], 'value': e.get('value','')[:60]})
-dupes = {k: v for k,v in by_key.items() if len(v)>1}
-if dupes:
-    for k,entries in dupes.items():
-        print(f'DUPE:{k}')
-        for e in entries:
-            print(f'  uuid={e[\"uuid\"]} val={e[\"value\"]}')
-" 2>/dev/null || true)
-
-  if [[ -n "$DUPES" ]]; then
-    red "Duplicate Coolify env vars detected:"
-    echo "$DUPES" | while read -r line; do info "$line"; done
-    if $FIX_COOLIFY; then
-      yellow "Auto-fix not implemented for conflicting dupes — resolve manually"
-    else
-      info "Re-run with --fix-coolify to attempt auto-cleanup"
-    fi
-  else
-    green "No duplicate Coolify env vars"
-  fi
-
-  # Check required keys are present
-  REQUIRED_KEYS="NEXTAUTH_URL NEXTAUTH_SECRET DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET STRIPE_PRO_PRICE_ID STRIPE_TEAM_PRICE_ID NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
-  MISSING_KEYS=""
-  for KEY in $REQUIRED_KEYS; do
-    PRESENT=$(echo "$ENVS_JSON" | python3 -c "
-import json,sys
-data=json.load(sys.stdin)
-print('yes' if any(e['key']=='$KEY' for e in data) else 'no')
-" 2>/dev/null || echo "no")
-    if [[ "$PRESENT" != "yes" ]]; then
-      MISSING_KEYS="$MISSING_KEYS $KEY"
-    fi
-  done
-
-  if [[ -n "$MISSING_KEYS" ]]; then
-    red "Missing required Coolify env vars:$MISSING_KEYS"
-  else
-    green "All required Coolify env vars present"
-  fi
-
-  # Verify NEXTAUTH_URL is prod (not dev)
-  NEXTAUTH_VAL=$(echo "$ENVS_JSON" | python3 -c "
-import json,sys
-data=json.load(sys.stdin)
-vals=[e.get('value','') for e in data if e['key']=='NEXTAUTH_URL']
-print(vals[0] if vals else '')
-" 2>/dev/null || true)
-
-  if [[ "$NEXTAUTH_VAL" == "https://archonhq.ai" ]]; then
-    green "NEXTAUTH_URL = https://archonhq.ai ✓"
-  else
-    red "NEXTAUTH_URL is '$NEXTAUTH_VAL' — expected https://archonhq.ai"
-  fi
-fi
+yellow "Coolify is decommissioned — skipping Coolify env API checks."
 
 echo ""
 
