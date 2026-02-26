@@ -62,5 +62,8 @@ jobs:
           path: coverage
           if-no-files-found: ignore
 
+      - name: Install postgres client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+
       - name: Integration (DB migrations + smoke)
         run: npm run test:integration
