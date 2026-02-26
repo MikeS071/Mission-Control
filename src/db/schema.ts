@@ -42,10 +42,35 @@ export const tasks = pgTable('tasks', {
   assignedAgent: text('assigned_agent'),
   tags: text('tags').default(''),
   checklist: text('checklist').default('[]'),
+  prdPath: text('prd_path'),
+  prdCanonicalPath: text('prd_canonical_path'),
+  prdVersion: integer('prd_version').notNull().default(1),
+  prdLastUpdatedAt: timestamp('prd_last_updated_at', { withTimezone: true }),
+  prdMissingRemindedAt: timestamp('prd_missing_reminded_at', { withTimezone: true }),
+
   completedAt: timestamp('completed_at', { withTimezone: true }),
   estimatedCostUsd: numeric('estimated_cost_usd', { precision: 12, scale: 6 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+
+export const taskPrdVersions = pgTable('task_prd_versions', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  taskId: integer('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  versionNumber: integer('version_number').notNull(),
+  path: text('path').notNull(),
+  source: text('source').notNull().default('generate'),
+  parentVersionId: integer('parent_version_id'),
+  changeNote: text('change_note'),
+  isCurrent: boolean('is_current').notNull().default(true),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const events = pgTable('events', {
