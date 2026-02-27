@@ -21,6 +21,7 @@ let handleUpgrade: ReturnType<typeof app.getUpgradeHandler> | null = null;
 
 const httpsPort = Number(process.env.PORT_HTTPS) || 3000;
 const httpPort  = Number(process.env.PORT_HTTP)  || 3001;
+const httpsHost = process.env.HTTPS_BIND || '127.0.0.1';
 
 const sslOptions = {
   key:  readFileSync(process.env.SSL_KEY  || '/home/openclaw/projects/mc.key'),
@@ -94,8 +95,8 @@ app.prepare().then(() => {
   // HTTPS for Tailscale / direct access
   const httpsServer = createHttpsServer(sslOptions, handler);
   attachWebSocketServer(httpsServer);
-  httpsServer.listen(httpsPort, () => {
-    console.log(`> Mission Control ready on https://ocprd-sgp1-01.***REDACTED_HOST***:${httpsPort}`);
+  httpsServer.listen(httpsPort, httpsHost, () => {
+    console.log(`> Mission Control ready on https://${httpsHost}:${httpsPort}`);
   });
 
   // HTTP for Cloudflare Tunnel or local dev
