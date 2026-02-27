@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { tasks } from '@/db/schema';
+import { taskPrdVersions, tasks } from '@/db/schema';
 import { getTenantId } from '@/lib/tenant';
 import { readWorkspaceMarkdown, writeWorkspaceMarkdown } from '@/lib/prd-files';
 
@@ -43,7 +43,12 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const taskId = Number(id);
   if (!Number.isFinite(taskId) || taskId <= 0) return NextResponse.json({ error: 'Invalid task id' }, { status: 400 });
 
-  const body = (await req.json().catch(() => null)) as null | { content?: string };
+  const body = (await req.json().catch(() => null)) as null | {
+    content?: string;
+    source?: 'manual' | 'restored' | 'new_version' | 'generate';
+    changeNote?: string;
+    createdBy?: string;
+  };
   if (!body || typeof body.content !== 'string') {
     return NextResponse.json({ error: 'Missing content' }, { status: 400 });
   }
@@ -63,10 +68,30 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Write failed' }, { status: 500 });
   }
 
+  const now = new Date();
+  const nextVersion = (task.prdVersion ?? 1) + 1;
+
+  await db
+    .update(taskPrdVersions)
+    .set({ isCurrent: false })
+    .where(and(eq(taskPrdVersions.taskId, taskId), eq(taskPrdVersions.tenantId, tenantId), eq(taskPrdVersions.isCurrent, true)));
+
+  await db.insert(taskPrdVersions).values({
+    tenantId,
+    taskId,
+    versionNumber: nextVersion,
+    path: task.prdPath,
+    source: body.source ?? 'manual',
+    isCurrent: true,
+    changeNote: body.changeNote ?? null,
+    createdBy: body.createdBy ?? 'user',
+    createdAt: now,
+  });
+
   await db
     .update(tasks)
-    .set({ prdLastUpdatedAt: new Date(), updatedAt: new Date() })
+    .set({ prdVersion: nextVersion, prdLastUpdatedAt: now, updatedAt: now })
     .where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId)));
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, prdVersion: nextVersion });
 }

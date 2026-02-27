@@ -105,17 +105,15 @@ export function VersionHistoryPanel({ taskId, onRestored }: VersionHistoryPanelP
         return;
       }
 
-      // Write content as current PRD, then create a new version
+      // Restore by writing as current PRD; backend creates a new version row.
       await fetch(`/api/tasks/${taskId}/prd`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-
-      await fetch(`/api/tasks/${taskId}/prd/new-version`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: 'restored', changeNote: `Restored from v${version.versionNumber}` }),
+        body: JSON.stringify({
+          content,
+          source: 'restored',
+          changeNote: `Restored from v${version.versionNumber}`,
+        }),
       });
 
       await fetchVersions();
