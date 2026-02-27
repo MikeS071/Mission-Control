@@ -27,9 +27,10 @@ type Task = {
   checklist: ChecklistItem[];
   prdPath: string | null;
   prdVersion: number;
+  updatedAt: string;
 };
 
-type ApiTask = Omit<Task, 'assignedAgent'> & { assignedAgent?: string | null; assigned_agent?: string | null; prd_path?: string | null; prd_version?: number };
+type ApiTask = Omit<Task, 'assignedAgent'> & { assignedAgent?: string | null; assigned_agent?: string | null; prd_path?: string | null; prd_version?: number; updated_at?: string };
 
 type TaskForm = {
   title: string;
@@ -95,6 +96,7 @@ function mapTask(t: ApiTask): Task {
     assignedAgent: t.assignedAgent ?? t.assigned_agent ?? null,
     prdPath: t.prdPath ?? t.prd_path ?? null,
     prdVersion: t.prdVersion ?? t.prd_version ?? 1,
+    updatedAt: t.updatedAt ?? t.updated_at ?? '',
     priority: t.priority || 'Medium',
     goal: t.goal || t.goalId || 'Unlinked',
     tags: t.tags || '',
@@ -826,6 +828,7 @@ const [rightWidth, setRightWidth] = useState(402);
                               const isWorking = Boolean(workingByTask[task.id]);
                               const blocked = isTaskBlocked(task.tags);
                               const needsHuman = isTaskNeedsHuman(task.tags);
+                              const isStale = task.status === 'in_progress' && (Date.now() - new Date(task.updatedAt).getTime() > 24 * 60 * 60 * 1000);
 
                               return (
                                 <Draggable key={task.id} draggableId={String(task.id)} index={i}>
@@ -846,6 +849,7 @@ const [rightWidth, setRightWidth] = useState(402);
                                       <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
                                         <div className="flex items-center gap-1 flex-wrap">
                                           {task.goalId && <Badge className="bg-indigo-600/80 text-white text-[9px] px-1 py-0">{task.goalId}</Badge>}
+                                          {isStale && <Badge className="bg-amber-500/20 text-amber-200 border border-amber-400/40 text-[9px] px-1 py-0">⏰ Stale</Badge>}
                                           <p className="text-xs font-medium text-white leading-tight">{task.title}</p>
                                         </div>
                                         {task.description && <p className="mt-0.5 line-clamp-2 text-[11px] text-gray-500 leading-snug">{task.description}</p>}
