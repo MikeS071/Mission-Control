@@ -449,6 +449,8 @@ const [rightWidth, setRightWidth] = useState(402);
   const [editingWipValue, setEditingWipValue] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [workingByTask, setWorkingByTask] = useState<Record<number, boolean>>({});
+  const [askingNaviByTask, setAskingNaviByTask] = useState<Record<number, boolean>>({});
+  const [sentToNaviByTask, setSentToNaviByTask] = useState<Record<number, boolean>>({});
   const [doneConfirm, setDoneConfirm] = useState<{ taskId: number; fromStatus: string; incomplete: number } | null>(null);
   const [prdEditor, setPrdEditor] = useState<{ taskId: number; title: string; content: string; version: number } | null>(null);
 
@@ -720,6 +722,34 @@ const [rightWidth, setRightWidth] = useState(402);
     if (next !== null && !historyByTask[taskId]) await loadHistory(taskId);
   };
 
+  const askNavi = async (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAskingNaviByTask((prev) => ({ ...prev, [task.id]: true }));
+    setErrorMessage(null);
+    try {
+      const message = `Work on task: ${task.title} (ID: ${task.id})\n\nDescription: ${task.description || 'No description provided'}\n\nStatus: ${task.status}`;
+      const response = await fetch('/api/openclaw/chat/send', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      if (!response.ok) throw new Error('Failed to send to Navi');
+      setSentToNaviByTask((prev) => ({ ...prev, [task.id]: true }));
+      setTimeout(() => {
+        setSentToNaviByTask((prev) => {
+          if (!prev[task.id]) return prev;
+          const next = { ...prev };
+          delete next[task.id];
+          return next;
+        });
+      }, 2000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to send to Navi');
+    } finally {
+      setAskingNaviByTask((prev) => ({ ...prev, [task.id]: false }));
+    }
+  };
+
   const confirmDoneMove = async (markDone: boolean) => {
     if (!doneConfirm) return;
     const { taskId, fromStatus } = doneConfirm;
@@ -894,6 +924,22 @@ const [rightWidth, setRightWidth] = useState(402);
                                         <button type="button" onClick={() => void toggleHistory(task.id)} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Clock3 className="h-2 w-2" />History</button>
                                         {task.prdPath && (
                                           <button type="button" onClick={(e) => { e.stopPropagation(); void openPrdEditor(task); }} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Pencil className="h-2 w-2" />PRD</button>
+                                        )}
+                                        {task.status !== 'done' && (
+                                          <>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={(e) => void askNavi(task, e)}
+                                              disabled={Boolean(askingNaviByTask[task.id])}
+                                              className="h-5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"
+                                            >
+                                              <Bot className="h-2 w-2" />
+                                              {askingNaviByTask[task.id] ? 'Sending...' : 'Ask Navi'}
+                                            </Button>
+                                            {sentToNaviByTask[task.id] && <span className="text-[9px] text-emerald-300">Sent to Navi</span>}
+                                          </>
                                         )}
                                         {task.prdVersion > 0 && (
                                           <button
