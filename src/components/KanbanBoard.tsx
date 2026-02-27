@@ -451,6 +451,7 @@ const [rightWidth, setRightWidth] = useState(402);
   const [workingByTask, setWorkingByTask] = useState<Record<number, boolean>>({});
   const [doneConfirm, setDoneConfirm] = useState<{ taskId: number; fromStatus: string; incomplete: number } | null>(null);
   const [prdEditor, setPrdEditor] = useState<{ taskId: number; title: string; content: string; version: number } | null>(null);
+  const [isAskingNavi, setIsAskingNavi] = useState(false);
 
   const load = useCallback(async () => {
     const response = await fetch('/api/tasks', { cache: 'no-store' });
@@ -560,6 +561,7 @@ const [rightWidth, setRightWidth] = useState(402);
   }), [tasks, filters]);
 
   const grouped = useMemo(() => STATUS_COLUMNS.map((col) => ({ col, items: filteredTasks.filter((t) => t.status === col) })), [filteredTasks]);
+  const inProgressTaskCount = useMemo(() => tasks.filter((task) => task.status === 'in_progress').length, [tasks]);
   const hasActiveFilters = filters.search !== '' || filters.priority !== 'All' || filters.goal !== 'All' || filters.agent !== 'All' || filters.tags !== '';
   const hiddenCount = tasks.length - filteredTasks.length;
 
@@ -743,6 +745,27 @@ const [rightWidth, setRightWidth] = useState(402);
   const toggleColumnCollapsed = (column: string) => setCollapsedColumns((prev) => ({ ...prev, [column]: !prev[column] }));
   const startWipEdit = (column: string) => { setEditingWipColumn(column); const current = wipLimits[column]; setEditingWipValue(current && current > 0 ? String(current) : ''); };
   const saveWipLimit = (column: string) => { const parsed = Number(editingWipValue); setWipLimits((prev) => ({ ...prev, [column]: Number.isFinite(parsed) && parsed > 0 ? parsed : null })); setEditingWipColumn(null); };
+  const askNaviForNextTask = async () => {
+    setErrorMessage(null);
+    setIsAskingNavi(true);
+    try {
+      const response = await fetch('/api/openclaw/chat/send', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          message: 'What should I work on next? Check the backlog and recommend the highest priority task.',
+        }),
+      });
+
+      if (!response.ok) {
+        setErrorMessage("Failed to ask Navi what's next");
+      }
+    } catch {
+      setErrorMessage("Failed to ask Navi what's next");
+    } finally {
+      setIsAskingNavi(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full gap-2">
@@ -915,6 +938,24 @@ const [rightWidth, setRightWidth] = useState(402);
                                 </Draggable>
                               );
                             })}
+                            {col === 'in_progress' && inProgressTaskCount === 0 && (
+                              <div className="flex min-h-28 items-center justify-center rounded-md border border-dashed border-gray-700/80 bg-gray-950/30 px-3 py-4 text-center">
+                                <div className="space-y-2">
+                                  <p className="text-[11px] text-gray-500">
+                                    No tasks in progress. Pick one from backlog or ask Navi for suggestions!
+                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800"
+                                    onClick={() => void askNaviForNextTask()}
+                                    disabled={isAskingNavi}
+                                  >
+                                    {isAskingNavi ? 'Asking Navi...' : "Ask Navi what's next"}
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                             {provided.placeholder}
                           </div>
                         )}
