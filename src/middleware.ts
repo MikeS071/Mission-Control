@@ -46,5 +46,5 @@ export default auth((req: NextAuthRequest) => {
 });
 
 export const config = {
-  matcher: ['/api/:path*', '/dashboard/:path*'],
+  matcher: ['/api/:path*', '/dashboard/:path*', '/agentteams'],
 };
