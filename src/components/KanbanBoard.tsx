@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EventItem, EventTimeline } from '@/components/EventTimeline';
 import { ActivityPane } from '@/components/ActivityPane';
+import { MdxModal } from '@/components/MdxModal';
 
 type ChecklistItem = { id: string; text: string; checked: boolean };
 
@@ -23,9 +24,11 @@ type Task = {
   tags: string;
   assignedAgent: string | null;
   checklist: ChecklistItem[];
+  prdPath: string | null;
+  prdVersion: number;
 };
 
-type ApiTask = Omit<Task, 'assignedAgent'> & { assignedAgent?: string | null; assigned_agent?: string | null };
+type ApiTask = Omit<Task, 'assignedAgent'> & { assignedAgent?: string | null; assigned_agent?: string | null; prd_path?: string | null; prd_version?: number };
 
 type TaskForm = {
   title: string;
@@ -89,6 +92,8 @@ function mapTask(t: ApiTask): Task {
     ...t,
     status: normalizeStatus(t.status),
     assignedAgent: t.assignedAgent ?? t.assigned_agent ?? null,
+    prdPath: t.prdPath ?? t.prd_path ?? null,
+    prdVersion: t.prdVersion ?? t.prd_version ?? 1,
     priority: t.priority || 'Medium',
     goal: t.goal || t.goalId || 'Unlinked',
     tags: t.tags || '',
@@ -443,6 +448,7 @@ const [rightWidth, setRightWidth] = useState(402);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [workingByTask, setWorkingByTask] = useState<Record<number, boolean>>({});
   const [doneConfirm, setDoneConfirm] = useState<{ taskId: number; fromStatus: string; incomplete: number } | null>(null);
+  const [prdEditor, setPrdEditor] = useState<{ taskId: number; title: string; content: string; version: number } | null>(null);
 
   const load = useCallback(async () => {
     const response = await fetch('/api/tasks', { cache: 'no-store' });
@@ -670,6 +676,28 @@ const [rightWidth, setRightWidth] = useState(402);
     setEditingId(null);
   };
 
+  const openPrdEditor = async (task: Task) => {
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/prd`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = (await res.json()) as { content?: string; prdVersion?: number };
+      setPrdEditor({
+        taskId: task.id,
+        title: `PRD: ${task.title}`,
+        content: data.content ?? '',
+        version: data.prdVersion ?? task.prdVersion,
+      });
+    } catch { /* ignore */ }
+  };
+
+  const savePrd = async (taskId: number, content: string) => {
+    await fetch(`/api/tasks/${taskId}/prd`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+  };
+
   const openEdit = (task: Task) => {
     setEditingId(task.id);
     setEditTask({ title: task.title, description: task.description, goal: task.goalId || task.goal || '', priority: task.priority, status: task.status, tags: task.tags || '', checklist: task.checklist || [] });
@@ -862,6 +890,9 @@ const [rightWidth, setRightWidth] = useState(402);
                                           <UserX className="h-2 w-2" />Needs you
                                         </button>
                                         <button type="button" onClick={() => void toggleHistory(task.id)} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Clock3 className="h-2 w-2" />History</button>
+                                        {task.prdPath && (
+                                          <button type="button" onClick={(e) => { e.stopPropagation(); void openPrdEditor(task); }} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Pencil className="h-2 w-2" />PRD</button>
+                                        )}
                                       </div>
 
                                       {openHistoryTaskId === task.id && <div className="mt-1.5 rounded border border-gray-700/60 bg-gray-900 p-1.5"><EventTimeline events={historyByTask[task.id] || []} /></div>}
@@ -920,6 +951,18 @@ const [rightWidth, setRightWidth] = useState(402);
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {prdEditor && (
+        <MdxModal
+          open={true}
+          onOpenChange={(open) => { if (!open) setPrdEditor(null); }}
+          title={prdEditor.title}
+          initialContent={prdEditor.content}
+          loadedVersion={prdEditor.version}
+          staleCheckUrl={`/api/tasks/${prdEditor.taskId}/prd`}
+          onSave={(content) => savePrd(prdEditor.taskId, content)}
+        />
+      )}
     </div>
   );
 }
