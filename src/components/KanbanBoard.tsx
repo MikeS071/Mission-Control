@@ -2,7 +2,8 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, Pencil, Plus, Settings2, UserX } from 'lucide-react';
+import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, History, Pencil, Plus, Settings2, UserX } from 'lucide-react';
+import { VersionHistoryPanel } from '@/components/VersionHistoryPanel';
 import { ChatPanel } from '@/components/ChatPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -437,6 +438,7 @@ export function KanbanBoard() {
 const [rightWidth, setRightWidth] = useState(402);
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [openHistoryTaskId, setOpenHistoryTaskId] = useState<number | null>(null);
+  const [openVersionHistoryTaskId, setOpenVersionHistoryTaskId] = useState<number | null>(null);
   const [historyByTask, setHistoryByTask] = useState<Record<number, EventItem[]>>({});
   const [columnLabels, setColumnLabels] = useState<Record<string, string>>(STATUS_LABELS);
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
@@ -893,9 +895,21 @@ const [rightWidth, setRightWidth] = useState(402);
                                         {task.prdPath && (
                                           <button type="button" onClick={(e) => { e.stopPropagation(); void openPrdEditor(task); }} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Pencil className="h-2 w-2" />PRD</button>
                                         )}
+                                        {task.prdVersion > 0 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => setOpenVersionHistoryTaskId((prev) => prev === task.id ? null : task.id)}
+                                            className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${openVersionHistoryTaskId === task.id ? 'border-indigo-600 text-indigo-300' : 'border-gray-700/60 text-gray-500 hover:text-gray-300 hover:border-gray-600'}`}
+                                          >
+                                            <History className="h-2 w-2" />PRD Versions
+                                          </button>
+                                        )}
                                       </div>
 
                                       {openHistoryTaskId === task.id && <div className="mt-1.5 rounded border border-gray-700/60 bg-gray-900 p-1.5"><EventTimeline events={historyByTask[task.id] || []} /></div>}
+                                      {openVersionHistoryTaskId === task.id && (
+                                        <VersionHistoryPanel taskId={task.id} onRestored={() => void load()} />
+                                      )}
                                     </div>
                                   )}
                                 </Draggable>
