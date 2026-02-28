@@ -16,7 +16,7 @@ export default function NewsletterSignup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, source: 'blog' }),
       });
-      setStatus(res.ok ? 'success' : 'error');
+      setStatus(res.ok || res.status === 409 ? 'success' : 'error');
     } catch {
       setStatus('error');
     }

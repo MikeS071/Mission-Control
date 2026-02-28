@@ -50,29 +50,56 @@ export async function POST(req: NextRequest) {
     const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(waitlist);
     const position = count ?? 0;
 
-    const htmlBody = `<!DOCTYPE html>
+    const isBlog = source === 'blog';
+    const subjectLine = isBlog
+      ? "You're subscribed! \u{1F9ED} Welcome to ArchonHQ Insights"
+      : "You're on the list \u{1F389} Welcome to archonhq";
+
+    const blogHtml = `<!DOCTYPE html>
+<html>
+<body style="background:#0a1a12;color:#e5e7eb;font-family:system-ui,sans-serif;padding:40px 20px;max-width:600px;margin:0 auto;">
+  <div style="text-align:center;margin-bottom:32px;">
+    <span style="font-size:32px;">\u{1F9ED}</span>
+    <h1 style="color:#fff;font-size:24px;margin:12px 0 4px;">You're subscribed!</h1>
+    <p style="color:#2dd47a;margin:0;">Welcome to ArchonHQ Insights</p>
+  </div>
+  <p style="color:#d1d5db;line-height:1.7;">Hey there,</p>
+  <p style="color:#d1d5db;line-height:1.7;">Thanks for subscribing. You'll get an email whenever we publish new articles about AI engineering, agent swarms, and what we're building.</p>
+  <ul style="color:#d1d5db;line-height:2;">
+    <li>\u{1F916} <strong style="color:#fff;">Agent swarms</strong> \u2014 building and managing AI coding teams</li>
+    <li>\u{1F527} <strong style="color:#fff;">Engineering insights</strong> \u2014 real lessons from production systems</li>
+    <li>\u{1F4CA} <strong style="color:#fff;">Product updates</strong> \u2014 new features and behind-the-scenes</li>
+  </ul>
+  <div style="text-align:center;margin:32px 0;">
+    <a href="https://archonhq.ai/insights" style="background:#2dd47a;color:#0a1a12;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Read Latest Articles \u2192</a>
+  </div>
+  <p style="color:#6b7280;font-size:13px;text-align:center;margin-top:40px;">archonhq.ai \u00b7 You subscribed to our blog.<br><a href="https://archonhq.ai/unsubscribe?token=${emailToken(email)}" style="color:#6b7280;">Unsubscribe</a></p>
+</body>
+</html>`;
+
+    const waitlistHtml = `<!DOCTYPE html>
 <html>
 <body style="background:#0a0a0f;color:#e5e7eb;font-family:system-ui,sans-serif;padding:40px 20px;max-width:600px;margin:0 auto;">
   <div style="text-align:center;margin-bottom:32px;">
-    <span style="font-size:32px;">🧭</span>
+    <span style="font-size:32px;">\u{1F9ED}</span>
     <h1 style="color:#fff;font-size:24px;margin:12px 0 4px;">You're on the list!</h1>
     <p style="color:#818cf8;margin:0;">Welcome to archonhq early access</p>
   </div>
   <p style="color:#d1d5db;line-height:1.7;">Hey there,</p>
-  <p style="color:#d1d5db;line-height:1.7;">You're <strong style="color:#fff;">#${position}</strong> on the waitlist — and we couldn't be more excited to have you.</p>
-  <p style="color:#d1d5db;line-height:1.7;">Here's what you've signed up for:</p>
+  <p style="color:#d1d5db;line-height:1.7;">You're <strong style="color:#fff;">#${position}</strong> on the waitlist.</p>
   <ul style="color:#d1d5db;line-height:2;">
-    <li>🔀 <strong style="color:#fff;">AiPipe</strong> — intelligent LLM routing that cuts your AI costs automatically</li>
-    <li>🏆 <strong style="color:#fff;">Agent Challenges</strong> — XP, streaks, and leaderboards for your AI agents</li>
-    <li>🔌 <strong style="color:#fff;">OpenClaw-native</strong> — connect your gateway in 60 seconds</li>
+    <li>\u{1F500} <strong style="color:#fff;">AiPipe</strong> \u2014 intelligent LLM routing</li>
+    <li>\u{1F3C6} <strong style="color:#fff;">Agent Challenges</strong> \u2014 XP, streaks, leaderboards</li>
+    <li>\u{1F50C} <strong style="color:#fff;">OpenClaw-native</strong> \u2014 connect in 60 seconds</li>
   </ul>
-  <p style="color:#d1d5db;line-height:1.7;">As a founding member, you'll get <strong style="color:#fff;">early access before the public launch</strong> and locked-in founding pricing.</p>
   <div style="text-align:center;margin:32px 0;">
-    <a href="https://archonhq.ai/roadmap" style="background:#6366f1;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">See the Roadmap →</a>
+    <a href="https://archonhq.ai/roadmap" style="background:#6366f1;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;">See the Roadmap \u2192</a>
   </div>
-  <p style="color:#6b7280;font-size:13px;text-align:center;margin-top:40px;">archonhq.ai · Built with OpenClaw<br>You're receiving this because you joined our waitlist.</p>
+  <p style="color:#6b7280;font-size:13px;text-align:center;margin-top:40px;">archonhq.ai<br>You joined our waitlist.</p>
 </body>
 </html>`;
+
+    const htmlBody = isBlog ? blogHtml : waitlistHtml;
 
     try {
       await fetch('https://api.resend.com/emails', {
@@ -85,7 +112,7 @@ export async function POST(req: NextRequest) {
           from: 'archonhq <hello@archonhq.ai>',
           to: [email],
           reply_to: 'hello@archonhq.ai',
-          subject: "You're on the list 🎉 Welcome to archonhq",
+          subject: subjectLine,
           html: htmlBody,
         }),
       });
