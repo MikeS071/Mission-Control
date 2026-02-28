@@ -138,7 +138,9 @@ export function renderMarkdown(markdown: string): string {
       flushParagraph();
       closeList();
       const level = Math.min(6, headingMatch[1].length);
-      html.push(`<h${level}>${formatInline(headingMatch[2].trim())}</h${level}>`);
+      const headingText = headingMatch[2].trim();
+      const headingId = headingText.toLowerCase().replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      html.push(`<h${level} id="${headingId}">${formatInline(headingText)}</h${level}>`);
       continue;
     }
 
