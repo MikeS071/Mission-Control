@@ -62,6 +62,31 @@ export function renderMarkdown(markdown: string): string {
     }
   };
 
+  let tableRows: string[][] = [];
+  let inTable = false;
+
+  const flushTable = () => {
+    if (tableRows.length === 0) return;
+    const thead = tableRows[0];
+    const tbody = tableRows.slice(1);
+    let t = '<table><thead><tr>';
+    for (const cell of thead) t += `<th>${formatInline(cell.trim())}</th>`;
+    t += '</tr></thead>';
+    if (tbody.length) {
+      t += '<tbody>';
+      for (const row of tbody) {
+        t += '<tr>';
+        for (const cell of row) t += `<td>${formatInline(cell.trim())}</td>`;
+        t += '</tr>';
+      }
+      t += '</tbody>';
+    }
+    t += '</table>';
+    html.push(t);
+    tableRows = [];
+    inTable = false;
+  };
+
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
 
@@ -71,6 +96,7 @@ export function renderMarkdown(markdown: string): string {
         inCodeBlock = false;
       } else {
         flushParagraph();
+        flushTable();
         closeList();
         inCodeBlock = true;
       }
@@ -82,8 +108,27 @@ export function renderMarkdown(markdown: string): string {
       continue;
     }
 
+    // Table detection: line starts and ends with |
+    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      const cells = line.trim().slice(1, -1).split('|');
+      // Skip separator rows (|---|---|)
+      if (cells.every(c => /^[\s:-]+$/.test(c))) {
+        continue;
+      }
+      if (!inTable) {
+        flushParagraph();
+        closeList();
+        inTable = true;
+      }
+      tableRows.push(cells);
+      continue;
+    } else if (inTable) {
+      flushTable();
+    }
+
     if (line.trim() === '') {
       flushParagraph();
+      flushTable();
       closeList();
       continue;
     }
@@ -132,6 +177,7 @@ export function renderMarkdown(markdown: string): string {
   }
 
   flushParagraph();
+  flushTable();
   closeList();
   if (inCodeBlock) {
     flushCode();
