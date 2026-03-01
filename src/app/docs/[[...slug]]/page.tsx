@@ -17,13 +17,14 @@ export default async function DocPage({ params }: PageProps) {
 
   const page = source.getPage(slug);
   if (!page) notFound();
+  const pageData = page.data as any;
 
-  const MDX = page.data.body;
+  const MDX = pageData.body;
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
+    <DocsPage toc={pageData.toc} full={pageData.full}>
+      <DocsTitle>{pageData.title}</DocsTitle>
+      <DocsDescription>{pageData.description}</DocsDescription>
       <DocsBody>
         <MDX components={defaultMdxComponents} />
       </DocsBody>
@@ -39,9 +40,10 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const page = source.getPage(slug);
   if (!page) notFound();
+  const pageData = page.data as any;
 
   return {
-    title: `${page.data.title} — Mission Control Docs`,
-    description: page.data.description,
+    title: `${pageData.title} — Mission Control Docs`,
+    description: pageData.description,
   };
 }
