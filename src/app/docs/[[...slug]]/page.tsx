@@ -18,12 +18,17 @@ export default async function DocPage({ params }: PageProps) {
   const page = source.getPage(slug);
   if (!page) notFound();
 
-  const MDX = page.data.body;
+  const pageData = page.data as typeof page.data & {
+    body: React.ComponentType<{ components?: Record<string, unknown> }>;
+    toc?: any;
+    full?: boolean;
+  };
+  const MDX = pageData.body;
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
+    <DocsPage toc={pageData.toc} full={pageData.full}>
+      <DocsTitle>{pageData.title}</DocsTitle>
+      <DocsDescription>{pageData.description}</DocsDescription>
       <DocsBody>
         <MDX components={defaultMdxComponents} />
       </DocsBody>
