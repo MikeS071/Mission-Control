@@ -1,0 +1,526 @@
+{
+  "project": "mc",
+  "tickets": {
+    "mc-01": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/mc-01",
+      "desc": "Admin layout + navigation scaffold"
+    },
+    "mc-02": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [
+        "mc-01"
+      ],
+      "branch": "feat/mc-02",
+      "desc": "Admin users list page"
+    },
+    "mc-03": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [
+        "mc-01"
+      ],
+      "branch": "feat/mc-03",
+      "desc": "Admin tenants list page"
+    },
+    "mc-04": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [
+        "mc-03"
+      ],
+      "branch": "feat/mc-04",
+      "desc": "Admin tenant detail page"
+    },
+    "mc-05": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/mc-05",
+      "desc": "Admin API — list users endpoint"
+    },
+    "mc-06": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/mc-06",
+      "desc": "Admin API — list tenants endpoint"
+    },
+    "mc-07": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/mc-07",
+      "desc": "Policy schema (Zod + types)"
+    },
+    "mc-08": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-07"
+      ],
+      "branch": "feat/mc-08",
+      "desc": "Policy tier templates"
+    },
+    "mc-09": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-07"
+      ],
+      "branch": "feat/mc-09",
+      "desc": "Policy DB migration"
+    },
+    "mc-10": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-07",
+        "mc-09"
+      ],
+      "branch": "feat/mc-10",
+      "desc": "Policy eval helpers"
+    },
+    "mc-11": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-07",
+        "mc-08",
+        "mc-09"
+      ],
+      "branch": "feat/mc-11",
+      "desc": "Policy admin API"
+    },
+    "mc-12": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-04",
+        "mc-11"
+      ],
+      "branch": "feat/mc-12",
+      "desc": "Policy editor UI"
+    },
+    "mc-13": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-11"
+      ],
+      "branch": "feat/mc-13",
+      "desc": "Policy audit log"
+    },
+    "mc-14": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "mc-10"
+      ],
+      "branch": "feat/mc-14",
+      "desc": "Wire policy to 3 existing features"
+    },
+    "mc-15": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/mc-15",
+      "desc": "Usage ledger schema"
+    },
+    "mc-16": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [
+        "mc-15"
+      ],
+      "branch": "feat/mc-16",
+      "desc": "AiPipe metering middleware"
+    },
+    "mc-17": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [
+        "mc-15",
+        "mc-16"
+      ],
+      "branch": "feat/mc-17",
+      "desc": "Budget enforcement"
+    },
+    "mc-18": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [
+        "mc-15"
+      ],
+      "branch": "feat/mc-18",
+      "desc": "Usage dashboard API"
+    },
+    "mc-19": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [
+        "mc-18"
+      ],
+      "branch": "feat/mc-19",
+      "desc": "Usage dashboard UI"
+    },
+    "mc-20": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [
+        "mc-16"
+      ],
+      "branch": "feat/mc-20",
+      "desc": "Pricing rates config"
+    },
+    "mc-21": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [
+        "mc-17"
+      ],
+      "branch": "feat/mc-21",
+      "desc": "Usage alerts"
+    },
+    "mc-22": {
+      "status": "todo",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/mc-22",
+      "desc": "Kanban bot activation triggers"
+    },
+    "mc-23": {
+      "status": "todo",
+      "phase": 4,
+      "depends": [
+        "mc-22"
+      ],
+      "branch": "feat/mc-23",
+      "desc": "Kanban stale indicator UI"
+    },
+    "mc-24": {
+      "status": "todo",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/mc-24",
+      "desc": "Kanban empty board suggestions"
+    },
+    "mc-25": {
+      "status": "todo",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/mc-25",
+      "desc": "Provisioning template sync"
+    },
+    "mc-26": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [],
+      "branch": "feat/mc-26",
+      "desc": "Content list page"
+    },
+    "mc-27": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "mc-26"
+      ],
+      "branch": "feat/mc-27",
+      "desc": "Content detail + editor page"
+    },
+    "mc-28": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "mc-27"
+      ],
+      "branch": "feat/mc-28",
+      "desc": "Content publish action"
+    },
+    "mc-29": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "mc-27"
+      ],
+      "branch": "feat/mc-29",
+      "desc": "Content social scheduling"
+    },
+    "mc-30": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "mc-27"
+      ],
+      "branch": "feat/mc-30",
+      "desc": "Content hero image preview"
+    },
+    "mc-31": {
+      "status": "todo",
+      "phase": 6,
+      "depends": [],
+      "branch": "feat/mc-31",
+      "desc": "System health dashboard"
+    },
+    "mc-32": {
+      "status": "todo",
+      "phase": 6,
+      "depends": [
+        "mc-01"
+      ],
+      "branch": "feat/mc-32",
+      "desc": "Application logs viewer"
+    },
+    "mc-33": {
+      "status": "todo",
+      "phase": 6,
+      "depends": [
+        "mc-01"
+      ],
+      "branch": "feat/mc-33",
+      "desc": "Deployment status panel"
+    },
+    "mc-34": {
+      "status": "todo",
+      "phase": 6,
+      "depends": [],
+      "branch": "feat/mc-34",
+      "desc": "Error tracking + alerts"
+    },
+    "mc-35": {
+      "status": "todo",
+      "phase": 6,
+      "depends": [
+        "mc-31"
+      ],
+      "branch": "feat/mc-35",
+      "desc": "Database stats panel"
+    },
+    "mc-36": {
+      "status": "todo",
+      "phase": 7,
+      "depends": [],
+      "branch": "feat/mc-36",
+      "desc": "Migration config schema"
+    },
+    "mc-37": {
+      "status": "todo",
+      "phase": 7,
+      "depends": [
+        "mc-36"
+      ],
+      "branch": "feat/mc-37",
+      "desc": "Migration pre-flight check API"
+    },
+    "mc-38": {
+      "status": "todo",
+      "phase": 7,
+      "depends": [
+        "mc-36"
+      ],
+      "branch": "feat/mc-38",
+      "desc": "Migration data export"
+    },
+    "mc-39": {
+      "status": "todo",
+      "phase": 7,
+      "depends": [
+        "mc-37",
+        "mc-38"
+      ],
+      "branch": "feat/mc-39",
+      "desc": "Migration UI wizard"
+    },
+    "mc-40": {
+      "status": "todo",
+      "phase": 8,
+      "depends": [],
+      "branch": "feat/mc-40",
+      "desc": "Dashboard home redesign"
+    },
+    "mc-41": {
+      "status": "todo",
+      "phase": 8,
+      "depends": [],
+      "branch": "feat/mc-41",
+      "desc": "Mobile responsive pass"
+    },
+    "mc-42": {
+      "status": "todo",
+      "phase": 8,
+      "depends": [],
+      "branch": "feat/mc-42",
+      "desc": "API rate limiting"
+    },
+    "mc-43": {
+      "status": "todo",
+      "phase": 8,
+      "depends": [],
+      "branch": "feat/mc-43",
+      "desc": "E2E smoke tests"
+    },
+    "mc-44": {
+      "status": "todo",
+      "phase": 8,
+      "depends": [],
+      "branch": "feat/mc-44",
+      "desc": "README + deployment docs"
+    },
+    "tc-01": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-01",
+      "desc": "Auth lib tests"
+    },
+    "tc-02": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-02",
+      "desc": "Chat lib tests"
+    },
+    "tc-03": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-03",
+      "desc": "Gateway lib tests"
+    },
+    "tc-04": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-04",
+      "desc": "AI lib tests"
+    },
+    "tc-05": {
+      "status": "todo",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-05",
+      "desc": "Util lib tests"
+    },
+    "tc-06": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "tc-01"
+      ],
+      "branch": "feat/tc-06",
+      "desc": "Auth route tests"
+    },
+    "tc-07": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "tc-02"
+      ],
+      "branch": "feat/tc-07",
+      "desc": "Chat route tests"
+    },
+    "tc-08": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-08",
+      "desc": "Task route tests"
+    },
+    "tc-09": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [
+        "tc-01"
+      ],
+      "branch": "feat/tc-09",
+      "desc": "Admin route tests"
+    },
+    "tc-10": {
+      "status": "todo",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-10",
+      "desc": "Billing route tests"
+    },
+    "tc-11": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-11",
+      "desc": "Activity route tests"
+    },
+    "tc-12": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-12",
+      "desc": "Arena route tests"
+    },
+    "tc-13": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-13",
+      "desc": "Telegram route tests"
+    },
+    "tc-14": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-14",
+      "desc": "Gateway/AiPipe route tests"
+    },
+    "tc-15": {
+      "status": "todo",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-15",
+      "desc": "Misc route tests"
+    },
+    "tc-16": {
+      "status": "todo",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-16",
+      "desc": "DB schema tests"
+    },
+    "tc-17": {
+      "status": "todo",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-17",
+      "desc": "Middleware tests"
+    },
+    "tc-18": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "tc-16",
+        "tc-17"
+      ],
+      "branch": "feat/tc-18",
+      "desc": "Test integration pass"
+    },
+    "tc-19": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "tc-18"
+      ],
+      "branch": "feat/tc-19",
+      "desc": "Coverage report"
+    },
+    "tc-20": {
+      "status": "todo",
+      "phase": 5,
+      "depends": [
+        "tc-19"
+      ],
+      "branch": "feat/tc-20",
+      "desc": "Final commit"
+    }
+  }
+}
