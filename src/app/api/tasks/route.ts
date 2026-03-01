@@ -74,8 +74,23 @@ export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const { searchParams } = new URL(req.url);
+  const statusFilter = searchParams.get('status');
+  const priorityFilter = searchParams.get('priority');
+  const assignedAgentFilter = searchParams.get('assignedAgent') ?? searchParams.get('assigned_agent');
+
   const all = await db.select().from(tasks).where(eq(tasks.tenantId, tenantId)).orderBy(tasks.createdAt);
-  return NextResponse.json(all.map(mapTaskOutput));
+  const filtered = all.filter((task) => {
+    if (statusFilter && normalizeStatus(task.status) !== normalizeStatus(statusFilter)) return false;
+    if (priorityFilter && normalizePriority(task.priority || undefined) !== normalizePriority(priorityFilter)) return false;
+    if (assignedAgentFilter) {
+      const assigned = (task.assignedAgent || '').trim().toLowerCase();
+      if (assigned !== assignedAgentFilter.trim().toLowerCase()) return false;
+    }
+    return true;
+  });
+
+  return NextResponse.json(filtered.map(mapTaskOutput));
 }
 
 export async function POST(req: NextRequest) {
@@ -187,6 +202,20 @@ export async function PATCH(req: NextRequest) {
     });
     if (task.status === 'done') void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
     void sendTelegramMessage(`🔄 ${task.title}: ${before.status} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
+  }
+
+  if (data.comment) {
+    await db.insert(events).values({
+      tenantId,
+      taskId: task.id,
+      agentName: 'system',
+      eventType: 'task_comment_added',
+      payload: JSON.stringify({
+        task_id: task.id,
+        title: task.title,
+        comment: data.comment,
+      }),
+    });
   }
 
   return NextResponse.json(mapTaskOutput(task));

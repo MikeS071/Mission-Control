@@ -56,6 +56,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 
   const { id } = await context.params;
   const taskId = Number(id);
+  if (!Number.isFinite(taskId) || taskId <= 0) return NextResponse.json({ error: 'Invalid task id' }, { status: 400 });
   const [task] = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId))).limit(1);
 
   if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -68,6 +69,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
   const { id } = await context.params;
   const taskId = Number(id);
+  if (!Number.isFinite(taskId) || taskId <= 0) return NextResponse.json({ error: 'Invalid task id' }, { status: 400 });
 
   const parsed = parseBody(TaskPatchSchema, await req.json());
   if (!parsed.ok) return parsed.response;
@@ -148,6 +150,20 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     }
   }
 
+  if (body.comment) {
+    await db.insert(events).values({
+      tenantId,
+      taskId: task.id,
+      agentName: 'system',
+      eventType: 'task_comment_added',
+      payload: JSON.stringify({
+        task_id: task.id,
+        title: task.title,
+        comment: body.comment,
+      }),
+    });
+  }
+
   return NextResponse.json(mapTaskOutput(task));
 }
 
@@ -157,6 +173,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
 
   const { id } = await context.params;
   const taskId = Number(id);
+  if (!Number.isFinite(taskId) || taskId <= 0) return NextResponse.json({ error: 'Invalid task id' }, { status: 400 });
 
   const [existing] = await db.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.tenantId, tenantId))).limit(1);
   if (!existing) return NextResponse.json({ error: 'Task not found' }, { status: 404 });

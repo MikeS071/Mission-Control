@@ -56,7 +56,9 @@ export const TaskCreateSchema = z.object({
   ]).optional(),
 });
 
-export const TaskPatchSchema = TaskCreateSchema.partial();
+export const TaskPatchSchema = TaskCreateSchema.partial().extend({
+  comment: z.string().trim().min(1, 'comment is required').max(2000).optional(),
+});
 
 export const EventCreateSchema = z.object({
   taskId: z.number().int().positive().nullable().optional(),
