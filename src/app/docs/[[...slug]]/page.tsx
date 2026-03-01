@@ -1,7 +1,16 @@
 import { DocsPage, DocsBody, DocsTitle, DocsDescription } from 'fumadocs-ui/page';
 import { notFound, redirect } from 'next/navigation';
+import type { ComponentType } from 'react';
 import { source } from '@/lib/source';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
+
+type DocPageData = {
+  body: ComponentType<{ components?: unknown }>;
+  toc?: unknown;
+  full?: boolean;
+  title?: string;
+  description?: string;
+};
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>;
@@ -18,12 +27,13 @@ export default async function DocPage({ params }: PageProps) {
   const page = source.getPage(slug);
   if (!page) notFound();
 
-  const MDX = page.data.body;
+  const pageData = page.data as DocPageData;
+  const MDX = pageData.body;
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
+    <DocsPage toc={pageData.toc as any} full={pageData.full}>
+      <DocsTitle>{pageData.title}</DocsTitle>
+      <DocsDescription>{pageData.description}</DocsDescription>
       <DocsBody>
         <MDX components={defaultMdxComponents} />
       </DocsBody>
