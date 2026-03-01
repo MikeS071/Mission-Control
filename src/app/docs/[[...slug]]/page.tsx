@@ -2,10 +2,19 @@ import { DocsPage, DocsBody, DocsTitle, DocsDescription } from 'fumadocs-ui/page
 import { notFound, redirect } from 'next/navigation';
 import { source } from '@/lib/source';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
+import type { ComponentType } from 'react';
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>;
 }
+
+type DocsPageData = {
+  body: ComponentType<{ components: typeof defaultMdxComponents }>;
+  toc?: any;
+  full?: boolean;
+  title: string;
+  description?: string;
+};
 
 export default async function DocPage({ params }: PageProps) {
   const { slug } = await params;
@@ -18,12 +27,13 @@ export default async function DocPage({ params }: PageProps) {
   const page = source.getPage(slug);
   if (!page) notFound();
 
-  const MDX = page.data.body;
+  const pageData = page.data as unknown as DocsPageData;
+  const MDX = pageData.body;
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>{page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
+    <DocsPage toc={pageData.toc} full={pageData.full}>
+      <DocsTitle>{pageData.title}</DocsTitle>
+      <DocsDescription>{pageData.description}</DocsDescription>
       <DocsBody>
         <MDX components={defaultMdxComponents} />
       </DocsBody>
@@ -39,9 +49,10 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const page = source.getPage(slug);
   if (!page) notFound();
+  const pageData = page.data as unknown as DocsPageData;
 
   return {
-    title: `${page.data.title} — Mission Control Docs`,
-    description: page.data.description,
+    title: `${pageData.title} — Mission Control Docs`,
+    description: pageData.description,
   };
 }

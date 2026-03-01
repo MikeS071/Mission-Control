@@ -13,6 +13,7 @@ export const authConfig: NextAuthConfig = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   pages: {
@@ -26,6 +27,16 @@ export const authConfig: NextAuthConfig = {
     session({ session, token }) {
       if (typeof token.tenantId === 'number') {
         session.tenantId = token.tenantId;
+      }
+      if (session.user) {
+        if (typeof token.userId === 'string') {
+          session.user.id = token.userId;
+        } else if (typeof token.sub === 'string') {
+          session.user.id = token.sub;
+        }
+        if (typeof token.isAdmin === 'boolean') {
+          session.user.isAdmin = token.isAdmin;
+        }
       }
       return session;
     },

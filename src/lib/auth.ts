@@ -7,6 +7,7 @@ import { memberships, tenants, users } from '@/db/schema';
 import { authConfig } from './auth.config';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const isAdminRole = (role: string) => role === 'owner' || role === 'admin';
 
 const credentialsProvider = Credentials({
   name: 'Email login',
@@ -26,6 +27,8 @@ const credentialsProvider = Credentials({
       .limit(1);
 
     if (!user?.passwordHash) return null;
+    const loginUser = user as typeof user & { isSuspended?: boolean | null; suspendedAt?: Date | null };
+    if (loginUser.isSuspended || loginUser.suspendedAt) return null;
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) return null;
 
@@ -81,6 +84,8 @@ export const { auth, handlers } = NextAuth({
 
       if (existingMembership) {
         token.tenantId = existingMembership.tenantId;
+        token.isAdmin = isAdminRole(existingMembership.role);
+        token.userId = String(dbUser.id);
         return token;
       }
 
@@ -103,6 +108,8 @@ export const { auth, handlers } = NextAuth({
         role: 'owner',
       });
       token.tenantId = tenant.id;
+      token.isAdmin = true;
+      token.userId = String(dbUser.id);
       return token;
     },
   },
