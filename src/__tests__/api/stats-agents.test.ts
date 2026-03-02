@@ -19,10 +19,15 @@ jest.mock('@/lib/policy', () => ({
   checkLimit: jest.fn(),
 }));
 
+jest.mock('@/lib/usage/alerts', () => ({
+  checkAlerts: jest.fn(),
+}));
+
 import { GET as getStatsSummary } from '@/app/api/stats/summary/route';
 import { GET as getAgentStats, POST as postAgentStats } from '@/app/api/agent-stats/route';
 import { GET as getActiveAgents } from '@/app/api/agents/active/route';
 import { checkLimit, getOrCreatePolicy } from '@/lib/policy';
+import { checkAlerts } from '@/lib/usage/alerts';
 
 type MockDb = {
   execute: jest.Mock;
@@ -34,6 +39,7 @@ const mockedDb = db as unknown as MockDb;
 const mockedResolveTenantId = resolveTenantId as jest.MockedFunction<typeof resolveTenantId>;
 const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof getOrCreatePolicy>;
 const mockedCheckLimit = checkLimit as jest.MockedFunction<typeof checkLimit>;
+const mockedCheckAlerts = checkAlerts as jest.MockedFunction<typeof checkAlerts>;
 
 function makeRequest(
   method: 'GET' | 'POST',
@@ -83,6 +89,7 @@ describe('stats + agents API routes', () => {
       limit: 1,
       remaining: 1,
     });
+    mockedCheckAlerts.mockResolvedValue([]);
   });
 
   describe('GET /api/stats/summary', () => {
@@ -183,6 +190,7 @@ describe('stats + agents API routes', () => {
         tokens: 0,
         costUsd: '0.00',
       });
+      expect(mockedCheckAlerts).toHaveBeenCalledWith(7);
     });
 
     it('POST returns 400 for invalid payload', async () => {
