@@ -7,7 +7,6 @@ import { FileExplorer } from '@/components/FileExplorer';
 import { ArenaPanel } from '@/components/ArenaPanel';
 import { AiPipeWidget } from '@/components/AiPipeWidget';
 import { ChatPanel } from '@/components/ChatPanel';
-import { ProvisioningPanel } from '@/components/ProvisioningPanel';
 import { GatewayHeartbeatIndicator } from '@/components/GatewayHeartbeatIndicator';
 import { UserAvatarMenu } from '@/components/UserAvatarMenu';
 import { NavbarArenaProgress } from '@/components/NavbarArenaProgress';
@@ -70,7 +69,7 @@ export default async function DashboardPage() {
           <TabsTrigger value="progress"  className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">Arena</TabsTrigger>
           <TabsTrigger value="router"    className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">⚡ Router</TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="admin-provision" className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">🔧 Admin</TabsTrigger>
+            <TabsTrigger value="admin" className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">🔧 Admin</TabsTrigger>
           )}
         </TabsList>
 
@@ -121,7 +120,18 @@ export default async function DashboardPage() {
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
         <TabsContent value="chat"     className="mt-0 h-[calc(100vh-120px)]"><ChatPanel /></TabsContent>
         {isAdmin && (
-          <TabsContent value="admin-provision" className="mt-0"><ProvisioningPanel /></TabsContent>
+          <TabsContent value="admin" className="mt-0">
+            <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-6">
+              <h2 className="text-lg font-semibold text-white">Admin Controls</h2>
+              <p className="mt-2 text-sm text-gray-400">Provisioning and policy tools moved to the dedicated admin area.</p>
+              <Link
+                href="/admin"
+                className="mt-4 inline-flex items-center rounded-md border border-sky-700/70 bg-sky-900/25 px-4 py-2 text-sm font-medium text-sky-200 transition hover:bg-sky-900/40"
+              >
+                Open Admin Console
+              </Link>
+            </div>
+          </TabsContent>
         )}
       </div>
 

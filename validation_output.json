@@ -1,7 +1,7 @@
 ▶ validate:
   spec: intent_version=0.0.2
   gate: Four Invariants Gate
-  summary: pass=146 fail=25 warn=5 (525.72ms)
-  ✗ failures: Invariant missing: Version update gate language | Invariant missing: Docker workspace mandate language (+23 more)
+  summary: pass=143 fail=28 warn=5 (500.63ms)
+  ✗ failures: NEEDS_PLAN_APPROVAL: 1 done TODO(s) exist but governed PLAN artifact is missing | PROOF_HOOK_FAILED: 1 done TODO(s) are CLAIMED but not VERIFIED: fend_01kjq2nmzw347vpx (+26 more)
   ⚠ warnings: TASK: Generated specs still match scaffold template for [".decapod/generated/specs/README.md", ".decapod/gener... | TASK: Significant repo surfaces changed since specs scaffold/hydration. Review and update INTENT/ARCHITECTURE/... (+3 more)
-Error: ValidationError("25 test(s) failed.")
+Error: ValidationError("28 test(s) failed.")
