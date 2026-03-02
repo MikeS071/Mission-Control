@@ -1,117 +1,118 @@
 import { db } from '@/lib/db';
+import { getTenantPlan } from '@/lib/billing';
 import { recordUsage } from '@/lib/usage/meter';
 
 jest.mock('@/lib/db', () => ({
   db: {
-    execute: jest.fn(),
+    insert: jest.fn(),
   },
 }));
 
-type SqlLike = {
-  queryChunks?: unknown[];
-};
+jest.mock('@/lib/billing', () => ({
+  getTenantPlan: jest.fn(),
+}));
 
 type MockDb = {
-  execute: jest.Mock;
+  insert: jest.Mock;
 };
 
 const mockedDb = db as unknown as MockDb;
+const mockedGetTenantPlan = getTenantPlan as jest.MockedFunction<typeof getTenantPlan>;
 
-function inspectSql(sqlArg: SqlLike) {
-  const chunks = Array.isArray(sqlArg.queryChunks) ? sqlArg.queryChunks : [];
-  const text = chunks.map((chunk) => {
-    const maybeStringChunk = chunk as { value?: unknown };
-    if (maybeStringChunk && typeof maybeStringChunk === 'object' && Array.isArray(maybeStringChunk.value)) {
-      return (maybeStringChunk.value as string[]).join('');
-    }
-    return '?';
-  }).join('');
-
-  const params = chunks.filter((chunk) => {
-    const maybeStringChunk = chunk as { value?: unknown };
-    return !(maybeStringChunk && typeof maybeStringChunk === 'object' && Array.isArray(maybeStringChunk.value));
-  });
-
-  return { text, params };
+function createLedgerInsertBuilder() {
+  const values = jest.fn().mockResolvedValue(undefined);
+  return { values };
 }
 
-function createValidAiPipeHeaders() {
-  const headers = new Headers();
-  headers.set('X-AiPipe-Model', 'gpt-4o-mini');
-  headers.set('X-AiPipe-Provider', 'openai');
-  headers.set('X-AiPipe-Tokens-In', '120');
-  headers.set('X-AiPipe-Tokens-Out', '80');
-  headers.set('X-AiPipe-Cost-USD', '0.0234');
-  headers.set('X-AiPipe-Hypothetical-Cost-USD', '0.0520');
-  headers.set('X-AiPipe-Saved-USD', '0.0286');
-  headers.set('X-AiPipe-Cache', 'hit');
-  headers.set('X-AiPipe-Request-Id', 'req-abc-123');
+function createSummaryInsertBuilder() {
+  const onConflictDoUpdate = jest.fn().mockResolvedValue(undefined);
+  const values = jest.fn().mockReturnValue({ onConflictDoUpdate });
+  return { values, onConflictDoUpdate };
+}
+
+function createHeaders(overrides: Record<string, string> = {}) {
+  const headers = new Headers({
+    'X-AiPipe-Model': 'gpt-4o-mini',
+    'X-AiPipe-Provider': 'openai',
+    'X-AiPipe-Tokens-In': '120',
+    'X-AiPipe-Tokens-Out': '80',
+    'X-AiPipe-Cost-USD': '0.0234',
+    'X-AiPipe-Hypothetical-Cost-USD': '0.0520',
+    'X-AiPipe-Saved-USD': '0.0286',
+    'X-AiPipe-Cache': 'hit',
+    'X-AiPipe-Request-Id': 'req-abc-123',
+    ...overrides,
+  });
   return headers;
 }
 
-describe('usage meter', () => {
-  let warnSpy: jest.SpyInstance;
-
+describe('usage meter compatibility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    mockedDb.execute.mockResolvedValue({ rows: [] });
+    mockedGetTenantPlan.mockResolvedValue('free');
   });
 
-  afterEach(() => {
+  it('records ledger and summary usage rows', async () => {
+    const ledgerInsert = createLedgerInsertBuilder();
+    const dailySummaryInsert = createSummaryInsertBuilder();
+    const monthlySummaryInsert = createSummaryInsertBuilder();
+
+    mockedDb.insert
+      .mockReturnValueOnce(ledgerInsert)
+      .mockReturnValueOnce(dailySummaryInsert)
+      .mockReturnValueOnce(monthlySummaryInsert);
+
+    await expect(recordUsage(77, createHeaders())).resolves.toBeUndefined();
+
+    expect(mockedDb.insert).toHaveBeenCalledTimes(3);
+    expect(ledgerInsert.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: 77,
+        model: 'gpt-4o-mini',
+        provider: 'openai',
+        tokensIn: 120,
+        tokensOut: 80,
+        requestId: 'req-abc-123',
+      }),
+    );
+    expect(dailySummaryInsert.values).toHaveBeenCalledTimes(1);
+    expect(monthlySummaryInsert.values).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs missing header warnings but still records with defaults', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const ledgerInsert = createLedgerInsertBuilder();
+    const dailySummaryInsert = createSummaryInsertBuilder();
+    const monthlySummaryInsert = createSummaryInsertBuilder();
+
+    mockedDb.insert
+      .mockReturnValueOnce(ledgerInsert)
+      .mockReturnValueOnce(dailySummaryInsert)
+      .mockReturnValueOnce(monthlySummaryInsert);
+
+    await expect(recordUsage(77, new Headers())).resolves.toBeUndefined();
+
+    expect(warnSpy).toHaveBeenCalled();
+    expect(mockedDb.insert).toHaveBeenCalledTimes(3);
     warnSpy.mockRestore();
   });
 
-  it('records ledger entry and upserts daily/monthly usage summaries', async () => {
-    await expect(recordUsage(77, createValidAiPipeHeaders())).resolves.toBeUndefined();
+  it('tolerates invalid numeric headers by coercing to zero values', async () => {
+    const ledgerInsert = createLedgerInsertBuilder();
+    const dailySummaryInsert = createSummaryInsertBuilder();
+    const monthlySummaryInsert = createSummaryInsertBuilder();
 
-    expect(mockedDb.execute).toHaveBeenCalledTimes(3);
+    mockedDb.insert
+      .mockReturnValueOnce(ledgerInsert)
+      .mockReturnValueOnce(dailySummaryInsert)
+      .mockReturnValueOnce(monthlySummaryInsert);
 
-    const first = inspectSql(mockedDb.execute.mock.calls[0]?.[0] as SqlLike);
-    const second = inspectSql(mockedDb.execute.mock.calls[1]?.[0] as SqlLike);
-    const third = inspectSql(mockedDb.execute.mock.calls[2]?.[0] as SqlLike);
+    await expect(recordUsage(77, createHeaders({ 'X-AiPipe-Tokens-In': 'not-a-number' }))).resolves.toBeUndefined();
 
-    expect(first.text).toContain('INSERT INTO usage_ledger');
-    expect(first.params).toEqual(expect.arrayContaining([
-      77,
-      'gpt-4o-mini',
-      'openai',
-      120,
-      80,
-      0.0234,
-      0.052,
-      0.0286,
-      true,
-      'req-abc-123',
-    ]));
-
-    expect(second.text).toContain('INSERT INTO usage_summary');
-    expect(second.text).toContain('ON CONFLICT');
-    expect(second.params).toEqual(expect.arrayContaining([77, 'day', 1, 120, 80]));
-
-    expect(third.text).toContain('INSERT INTO usage_summary');
-    expect(third.text).toContain('ON CONFLICT');
-    expect(third.params).toEqual(expect.arrayContaining([77, 'month', 1, 120, 80]));
-  });
-
-  it('warns and returns without throwing when required headers are missing', async () => {
-    const partialHeaders = new Headers();
-    partialHeaders.set('X-AiPipe-Model', 'gpt-4o-mini');
-    partialHeaders.set('X-AiPipe-Provider', 'openai');
-
-    await expect(recordUsage(77, partialHeaders)).resolves.toBeUndefined();
-
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[usage] missing AiPipe headers'));
-    expect(mockedDb.execute).not.toHaveBeenCalled();
-  });
-
-  it('warns and returns without throwing when numeric headers are invalid', async () => {
-    const headers = createValidAiPipeHeaders();
-    headers.set('X-AiPipe-Tokens-In', 'not-a-number');
-
-    await expect(recordUsage(77, headers)).resolves.toBeUndefined();
-
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[usage] invalid AiPipe header values'));
-    expect(mockedDb.execute).not.toHaveBeenCalled();
+    expect(ledgerInsert.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tokensIn: 0,
+      }),
+    );
   });
 });

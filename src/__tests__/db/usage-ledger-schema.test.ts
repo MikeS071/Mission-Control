@@ -23,12 +23,13 @@ describe('Usage Ledger DB Schema', () => {
     expect(usageLedger.tokensOut.notNull).toBe(true);
     expect(usageLedger.costUsd.notNull).toBe(true);
 
-    expect(usageLedger.hypotheticalCostUsd.notNull).toBe(false);
-    expect(usageLedger.savedUsd.notNull).toBe(false);
+    expect(usageLedger.hypotheticalCostUsd.notNull).toBe(true);
+    expect(usageLedger.savedUsd.notNull).toBe(true);
     expect(usageLedger.requestId.notNull).toBe(false);
+    expect(usageLedger.tenantCostUsd.notNull).toBe(false);
 
     expect(usageLedger.cacheHit.hasDefault).toBe(true);
-    expect(usageLedger.createdAt.hasDefault).toBe(true);
+    expect(usageLedger.recordedAt.hasDefault).toBe(true);
   });
 
   test('usage_summary has rollup counters with safe defaults', () => {
@@ -37,12 +38,12 @@ describe('Usage Ledger DB Schema', () => {
     expect(usageSummary.tenantId.notNull).toBe(true);
     expect(usageSummary.period.notNull).toBe(true);
     expect(usageSummary.periodStart.notNull).toBe(true);
-    expect(usageSummary.totalTokensIn.hasDefault).toBe(true);
-    expect(usageSummary.totalTokensOut.hasDefault).toBe(true);
-    expect(usageSummary.totalCostUsd.hasDefault).toBe(true);
-    expect(usageSummary.totalSavedUsd.hasDefault).toBe(true);
-    expect(usageSummary.requestCount.hasDefault).toBe(true);
-    expect(usageSummary.cacheHits.hasDefault).toBe(true);
+    expect(usageSummary.tokensIn.hasDefault).toBe(true);
+    expect(usageSummary.tokensOut.hasDefault).toBe(true);
+    expect(usageSummary.costUsd.hasDefault).toBe(true);
+    expect(usageSummary.savedUsd.hasDefault).toBe(true);
+    expect(usageSummary.requests.hasDefault).toBe(true);
+    expect(usageSummary.tenantCostUsd.hasDefault).toBe(true);
     expect(usageSummary.updatedAt.hasDefault).toBe(true);
   });
 });
@@ -66,12 +67,15 @@ describe('Usage Ledger Migration', () => {
   });
 
   test('creates required tenant/time indexes', () => {
-    const sql = readMigration(drizzleMigrationPath);
+    const sql0018 = readMigration(drizzleMigrationPath);
+    const sql0022 = readMigration('drizzle/migrations/0022_usage_ledger_pricing.sql');
 
-    expect(sql).toContain('"usage_ledger_tenant_created_at_idx"');
-    expect(sql).toContain('ON "usage_ledger" ("tenant_id", "created_at")');
-    expect(sql).toContain('"usage_summary_tenant_period_start_idx"');
-    expect(sql).toContain('ON "usage_summary" ("tenant_id", "period", "period_start")');
+    expect(sql0018).toContain('"usage_ledger_tenant_created_at_idx"');
+    expect(sql0018).toContain('ON "usage_ledger" ("tenant_id", "created_at")');
+    expect(sql0018).toContain('"usage_summary_tenant_period_start_idx"');
+    expect(sql0018).toContain('ON "usage_summary" ("tenant_id", "period", "period_start")');
+    expect(sql0022).toContain('"usage_summary_tenant_period_start_uidx"');
+    expect(sql0022).toContain('ON "usage_summary" ("tenant_id", "period", "period_start")');
   });
 
   test('stores costs from AiPipe as provided values (no computed SQL formulas)', () => {
