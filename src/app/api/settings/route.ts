@@ -90,11 +90,23 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ settings: decryptKeyFields(rawSettings), updatedAt: row?.updatedAt ?? null });
 }
 
-export async function POST(req: NextRequest) {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+async function upsertSettings(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json()) as { settings?: SettingsPayload; merge?: boolean; testNotification?: boolean };
+  const body = (await req.json().catch(() => null)) as
+    | { settings?: SettingsPayload; merge?: boolean; testNotification?: boolean }
+    | null;
+  if (!body || !isPlainObject(body)) {
+    return NextResponse.json({ error: 'Invalid settings payload' }, { status: 400 });
+  }
+  if (body.settings !== undefined && !isPlainObject(body.settings)) {
+    return NextResponse.json({ error: 'Invalid settings payload' }, { status: 400 });
+  }
 
   if (body.testNotification) {
     const token = body.settings?.notifications?.telegramBotToken?.trim();
@@ -168,4 +180,12 @@ export async function POST(req: NextRequest) {
 
   // Decrypt key fields before returning to client
   return NextResponse.json({ settings: decryptKeyFields(savedSettings), updatedAt: savedAt });
+}
+
+export async function POST(req: NextRequest) {
+  return upsertSettings(req);
+}
+
+export async function PUT(req: NextRequest) {
+  return upsertSettings(req);
 }
