@@ -3,12 +3,16 @@
 ## MANDATORY DEVELOPMENT PROCESS (follow in exact order)
 
 ### Phase 0: Decapod governance
-Run once at start (best-effort — do NOT debug or fix failures):
+Run once at start — capture validation state:
 ```bash
 export PATH="$HOME/.cargo/bin:$PATH"
-decapod validate 2>/dev/null || true
+decapod validate --format json > validation_output.json 2>&1
 ```
-⚠️ There are ~25 PRE-EXISTING invariant failures in this repo. These are NOT your problem. Ignore them entirely and proceed to Phase 1.
+Review `validation_output.json`. If there are failures:
+- Distinguish PRE-EXISTING failures (present before your changes) from NEW failures (introduced by your work)
+- Do NOT attempt to fix pre-existing failures
+- If your changes introduce NEW validation failures, fix them before proceeding
+- Commit `validation_output.json` with your final commit so the orchestrator can review
 
 ### Phase 1: Understand the spec
 - Read the task objective and requirements above
@@ -27,6 +31,8 @@ decapod validate 2>/dev/null || true
 ### Phase 4: Quality gates (fix and re-run until all green)
 1. Tests pass: `npx jest <test-file> --ci`
 2. Build check: `npx tsc --noEmit` (best-effort, don't fix pre-existing errors)
+3. Decapod re-validate: `decapod validate --format json > validation_output.json 2>&1`
+   - Confirm no NEW failures introduced by your changes
 
 ### Phase 5: Commit and push
 ```bash
