@@ -28,6 +28,9 @@ export function UserAvatarMenu({ email, image }: { email?: string | null; image?
           <Link href="/dashboard/billing">Billing</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href="/dashboard/usage">Usage</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/dashboard/connect">Connect Gateway</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
