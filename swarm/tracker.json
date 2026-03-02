@@ -2,29 +2,33 @@
   "project": "mc",
   "tickets": {
     "mc-01": {
-      "status": "todo",
+      "status": "done",
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-01",
-      "desc": "Admin layout + navigation scaffold"
+      "desc": "Admin layout + navigation scaffold",
+      "sha": "fbb525f",
+      "startedAt": "2026-03-02T07:04:17Z"
     },
     "mc-02": {
-      "status": "todo",
+      "status": "running",
       "phase": 1,
       "depends": [
         "mc-01"
       ],
       "branch": "feat/mc-02",
-      "desc": "Admin users list page"
+      "desc": "Admin users list page",
+      "startedAt": "2026-03-02T07:15:18Z"
     },
     "mc-03": {
-      "status": "todo",
+      "status": "running",
       "phase": 1,
       "depends": [
         "mc-01"
       ],
       "branch": "feat/mc-03",
-      "desc": "Admin tenants list page"
+      "desc": "Admin tenants list page",
+      "startedAt": "2026-03-02T07:15:19Z"
     },
     "mc-04": {
       "status": "todo",
@@ -40,7 +44,7 @@
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-05",
-      "desc": "Admin API — list users endpoint",
+      "desc": "Admin API \u2014 list users endpoint",
       "sha": "2f47144",
       "startedAt": "2026-03-02T06:45:52Z"
     },
@@ -49,7 +53,7 @@
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-06",
-      "desc": "Admin API — list tenants endpoint",
+      "desc": "Admin API \u2014 list tenants endpoint",
       "sha": "2682697",
       "startedAt": "2026-03-02T06:45:52Z"
     },
@@ -372,6 +376,186 @@
       "depends": [],
       "branch": "feat/mc-44",
       "desc": "README + deployment docs"
+    },
+    "mc-p1-integrate": {
+      "phase": 1,
+      "status": "todo",
+      "branch": "feat/mc-p1-integrate",
+      "depends": [
+        "mc-01",
+        "mc-02",
+        "mc-03",
+        "mc-04",
+        "mc-05",
+        "mc-06"
+      ],
+      "desc": "Phase 1 integration merge + conflict resolution"
+    },
+    "mc-p1-test": {
+      "phase": 1,
+      "status": "todo",
+      "branch": "feat/mc-p1-test",
+      "depends": [
+        "mc-p1-integrate"
+      ],
+      "desc": "Phase 1 E2E test suite + build verification"
+    },
+    "mc-p2-integrate": {
+      "phase": 2,
+      "status": "todo",
+      "branch": "feat/mc-p2-integrate",
+      "depends": [
+        "mc-07",
+        "mc-08",
+        "mc-09",
+        "mc-10",
+        "mc-11",
+        "mc-12",
+        "mc-13",
+        "mc-14"
+      ],
+      "desc": "Phase 2 integration merge + conflict resolution"
+    },
+    "mc-p2-test": {
+      "phase": 2,
+      "status": "todo",
+      "branch": "feat/mc-p2-test",
+      "depends": [
+        "mc-p2-integrate"
+      ],
+      "desc": "Phase 2 E2E test suite + build verification"
+    },
+    "mc-p3-integrate": {
+      "phase": 3,
+      "status": "todo",
+      "branch": "feat/mc-p3-integrate",
+      "depends": [
+        "mc-15",
+        "mc-16",
+        "mc-17",
+        "mc-18",
+        "mc-19",
+        "mc-20",
+        "mc-21"
+      ],
+      "desc": "Phase 3 integration merge + conflict resolution"
+    },
+    "mc-p3-test": {
+      "phase": 3,
+      "status": "todo",
+      "branch": "feat/mc-p3-test",
+      "depends": [
+        "mc-p3-integrate"
+      ],
+      "desc": "Phase 3 E2E test suite + build verification"
+    },
+    "mc-p4-integrate": {
+      "phase": 4,
+      "status": "todo",
+      "branch": "feat/mc-p4-integrate",
+      "depends": [
+        "mc-22",
+        "mc-23",
+        "mc-24",
+        "mc-25"
+      ],
+      "desc": "Phase 4 integration merge + conflict resolution"
+    },
+    "mc-p4-test": {
+      "phase": 4,
+      "status": "todo",
+      "branch": "feat/mc-p4-test",
+      "depends": [
+        "mc-p4-integrate"
+      ],
+      "desc": "Phase 4 E2E test suite + build verification"
+    },
+    "mc-p5-integrate": {
+      "phase": 5,
+      "status": "todo",
+      "branch": "feat/mc-p5-integrate",
+      "depends": [
+        "mc-26",
+        "mc-27",
+        "mc-28",
+        "mc-29",
+        "mc-30"
+      ],
+      "desc": "Phase 5 integration merge + conflict resolution"
+    },
+    "mc-p5-test": {
+      "phase": 5,
+      "status": "todo",
+      "branch": "feat/mc-p5-test",
+      "depends": [
+        "mc-p5-integrate"
+      ],
+      "desc": "Phase 5 E2E test suite + build verification"
+    },
+    "mc-p6-integrate": {
+      "phase": 6,
+      "status": "todo",
+      "branch": "feat/mc-p6-integrate",
+      "depends": [
+        "mc-31",
+        "mc-32",
+        "mc-33",
+        "mc-34",
+        "mc-35"
+      ],
+      "desc": "Phase 6 integration merge + conflict resolution"
+    },
+    "mc-p6-test": {
+      "phase": 6,
+      "status": "todo",
+      "branch": "feat/mc-p6-test",
+      "depends": [
+        "mc-p6-integrate"
+      ],
+      "desc": "Phase 6 E2E test suite + build verification"
+    },
+    "mc-p7-integrate": {
+      "phase": 7,
+      "status": "todo",
+      "branch": "feat/mc-p7-integrate",
+      "depends": [
+        "mc-36",
+        "mc-37",
+        "mc-38",
+        "mc-39"
+      ],
+      "desc": "Phase 7 integration merge + conflict resolution"
+    },
+    "mc-p7-test": {
+      "phase": 7,
+      "status": "todo",
+      "branch": "feat/mc-p7-test",
+      "depends": [
+        "mc-p7-integrate"
+      ],
+      "desc": "Phase 7 E2E test suite + build verification"
+    },
+    "mc-p8-integrate": {
+      "phase": 8,
+      "status": "todo",
+      "branch": "feat/mc-p8-integrate",
+      "depends": [
+        "mc-40",
+        "mc-41",
+        "mc-42",
+        "mc-43",
+        "mc-44"
+      ],
+      "desc": "Phase 8 integration merge + conflict resolution"
+    },
+    "mc-p8-test": {
+      "phase": 8,
+      "status": "todo",
+      "branch": "feat/mc-p8-test",
+      "depends": [
+        "mc-p8-integrate"
+      ],
+      "desc": "Phase 8 E2E test suite + build verification"
     }
   }
 }

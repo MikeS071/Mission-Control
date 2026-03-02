@@ -224,3 +224,9 @@
 {"type":"idle_spawn","ticket":"mc-01","timestamp":"2026-03-02T07:01:34.584441772Z"}
 {"type":"idle_spawn","ticket":"mc-01","timestamp":"2026-03-02T07:02:04.549173117Z"}
 {"type":"idle_spawn","ticket":"mc-01","timestamp":"2026-03-02T07:02:34.564414675Z"}
+{"type":"idle_spawn","ticket":"mc-01","timestamp":"2026-03-02T07:04:16.926644888Z"}
+{"type":"ticket_spawned","ticket":"mc-01","timestamp":"2026-03-02T07:04:17.156543509Z","data":{"session":"swarm-mc-01"}}
+{"type":"ticket_done","ticket":"mc-01","timestamp":"2026-03-02T07:15:18.401887665Z","data":{"sha":"fbb525f"}}
+{"type":"ticket_spawned","ticket":"mc-02","timestamp":"2026-03-02T07:15:18.673828873Z","data":{"session":"swarm-mc-02"}}
+{"type":"idle_spawn","ticket":"mc-03","timestamp":"2026-03-02T07:15:18.681084857Z"}
+{"type":"ticket_spawned","ticket":"mc-03","timestamp":"2026-03-02T07:15:19.236826053Z","data":{"session":"swarm-mc-03"}}
