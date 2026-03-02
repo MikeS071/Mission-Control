@@ -20,3 +20,12 @@ export interface AuthorizeInboundResult {
 export async function authorizeInbound(_input: AuthorizeInboundInput): Promise<AuthorizeInboundResult> {
   return { allow: true };
 }
+
+export type {
+  AdminPolicyUpdateInput,
+  Policy,
+  PolicyOverrides,
+  PolicyRule,
+  PolicyRules,
+  PolicyTier,
+} from '@/lib/policy/schema';
