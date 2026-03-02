@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import 'fumadocs-ui/style.css';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
