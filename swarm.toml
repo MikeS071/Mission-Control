@@ -21,10 +21,10 @@ telegram_token_cmd = "pass show apis/telegram-bot-token"
 
 [watchdog]
 interval = "30s"
-max_runtime = "30m"
+max_runtime = "60m"
 stale_timeout = "10m"
 max_retries = 2
-auto_approve = true
+auto_approve = false
 
 [integration]
 verify_cmd = "npm run build"
