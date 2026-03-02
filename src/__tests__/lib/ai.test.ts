@@ -261,8 +261,8 @@ describe('kanbanTrigger', () => {
       kanbanTriggers: kanbanTriggersTable,
     }));
 
-    const module = await import('@/lib/kanbanTrigger');
-    return { fireKanbanTrigger: module.fireKanbanTrigger, insertMock, chatMessagesTable, kanbanTriggersTable };
+    const kanbanModule = await import('@/lib/kanbanTrigger');
+    return { fireKanbanTrigger: kanbanModule.fireKanbanTrigger, insertMock, chatMessagesTable, kanbanTriggersTable };
   }
 
   beforeEach(() => {
