@@ -1,0 +1,356 @@
+{
+  "project": "mc",
+  "tickets": {
+    "tc-01": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-01",
+      "desc": "Auth lib tests",
+      "sha": "b7396fb",
+      "startedAt": "2026-03-01T21:44:05Z"
+    },
+    "tc-02": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-02",
+      "desc": "Chat lib tests",
+      "sha": "739f374",
+      "startedAt": "2026-03-01T21:49:06Z"
+    },
+    "tc-03": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-03",
+      "desc": "Gateway lib tests",
+      "sha": "ad405de",
+      "startedAt": "2026-03-01T21:44:05Z"
+    },
+    "tc-04": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-04",
+      "desc": "AI lib tests",
+      "sha": "d968500",
+      "startedAt": "2026-03-01T21:44:05Z"
+    },
+    "tc-05": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-05",
+      "desc": "Util lib tests",
+      "sha": "8ac9c29",
+      "startedAt": "2026-03-01T21:53:06Z"
+    },
+    "tc-06": {
+      "status": "done",
+      "phase": 2,
+      "depends": [
+        "tc-01"
+      ],
+      "branch": "feat/tc-06",
+      "desc": "Auth route tests",
+      "sha": "dd0ba5c",
+      "startedAt": "2026-03-01T22:02:36Z"
+    },
+    "tc-07": {
+      "status": "done",
+      "phase": 2,
+      "depends": [
+        "tc-02"
+      ],
+      "branch": "feat/tc-07",
+      "desc": "Chat route tests",
+      "sha": "2770c67",
+      "startedAt": "2026-03-01T21:56:06Z"
+    },
+    "tc-08": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-08",
+      "desc": "Task route tests",
+      "sha": "13b0f48",
+      "startedAt": "2026-03-01T21:56:07Z"
+    },
+    "tc-09": {
+      "status": "done",
+      "phase": 2,
+      "depends": [
+        "tc-01"
+      ],
+      "branch": "feat/tc-09",
+      "desc": "Admin route tests",
+      "sha": "b4c77da",
+      "startedAt": "2026-03-02T00:03:17Z"
+    },
+    "tc-10": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-10",
+      "desc": "Billing route tests",
+      "sha": "7e6045b",
+      "startedAt": "2026-03-01T22:04:36Z"
+    },
+    "tc-11": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-11",
+      "desc": "Activity route tests",
+      "sha": "a95b132",
+      "startedAt": "2026-03-02T00:09:47Z"
+    },
+    "tc-12": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-12",
+      "desc": "Arena route tests",
+      "sha": "7a01ac8",
+      "startedAt": "2026-03-01T22:52:03Z"
+    },
+    "tc-13": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-13",
+      "desc": "Telegram route tests",
+      "sha": "cd62602",
+      "startedAt": "2026-03-01T22:52:03Z"
+    },
+    "tc-14": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-14",
+      "desc": "Gateway/AiPipe route tests",
+      "sha": "dcfab7c",
+      "startedAt": "2026-03-01T22:52:03Z"
+    },
+    "tc-15": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-15",
+      "desc": "Misc route tests",
+      "sha": "50487dc",
+      "startedAt": "2026-03-02T00:09:48Z"
+    },
+    "tc-16": {
+      "status": "done",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-16",
+      "desc": "DB schema tests",
+      "sha": "6ae1005",
+      "startedAt": "2026-03-01T23:58:33Z"
+    },
+    "tc-17": {
+      "status": "done",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-17",
+      "desc": "Middleware tests",
+      "sha": "manual",
+      "startedAt": "2026-03-02T00:06:17Z"
+    },
+    "tc-18": {
+      "status": "done",
+      "phase": 5,
+      "depends": [
+        "tc-16",
+        "tc-17"
+      ],
+      "branch": "feat/tc-18",
+      "desc": "Test integration pass",
+      "sha": "151f4f6",
+      "startedAt": "2026-03-02T01:04:10Z"
+    },
+    "tc-19": {
+      "status": "done",
+      "phase": 5,
+      "depends": [
+        "tc-18"
+      ],
+      "branch": "feat/tc-19",
+      "desc": "Coverage report",
+      "sha": "eac0bba",
+      "startedAt": "2026-03-02T01:10:40Z"
+    },
+    "tc-20": {
+      "status": "done",
+      "phase": 5,
+      "depends": [
+        "tc-19"
+      ],
+      "branch": "feat/tc-20",
+      "desc": "Final commit",
+      "sha": "7c8e3f4"
+    },
+    "tc-21": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-21",
+      "desc": "Activity route tests",
+      "sha": "d098285",
+      "startedAt": "2026-03-02T02:27:11Z"
+    },
+    "tc-22": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-22",
+      "desc": "Admin provision route tests"
+    },
+    "tc-23": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-23",
+      "desc": "Admin provision trial tests"
+    },
+    "tc-24": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-24",
+      "desc": "PRD route tests",
+      "sha": "17c7660",
+      "startedAt": "2026-03-02T03:00:35Z"
+    },
+    "tc-25": {
+      "status": "done",
+      "phase": 1,
+      "depends": [],
+      "branch": "feat/tc-25",
+      "desc": "Settings + tenants tests",
+      "sha": "2d8ffe1",
+      "startedAt": "2026-03-02T04:10:29Z"
+    },
+    "tc-26": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-26",
+      "desc": "Insights route tests",
+      "sha": "baf04b4"
+    },
+    "tc-27": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-27",
+      "desc": "Waitlist route tests",
+      "sha": "82dff8d"
+    },
+    "tc-28": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-28",
+      "desc": "Events + heartbeat tests",
+      "sha": "a57087e"
+    },
+    "tc-29": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-29",
+      "desc": "Gamification route tests",
+      "sha": "36494ed"
+    },
+    "tc-30": {
+      "status": "done",
+      "phase": 2,
+      "depends": [],
+      "branch": "feat/tc-30",
+      "desc": "Stats + agent tests"
+    },
+    "tc-31": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-31",
+      "desc": "Workspace route tests",
+      "sha": "4e7664f"
+    },
+    "tc-32": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-32",
+      "desc": "OpenClaw chat tests"
+    },
+    "tc-33": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-33",
+      "desc": "Webhook + newsletter tests"
+    },
+    "tc-34": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-34",
+      "desc": "Meta + health tests"
+    },
+    "tc-35": {
+      "status": "done",
+      "phase": 3,
+      "depends": [],
+      "branch": "feat/tc-35",
+      "desc": "Stream + arena misc tests"
+    },
+    "tc-36": {
+      "status": "done",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-36",
+      "desc": "Misc API route tests"
+    },
+    "tc-37": {
+      "status": "done",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-37",
+      "desc": "OpenAPI + docs tests"
+    },
+    "tc-38": {
+      "status": "done",
+      "phase": 4,
+      "depends": [],
+      "branch": "feat/tc-38",
+      "desc": "Feature requests tests"
+    },
+    "tc-39": {
+      "status": "done",
+      "phase": 5,
+      "depends": [
+        "tc-36",
+        "tc-37",
+        "tc-38"
+      ],
+      "branch": "feat/tc-39",
+      "desc": "Integration pass + coverage",
+      "sha": "bc4b6f5"
+    },
+    "tc-40": {
+      "status": "done",
+      "phase": 5,
+      "depends": [
+        "tc-39"
+      ],
+      "branch": "feat/tc-40",
+      "desc": "Final commit",
+      "sha": "e6221ff"
+    }
+  }
+}

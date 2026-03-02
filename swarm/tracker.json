@@ -40,14 +40,14 @@
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-05",
-      "desc": "Admin API — list users endpoint"
+      "desc": "Admin API \u2014 list users endpoint"
     },
     "mc-06": {
       "status": "todo",
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-06",
-      "desc": "Admin API — list tenants endpoint"
+      "desc": "Admin API \u2014 list tenants endpoint"
     },
     "mc-07": {
       "status": "todo",
@@ -368,159 +368,6 @@
       "depends": [],
       "branch": "feat/mc-44",
       "desc": "README + deployment docs"
-    },
-    "tc-01": {
-      "status": "todo",
-      "phase": 1,
-      "depends": [],
-      "branch": "feat/tc-01",
-      "desc": "Auth lib tests"
-    },
-    "tc-02": {
-      "status": "todo",
-      "phase": 1,
-      "depends": [],
-      "branch": "feat/tc-02",
-      "desc": "Chat lib tests"
-    },
-    "tc-03": {
-      "status": "todo",
-      "phase": 1,
-      "depends": [],
-      "branch": "feat/tc-03",
-      "desc": "Gateway lib tests"
-    },
-    "tc-04": {
-      "status": "todo",
-      "phase": 1,
-      "depends": [],
-      "branch": "feat/tc-04",
-      "desc": "AI lib tests"
-    },
-    "tc-05": {
-      "status": "todo",
-      "phase": 1,
-      "depends": [],
-      "branch": "feat/tc-05",
-      "desc": "Util lib tests"
-    },
-    "tc-06": {
-      "status": "todo",
-      "phase": 2,
-      "depends": [
-        "tc-01"
-      ],
-      "branch": "feat/tc-06",
-      "desc": "Auth route tests"
-    },
-    "tc-07": {
-      "status": "todo",
-      "phase": 2,
-      "depends": [
-        "tc-02"
-      ],
-      "branch": "feat/tc-07",
-      "desc": "Chat route tests"
-    },
-    "tc-08": {
-      "status": "todo",
-      "phase": 2,
-      "depends": [],
-      "branch": "feat/tc-08",
-      "desc": "Task route tests"
-    },
-    "tc-09": {
-      "status": "todo",
-      "phase": 2,
-      "depends": [
-        "tc-01"
-      ],
-      "branch": "feat/tc-09",
-      "desc": "Admin route tests"
-    },
-    "tc-10": {
-      "status": "todo",
-      "phase": 2,
-      "depends": [],
-      "branch": "feat/tc-10",
-      "desc": "Billing route tests"
-    },
-    "tc-11": {
-      "status": "todo",
-      "phase": 3,
-      "depends": [],
-      "branch": "feat/tc-11",
-      "desc": "Activity route tests"
-    },
-    "tc-12": {
-      "status": "todo",
-      "phase": 3,
-      "depends": [],
-      "branch": "feat/tc-12",
-      "desc": "Arena route tests"
-    },
-    "tc-13": {
-      "status": "todo",
-      "phase": 3,
-      "depends": [],
-      "branch": "feat/tc-13",
-      "desc": "Telegram route tests"
-    },
-    "tc-14": {
-      "status": "todo",
-      "phase": 3,
-      "depends": [],
-      "branch": "feat/tc-14",
-      "desc": "Gateway/AiPipe route tests"
-    },
-    "tc-15": {
-      "status": "todo",
-      "phase": 3,
-      "depends": [],
-      "branch": "feat/tc-15",
-      "desc": "Misc route tests"
-    },
-    "tc-16": {
-      "status": "todo",
-      "phase": 4,
-      "depends": [],
-      "branch": "feat/tc-16",
-      "desc": "DB schema tests"
-    },
-    "tc-17": {
-      "status": "todo",
-      "phase": 4,
-      "depends": [],
-      "branch": "feat/tc-17",
-      "desc": "Middleware tests"
-    },
-    "tc-18": {
-      "status": "todo",
-      "phase": 5,
-      "depends": [
-        "tc-16",
-        "tc-17"
-      ],
-      "branch": "feat/tc-18",
-      "desc": "Test integration pass"
-    },
-    "tc-19": {
-      "status": "todo",
-      "phase": 5,
-      "depends": [
-        "tc-18"
-      ],
-      "branch": "feat/tc-19",
-      "desc": "Coverage report"
-    },
-    "tc-20": {
-      "status": "todo",
-      "phase": 5,
-      "depends": [
-        "tc-19"
-      ],
-      "branch": "feat/tc-20",
-      "desc": "Final commit"
     }
   }
 }
