@@ -164,7 +164,6 @@ describe('gateway + aipipe API routes', () => {
       policy.tier === 'pro' ? models : models.filter((m) => m.model === 'gpt-4o-mini')
     ));
     mockedRecordUsage.mockResolvedValue(undefined);
-    mockedRecordUsage.mockResolvedValue(undefined);
     mockedCheckBudget.mockResolvedValue({
       allowed: true,
       remaining: 88,

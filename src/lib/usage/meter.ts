@@ -1,150 +1,123 @@
 import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
+import { usageLedger, usageSummary } from '@/db/schema';
+import { getTenantPlan } from '@/lib/billing';
+import { getTenantCost } from '@/lib/usage/pricing';
 
-type ParsedUsage = {
-  model: string;
-  provider: string;
-  tokensIn: number;
-  tokensOut: number;
-  costUsd: number;
-  hypotheticalCostUsd: number;
-  savedUsd: number;
-  cacheHit: boolean;
-  requestId: string;
-};
+type SummaryPeriod = 'daily' | 'monthly';
 
-const REQUIRED_HEADERS = [
-  'X-AiPipe-Model',
-  'X-AiPipe-Provider',
-  'X-AiPipe-Tokens-In',
-  'X-AiPipe-Tokens-Out',
-  'X-AiPipe-Cost-USD',
-  'X-AiPipe-Hypothetical-Cost-USD',
-  'X-AiPipe-Saved-USD',
-  'X-AiPipe-Cache',
-  'X-AiPipe-Request-Id',
-] as const;
-
-function parseUsageHeaders(aipipeHeaders: Headers): ParsedUsage | null {
-  const values = REQUIRED_HEADERS.map((name) => ({
-    name,
-    value: aipipeHeaders.get(name)?.trim() ?? '',
-  }));
-
-  const missing = values.filter((entry) => entry.value.length === 0).map((entry) => entry.name);
-  if (missing.length > 0) {
-    console.warn(`[usage] missing AiPipe headers: ${missing.join(', ')}`);
-    return null;
-  }
-
-  const valueMap = new Map(values.map((entry) => [entry.name, entry.value]));
-  const tokensIn = Number(valueMap.get('X-AiPipe-Tokens-In'));
-  const tokensOut = Number(valueMap.get('X-AiPipe-Tokens-Out'));
-  const costUsd = Number(valueMap.get('X-AiPipe-Cost-USD'));
-  const hypotheticalCostUsd = Number(valueMap.get('X-AiPipe-Hypothetical-Cost-USD'));
-  const savedUsd = Number(valueMap.get('X-AiPipe-Saved-USD'));
-
-  if (![tokensIn, tokensOut, costUsd, hypotheticalCostUsd, savedUsd].every(Number.isFinite)) {
-    console.warn('[usage] invalid AiPipe header values');
-    return null;
-  }
-
-  return {
-    model: valueMap.get('X-AiPipe-Model')!,
-    provider: valueMap.get('X-AiPipe-Provider')!,
-    tokensIn,
-    tokensOut,
-    costUsd,
-    hypotheticalCostUsd,
-    savedUsd,
-    cacheHit: valueMap.get('X-AiPipe-Cache')!.toLowerCase() === 'hit',
-    requestId: valueMap.get('X-AiPipe-Request-Id')!,
-  };
+function parseInteger(rawValue: string | null): number {
+  if (!rawValue) return 0;
+  const parsed = Number.parseInt(rawValue, 10);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
-async function upsertUsageSummary(
-  tenantId: number,
-  periodType: 'day' | 'month',
-  periodStart: Date,
-  usage: ParsedUsage,
-) {
-  await db.execute(sql`
-    INSERT INTO usage_summary (
-      tenant_id,
-      period_type,
-      period_start,
-      requests_count,
-      tokens_in,
-      tokens_out,
-      cost_usd,
-      hypothetical_cost_usd,
-      saved_usd,
-      cache_hits,
-      updated_at
-    ) VALUES (
-      ${tenantId},
-      ${periodType},
-      ${periodStart},
-      ${1},
-      ${usage.tokensIn},
-      ${usage.tokensOut},
-      ${usage.costUsd},
-      ${usage.hypotheticalCostUsd},
-      ${usage.savedUsd},
-      ${usage.cacheHit ? 1 : 0},
-      NOW()
-    )
-    ON CONFLICT (tenant_id, period_type, period_start)
-    DO UPDATE SET
-      requests_count = usage_summary.requests_count + EXCLUDED.requests_count,
-      tokens_in = usage_summary.tokens_in + EXCLUDED.tokens_in,
-      tokens_out = usage_summary.tokens_out + EXCLUDED.tokens_out,
-      cost_usd = usage_summary.cost_usd + EXCLUDED.cost_usd,
-      hypothetical_cost_usd = usage_summary.hypothetical_cost_usd + EXCLUDED.hypothetical_cost_usd,
-      saved_usd = usage_summary.saved_usd + EXCLUDED.saved_usd,
-      cache_hits = usage_summary.cache_hits + EXCLUDED.cache_hits,
-      updated_at = NOW()
-  `);
+function parseFloatValue(rawValue: string | null): number {
+  if (!rawValue) return 0;
+  const parsed = Number.parseFloat(rawValue);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function toDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function getPeriodStart(date: Date, period: SummaryPeriod): string {
+  if (period === 'daily') return toDateKey(date);
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-01`;
+}
+
+function toUsdString(value: number): string {
+  return value.toFixed(6);
 }
 
 export async function recordUsage(tenantId: number, aipipeHeaders: Headers): Promise<void> {
-  const usage = parseUsageHeaders(aipipeHeaders);
-  if (!usage) return;
+  const model = aipipeHeaders.get('X-AiPipe-Model');
+  const provider = aipipeHeaders.get('X-AiPipe-Provider');
+  const tokensInRaw = aipipeHeaders.get('X-AiPipe-Tokens-In');
+  const tokensOutRaw = aipipeHeaders.get('X-AiPipe-Tokens-Out');
+  const costUsdRaw = aipipeHeaders.get('X-AiPipe-Cost-USD');
+  const hypotheticalCostUsdRaw = aipipeHeaders.get('X-AiPipe-Hypothetical-Cost-USD');
+  const savedUsdRaw = aipipeHeaders.get('X-AiPipe-Saved-USD');
+  const cacheRaw = aipipeHeaders.get('X-AiPipe-Cache');
+  const requestIdRaw = aipipeHeaders.get('X-AiPipe-Request-Id');
 
-  const now = new Date();
-  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const missingHeaders = [
+    ['X-AiPipe-Model', model],
+    ['X-AiPipe-Provider', provider],
+    ['X-AiPipe-Tokens-In', tokensInRaw],
+    ['X-AiPipe-Tokens-Out', tokensOutRaw],
+    ['X-AiPipe-Cost-USD', costUsdRaw],
+    ['X-AiPipe-Hypothetical-Cost-USD', hypotheticalCostUsdRaw],
+    ['X-AiPipe-Saved-USD', savedUsdRaw],
+    ['X-AiPipe-Cache', cacheRaw],
+    ['X-AiPipe-Request-Id', requestIdRaw],
+  ]
+    .filter(([, value]) => value == null)
+    .map(([name]) => name);
 
-  try {
-    await db.execute(sql`
-      INSERT INTO usage_ledger (
-        tenant_id,
-        model,
-        provider,
-        tokens_in,
-        tokens_out,
-        cost_usd,
-        hypothetical_cost_usd,
-        saved_usd,
-        cache_hit,
-        request_id
-      ) VALUES (
-        ${tenantId},
-        ${usage.model},
-        ${usage.provider},
-        ${usage.tokensIn},
-        ${usage.tokensOut},
-        ${usage.costUsd},
-        ${usage.hypotheticalCostUsd},
-        ${usage.savedUsd},
-        ${usage.cacheHit},
-        ${usage.requestId}
-      )
-    `);
-
-    await upsertUsageSummary(tenantId, 'day', dayStart, usage);
-    await upsertUsageSummary(tenantId, 'month', monthStart, usage);
-  } catch (error) {
-    console.warn('[usage] metering write failed:', error);
+  if (missingHeaders.length > 0) {
+    console.warn('[usage] Missing AiPipe headers:', missingHeaders.join(', '));
   }
+
+  const tokensIn = parseInteger(tokensInRaw);
+  const tokensOut = parseInteger(tokensOutRaw);
+  const costUsd = parseFloatValue(costUsdRaw);
+  const hypotheticalCostUsd = parseFloatValue(hypotheticalCostUsdRaw);
+  const savedUsd = parseFloatValue(savedUsdRaw);
+  const cacheHit = (cacheRaw ?? '').trim().toLowerCase() === 'hit';
+  const requestId = requestIdRaw?.trim() || null;
+  const normalizedModel = model?.trim() || 'unknown';
+  const normalizedProvider = provider?.trim() || 'unknown';
+
+  const tenantPlan = await getTenantPlan(tenantId).catch(() => 'free');
+  const tenantCostUsd = getTenantCost(costUsd, normalizedModel, tenantPlan);
+  const now = new Date();
+
+  await db.insert(usageLedger).values({
+    tenantId,
+    requestId,
+    model: normalizedModel,
+    provider: normalizedProvider,
+    tokensIn,
+    tokensOut,
+    costUsd: toUsdString(costUsd),
+    tenantCostUsd: toUsdString(tenantCostUsd),
+    hypotheticalCostUsd: toUsdString(hypotheticalCostUsd),
+    savedUsd: toUsdString(savedUsd),
+    cacheHit,
+    recordedAt: now,
+  });
+
+  const upsertSummary = async (period: SummaryPeriod) => {
+    const periodStart = getPeriodStart(now, period);
+    await db
+      .insert(usageSummary)
+      .values({
+        tenantId,
+        period,
+        periodStart,
+        requests: 1,
+        tokensIn,
+        tokensOut,
+        costUsd: toUsdString(costUsd),
+        tenantCostUsd: toUsdString(tenantCostUsd),
+        savedUsd: toUsdString(savedUsd),
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [usageSummary.tenantId, usageSummary.period, usageSummary.periodStart],
+        set: {
+          requests: sql`${usageSummary.requests} + 1`,
+          tokensIn: sql`${usageSummary.tokensIn} + ${tokensIn}`,
+          tokensOut: sql`${usageSummary.tokensOut} + ${tokensOut}`,
+          costUsd: sql`${usageSummary.costUsd} + ${costUsd}`,
+          tenantCostUsd: sql`${usageSummary.tenantCostUsd} + ${tenantCostUsd}`,
+          savedUsd: sql`${usageSummary.savedUsd} + ${savedUsd}`,
+          updatedAt: now,
+        },
+      });
+  };
+
+  await Promise.all([upsertSummary('daily'), upsertSummary('monthly')]);
 }
