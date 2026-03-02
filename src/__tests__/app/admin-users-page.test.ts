@@ -18,12 +18,14 @@ type UserRow = {
   id: number;
   email: string;
   tenantName: string | null;
-  createdAt: Date;
-  lastLogin: Date;
+  createdAt: Date | null;
+  lastLogin: Date | null;
 };
 
-function createSelectJoinOrderByBuilder(rows: UserRow[]) {
-  const orderBy = jest.fn().mockResolvedValue(rows);
+function createSelectJoinOrderByBuilder(rowsOrError: UserRow[] | Error) {
+  const orderBy = rowsOrError instanceof Error
+    ? jest.fn().mockRejectedValue(rowsOrError)
+    : jest.fn().mockResolvedValue(rowsOrError);
   const secondJoin = {
     leftJoin: jest.fn(),
     innerJoin: jest.fn(),
@@ -77,6 +79,26 @@ describe('admin users page', () => {
     expect(selectBuilder.secondJoin.leftJoin.mock.calls.length + selectBuilder.secondJoin.innerJoin.mock.calls.length).toBeGreaterThan(0);
   });
 
+  it('renders fallback values when tenant and timestamps are missing', async () => {
+    const rows: UserRow[] = [
+      {
+        id: 21,
+        email: 'orphan@example.com',
+        tenantName: null,
+        createdAt: null,
+        lastLogin: null,
+      },
+    ];
+    const selectBuilder = createSelectJoinOrderByBuilder(rows);
+    mockedDb.select.mockReturnValueOnce({ from: selectBuilder.from });
+
+    const node = await AdminUsersPage();
+    const html = renderToStaticMarkup(node);
+
+    expect(html).toContain('orphan@example.com');
+    expect(html).toContain('<td class="whitespace-nowrap px-4 py-3">—</td>');
+  });
+
   it('renders empty state when no users are returned', async () => {
     const selectBuilder = createSelectJoinOrderByBuilder([]);
     mockedDb.select.mockReturnValueOnce({ from: selectBuilder.from });
@@ -87,11 +109,13 @@ describe('admin users page', () => {
     expect(html).toContain('No users found');
   });
 
-  it('throws when loading users fails', async () => {
-    mockedDb.select.mockImplementationOnce(() => {
-      throw new Error('db unavailable');
-    });
+  it('renders a fallback error panel when loading users fails', async () => {
+    const selectBuilder = createSelectJoinOrderByBuilder(new Error('db unavailable'));
+    mockedDb.select.mockReturnValueOnce({ from: selectBuilder.from });
 
-    await expect(AdminUsersPage()).rejects.toThrow('db unavailable');
+    const node = await AdminUsersPage();
+    const html = renderToStaticMarkup(node);
+
+    expect(html).toContain('Failed to load users.');
   });
 });
