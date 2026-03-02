@@ -5,6 +5,7 @@ export const POLICY_FEATURE_KEYS = [
   'models',
   'storage_mb',
   'api_calls_per_day',
+  'budget_usd_per_month',
   'custom_tools',
   'team_members',
 ] as const;
@@ -93,4 +94,3 @@ export function validateRule(input: unknown) {
 export function validatePolicy(input: unknown) {
   return PolicySchema.safeParse(input);
 }
-

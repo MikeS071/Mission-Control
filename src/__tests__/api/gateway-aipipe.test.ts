@@ -27,6 +27,13 @@ jest.mock('@/lib/usage/meter', () => ({
   recordUsage: jest.fn(),
 }));
 
+jest.mock('@/lib/usage/budget', () => ({
+  UNLIMITED_BUDGET: Number.MAX_SAFE_INTEGER,
+  budgetHeaderValue: (value: number) => String(value),
+  budgetResetsAt: () => '2026-03-03T00:00:00.000Z',
+  checkBudget: jest.fn(),
+}));
+
 import {
   filterModelsForPolicy,
   getOrCreatePolicy,
@@ -34,6 +41,7 @@ import {
   isModelAllowedForPolicy,
 } from '@/lib/policy';
 import { recordUsage } from '@/lib/usage/meter';
+import { checkBudget } from '@/lib/usage/budget';
 
 type MockDb = {
   select: jest.Mock;
@@ -57,6 +65,7 @@ const mockedIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<typeof is
 const mockedIsModelAllowedForPolicy = isModelAllowedForPolicy as jest.MockedFunction<typeof isModelAllowedForPolicy>;
 const mockedFilterModelsForPolicy = filterModelsForPolicy as jest.MockedFunction<typeof filterModelsForPolicy>;
 const mockedRecordUsage = recordUsage as jest.MockedFunction<typeof recordUsage>;
+const mockedCheckBudget = checkBudget as jest.MockedFunction<typeof checkBudget>;
 
 let gatewayGet: (req: NextRequest) => Promise<Response>;
 let gatewayPost: (req: NextRequest) => Promise<Response>;
@@ -155,6 +164,13 @@ describe('gateway + aipipe API routes', () => {
       policy.tier === 'pro' ? models : models.filter((m) => m.model === 'gpt-4o-mini')
     ));
     mockedRecordUsage.mockResolvedValue(undefined);
+    mockedRecordUsage.mockResolvedValue(undefined);
+    mockedCheckBudget.mockResolvedValue({
+      allowed: true,
+      remaining: 88,
+      limit: 100,
+      period: 'daily',
+    });
   });
 
   it('forwards chat proxy requests to AiPipe with tenant header', async () => {
@@ -186,6 +202,9 @@ describe('gateway + aipipe API routes', () => {
     const res = await chatProxyPost(req);
     expect(res.status).toBe(202);
     await expect(res.json()).resolves.toEqual({ id: 'chat-1' });
+    expect(res.headers.get('X-Budget-Remaining')).toBe('88');
+    expect(res.headers.get('X-Budget-Limit')).toBe('100');
+    expect(mockedCheckBudget).toHaveBeenCalledWith(42);
     expect(mockedFetch).toHaveBeenCalledWith(
       'http://aipipe.local/v1/chat/completions',
       expect.objectContaining({
@@ -230,6 +249,9 @@ describe('gateway + aipipe API routes', () => {
     const res = await messagesProxyPost(req);
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ id: 'msg-1' });
+    expect(res.headers.get('X-Budget-Remaining')).toBe('88');
+    expect(res.headers.get('X-Budget-Limit')).toBe('100');
+    expect(mockedCheckBudget).toHaveBeenCalledWith(7);
     expect(mockedFetch).toHaveBeenCalledWith(
       'http://aipipe.local/v1/messages',
       expect.objectContaining({
@@ -336,6 +358,34 @@ describe('gateway + aipipe API routes', () => {
       }),
     );
     expect(mockedIsFeatureEnabled).toHaveBeenCalledWith(expect.any(Object), 'models');
+    expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it('returns 429 when the tenant budget is exceeded', async () => {
+    const mockedFetch = global.fetch as unknown as jest.MockedFunction<typeof fetch>;
+    mockedCheckBudget.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      limit: 100,
+      period: 'daily',
+    });
+
+    const req = createRequest({
+      headers: { 'x-tenant-id': '42' },
+      body: { model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'hello' }] },
+    });
+
+    const res = await chatProxyPost(req);
+
+    expect(res.status).toBe(429);
+    await expect(res.json()).resolves.toEqual({
+      error: 'Budget exceeded',
+      remaining: 0,
+      limit: 100,
+      resetsAt: expect.any(String),
+    });
+    expect(res.headers.get('X-Budget-Remaining')).toBe('0');
+    expect(res.headers.get('X-Budget-Limit')).toBe('100');
     expect(mockedFetch).not.toHaveBeenCalled();
   });
 
