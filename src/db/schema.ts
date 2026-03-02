@@ -162,6 +162,52 @@ export const tenantSettings = pgTable('tenant_settings', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+export const usageLedger = pgTable('usage_ledger', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  provider: text('provider').notNull(),
+  tokensIn: integer('tokens_in').notNull(),
+  tokensOut: integer('tokens_out').notNull(),
+  costUsd: numeric('cost_usd', { precision: 12, scale: 6 }).notNull(),
+  tenantCostUsd: numeric('tenant_cost_usd', { precision: 12, scale: 6 }),
+  hypotheticalCostUsd: numeric('hypothetical_cost_usd', { precision: 12, scale: 6 }),
+  savedUsd: numeric('saved_usd', { precision: 12, scale: 6 }),
+  cacheHit: boolean('cache_hit').notNull().default(false),
+  requestId: text('request_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const usageSummary = pgTable('usage_summary', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  period: text('period').notNull(), // daily | monthly
+  periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+  totalTokensIn: bigint('total_tokens_in', { mode: 'number' }).notNull().default(0),
+  totalTokensOut: bigint('total_tokens_out', { mode: 'number' }).notNull().default(0),
+  totalCostUsd: numeric('total_cost_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+  totalSavedUsd: numeric('total_saved_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+  requestCount: integer('request_count').notNull().default(0),
+  cacheHits: integer('cache_hits').notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const usageAlerts = pgTable('usage_alerts', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  alertType: text('alert_type').notNull(),
+  threshold: integer('threshold').notNull(),
+  message: text('message').notNull(),
+  acknowledged: boolean('acknowledged').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const policies = pgTable('policies', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id')

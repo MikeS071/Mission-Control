@@ -4,6 +4,8 @@ import { resolveTenantId } from '@/lib/tenant';
 import { parseBody } from '@/lib/validate';
 import { aipipeProxyChat } from '@/lib/aipipe';
 import { getOrCreatePolicy, isFeatureEnabled, isModelAllowedForPolicy } from '@/lib/policy';
+import { checkBudget } from '@/lib/usage/budget';
+import { recordUsage } from '@/lib/usage/meter';
 
 const MessageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant'] as const),
@@ -25,6 +27,25 @@ export async function POST(req: NextRequest) {
   const parsed = parseBody(ChatRequestSchema, await req.json().catch(() => null));
   if (!parsed.ok) return parsed.response;
 
+  const budget = await checkBudget(tenantId);
+  const budgetHeaders = {
+    'X-Budget-Remaining': String(budget.remaining),
+    'X-Budget-Limit': String(budget.limit),
+  };
+
+  if (!budget.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Budget exceeded',
+        remaining: budget.remaining,
+        limit: budget.limit,
+        period: budget.period,
+        resetsAt: budget.resetsAt,
+      },
+      { status: 429, headers: budgetHeaders },
+    );
+  }
+
   try {
     const policy = await getOrCreatePolicy(tenantId);
     if (!isFeatureEnabled(policy, 'models')) {
@@ -33,7 +54,7 @@ export async function POST(req: NextRequest) {
           error: 'Model access is disabled for your current plan.',
           upgradePrompt: 'Upgrade to Pro to unlock model access.',
         },
-        { status: 403 },
+        { status: 403, headers: budgetHeaders },
       );
     }
 
@@ -44,21 +65,25 @@ export async function POST(req: NextRequest) {
           error: `Model "${selectedModel}" is not available on the free tier.`,
           upgradePrompt: 'Upgrade to Pro to use premium models.',
         },
-        { status: 403 },
+        { status: 403, headers: budgetHeaders },
       );
     }
   } catch {
-    return NextResponse.json({ error: 'Policy evaluation failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Policy evaluation failed' }, { status: 500, headers: budgetHeaders });
   }
 
   try {
     const upstream = await aipipeProxyChat(parsed.data, String(tenantId));
     const body = await upstream.arrayBuffer();
+    void recordUsage(tenantId, upstream.headers);
     return new NextResponse(body, {
       status: upstream.status,
-      headers: { 'Content-Type': upstream.headers.get('Content-Type') ?? 'application/json' },
+      headers: {
+        'Content-Type': upstream.headers.get('Content-Type') ?? 'application/json',
+        ...budgetHeaders,
+      },
     });
   } catch {
-    return NextResponse.json({ error: 'AiPipe unavailable' }, { status: 503 });
+    return NextResponse.json({ error: 'AiPipe unavailable' }, { status: 503, headers: budgetHeaders });
   }
 }
