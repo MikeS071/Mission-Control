@@ -32,3 +32,4 @@ tsconfig.tsbuildinfo
 .codex-prompt.md
 validation_output.json
 .-worktrees/
+.source

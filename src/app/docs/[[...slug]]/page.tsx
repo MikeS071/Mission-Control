@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import { DocsPage, DocsBody, DocsTitle, DocsDescription } from 'fumadocs-ui/page';
 import { notFound, redirect } from 'next/navigation';
 import { source } from '@/lib/source';
@@ -42,7 +41,9 @@ export default async function DocPage({ params }: PageProps) {
   );
 }
 
-
+export async function generateStaticParams() {
+  return source.generateParams();
+}
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
