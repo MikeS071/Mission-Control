@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
 import { createMDX } from "fumadocs-mdx/next";
+import { resolveTurbopackRoot } from "@/lib/build-config";
 
 const nextConfig: NextConfig = {
   // Fix Turbopack workspace-root inference (multiple lockfiles on host).
   // Without this, Turbopack may use the wrong root and corrupt its cache.
   turbopack: {
-    root: process.cwd(),
+    root: resolveTurbopackRoot(),
   },
   async headers() {
     return [

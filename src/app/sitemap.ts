@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { desc } from 'drizzle-orm';
 
-import { source } from '@/lib/source';
 import { db } from '@/lib/db';
 import { insights } from '@/db/schema';
 
@@ -16,18 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const nowIso = now.toISOString();
 
   const [docPages, insightEntries] = await Promise.all([
+    getDocPages(nowIso),
     Promise.resolve(
-      source.getPages().map((page) => ({
-        url: `${BASE_URL}/docs/${page.slugs.join('/')}`,
-        lastModified: nowIso,
-        changeFrequency: 'monthly' as const,
-        priority: 0.7,
-      })),
-    ),
-    db
-      .select({ slug: insights.slug, publishedAt: insights.publishedAt })
-      .from(insights)
-      .orderBy(desc(insights.publishedAt)),
+      db
+        .select({ slug: insights.slug, publishedAt: insights.publishedAt })
+        .from(insights)
+        .orderBy(desc(insights.publishedAt)),
+    ).catch(() => []),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -65,4 +59,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   return [...staticPages, ...docPages, ...insightPages];
+}
+
+async function getDocPages(lastModified: string): Promise<MetadataRoute.Sitemap> {
+  try {
+    const { source } = await import('@/lib/source');
+    return source.getPages().map((page) => ({
+      url: `${BASE_URL}/docs/${page.slugs.join('/')}`,
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
+  } catch {
+    return [];
+  }
 }
