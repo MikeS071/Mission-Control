@@ -377,10 +377,10 @@
       "branch": "feat/mc-44",
       "desc": "README + deployment docs"
     },
-    "mc-p1-integrate": {
+    "int-1": {
       "phase": 1,
       "status": "todo",
-      "branch": "feat/mc-p1-integrate",
+      "branch": "feat/int-1",
       "depends": [
         "mc-01",
         "mc-02",
@@ -391,19 +391,19 @@
       ],
       "desc": "Phase 1 integration merge + conflict resolution"
     },
-    "mc-p1-test": {
+    "tst-1": {
       "phase": 1,
       "status": "todo",
-      "branch": "feat/mc-p1-test",
+      "branch": "feat/tst-1",
       "depends": [
-        "mc-p1-integrate"
+        "int-1"
       ],
       "desc": "Phase 1 E2E test suite + build verification"
     },
-    "mc-p2-integrate": {
+    "int-2": {
       "phase": 2,
       "status": "todo",
-      "branch": "feat/mc-p2-integrate",
+      "branch": "feat/int-2",
       "depends": [
         "mc-07",
         "mc-08",
@@ -416,19 +416,19 @@
       ],
       "desc": "Phase 2 integration merge + conflict resolution"
     },
-    "mc-p2-test": {
+    "tst-2": {
       "phase": 2,
       "status": "todo",
-      "branch": "feat/mc-p2-test",
+      "branch": "feat/tst-2",
       "depends": [
-        "mc-p2-integrate"
+        "int-2"
       ],
       "desc": "Phase 2 E2E test suite + build verification"
     },
-    "mc-p3-integrate": {
+    "int-3": {
       "phase": 3,
       "status": "todo",
-      "branch": "feat/mc-p3-integrate",
+      "branch": "feat/int-3",
       "depends": [
         "mc-15",
         "mc-16",
@@ -440,19 +440,19 @@
       ],
       "desc": "Phase 3 integration merge + conflict resolution"
     },
-    "mc-p3-test": {
+    "tst-3": {
       "phase": 3,
       "status": "todo",
-      "branch": "feat/mc-p3-test",
+      "branch": "feat/tst-3",
       "depends": [
-        "mc-p3-integrate"
+        "int-3"
       ],
       "desc": "Phase 3 E2E test suite + build verification"
     },
-    "mc-p4-integrate": {
+    "int-4": {
       "phase": 4,
       "status": "todo",
-      "branch": "feat/mc-p4-integrate",
+      "branch": "feat/int-4",
       "depends": [
         "mc-22",
         "mc-23",
@@ -461,19 +461,19 @@
       ],
       "desc": "Phase 4 integration merge + conflict resolution"
     },
-    "mc-p4-test": {
+    "tst-4": {
       "phase": 4,
       "status": "todo",
-      "branch": "feat/mc-p4-test",
+      "branch": "feat/tst-4",
       "depends": [
-        "mc-p4-integrate"
+        "int-4"
       ],
       "desc": "Phase 4 E2E test suite + build verification"
     },
-    "mc-p5-integrate": {
+    "int-5": {
       "phase": 5,
       "status": "todo",
-      "branch": "feat/mc-p5-integrate",
+      "branch": "feat/int-5",
       "depends": [
         "mc-26",
         "mc-27",
@@ -483,19 +483,19 @@
       ],
       "desc": "Phase 5 integration merge + conflict resolution"
     },
-    "mc-p5-test": {
+    "tst-5": {
       "phase": 5,
       "status": "todo",
-      "branch": "feat/mc-p5-test",
+      "branch": "feat/tst-5",
       "depends": [
-        "mc-p5-integrate"
+        "int-5"
       ],
       "desc": "Phase 5 E2E test suite + build verification"
     },
-    "mc-p6-integrate": {
+    "int-6": {
       "phase": 6,
       "status": "todo",
-      "branch": "feat/mc-p6-integrate",
+      "branch": "feat/int-6",
       "depends": [
         "mc-31",
         "mc-32",
@@ -505,19 +505,19 @@
       ],
       "desc": "Phase 6 integration merge + conflict resolution"
     },
-    "mc-p6-test": {
+    "tst-6": {
       "phase": 6,
       "status": "todo",
-      "branch": "feat/mc-p6-test",
+      "branch": "feat/tst-6",
       "depends": [
-        "mc-p6-integrate"
+        "int-6"
       ],
       "desc": "Phase 6 E2E test suite + build verification"
     },
-    "mc-p7-integrate": {
+    "int-7": {
       "phase": 7,
       "status": "todo",
-      "branch": "feat/mc-p7-integrate",
+      "branch": "feat/int-7",
       "depends": [
         "mc-36",
         "mc-37",
@@ -526,19 +526,19 @@
       ],
       "desc": "Phase 7 integration merge + conflict resolution"
     },
-    "mc-p7-test": {
+    "tst-7": {
       "phase": 7,
       "status": "todo",
-      "branch": "feat/mc-p7-test",
+      "branch": "feat/tst-7",
       "depends": [
-        "mc-p7-integrate"
+        "int-7"
       ],
       "desc": "Phase 7 E2E test suite + build verification"
     },
-    "mc-p8-integrate": {
+    "int-8": {
       "phase": 8,
       "status": "todo",
-      "branch": "feat/mc-p8-integrate",
+      "branch": "feat/int-8",
       "depends": [
         "mc-40",
         "mc-41",
@@ -548,12 +548,12 @@
       ],
       "desc": "Phase 8 integration merge + conflict resolution"
     },
-    "mc-p8-test": {
+    "tst-8": {
       "phase": 8,
       "status": "todo",
-      "branch": "feat/mc-p8-test",
+      "branch": "feat/tst-8",
       "depends": [
-        "mc-p8-integrate"
+        "int-8"
       ],
       "desc": "Phase 8 E2E test suite + build verification"
     }
