@@ -5,6 +5,7 @@ import { agentStats } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 import { parseBody, AgentStatCreateSchema } from '@/lib/validate';
 import { checkLimit, getOrCreatePolicy } from '@/lib/policy';
+import { checkAlerts } from '@/lib/usage/alerts';
 
 export async function GET(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
@@ -85,6 +86,12 @@ export async function POST(req: NextRequest) {
       costUsd: body.costUsd ?? '0.00',
     })
     .returning();
+
+  try {
+    await checkAlerts(tenantId);
+  } catch (err) {
+    console.error('[agent-stats] Failed to check usage alerts:', err);
+  }
 
   return NextResponse.json(created, { status: 201 });
 }
