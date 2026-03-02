@@ -8,6 +8,7 @@ process.env.API_SECRET = process.env.API_SECRET ?? 'api-secret';
 
 jest.mock('@/lib/db', () => ({
   db: {
+    execute: jest.fn(),
     select: jest.fn(),
     insert: jest.fn(),
     update: jest.fn(),
@@ -31,10 +32,16 @@ jest.mock('@/lib/chat-threads', () => ({
   bumpThreadUpdatedAt: jest.fn(),
 }));
 
+jest.mock('@/lib/policy', () => ({
+  getOrCreatePolicy: jest.fn(),
+  checkLimit: jest.fn(),
+}));
+
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { wsManager } from '@/lib/ws-manager';
 import { bumpThreadUpdatedAt, resolveThreadId } from '@/lib/chat-threads';
+import { checkLimit, getOrCreatePolicy } from '@/lib/policy';
 import { POST as chatPost } from '@/app/api/chat/route';
 import { GET as historyGet } from '@/app/api/chat/history/route';
 import { POST as inboundPost } from '@/app/api/chat/inbound/route';
@@ -45,6 +52,7 @@ import { PATCH as threadPatch, DELETE as threadDelete } from '@/app/api/chat/thr
 import { GET as wsTokenGet } from '@/app/api/chat/ws-token/route';
 
 type MockedDb = {
+  execute: jest.Mock;
   select: jest.Mock;
   insert: jest.Mock;
   update: jest.Mock;
@@ -56,6 +64,8 @@ const mockedAuth = auth as unknown as jest.MockedFunction<() => Promise<unknown>
 const mockedWsManager = wsManager as unknown as { broadcast: jest.Mock; createToken: jest.Mock };
 const mockedResolveThreadId = resolveThreadId as jest.MockedFunction<typeof resolveThreadId>;
 const mockedBumpThreadUpdatedAt = bumpThreadUpdatedAt as jest.MockedFunction<typeof bumpThreadUpdatedAt>;
+const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof getOrCreatePolicy>;
+const mockedCheckLimit = checkLimit as jest.MockedFunction<typeof checkLimit>;
 
 function req(
   url: string,
@@ -131,10 +141,23 @@ function routeFiles(rootDir: string): string[] {
 describe('chat API routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedDb.execute.mockResolvedValue({ rows: [{ count: 0 }] });
     mockedAuth.mockResolvedValue(null);
     mockedResolveThreadId.mockResolvedValue(777);
     mockedBumpThreadUpdatedAt.mockResolvedValue(undefined);
     mockedWsManager.createToken.mockReturnValue('ws-token');
+    mockedGetOrCreatePolicy.mockResolvedValue({
+      tier: 'free',
+      limits: { api_calls_per_day: 100, agents: 1 },
+      features: { models: true },
+    });
+    mockedCheckLimit.mockReturnValue({
+      allowed: true,
+      key: 'api_calls_per_day',
+      current: 0,
+      limit: 100,
+      remaining: 100,
+    });
     (globalThis as unknown as { fetch: jest.Mock }).fetch = jest.fn();
   });
 
@@ -198,6 +221,41 @@ describe('chat API routes', () => {
     await expect(res.json()).resolves.toEqual({
       error: 'message is required and must be a non-empty string',
     });
+  });
+
+  it('POST /api/chat returns 429 with limit info when daily API quota is exceeded', async () => {
+    mockedCheckLimit.mockReturnValueOnce({
+      allowed: false,
+      key: 'api_calls_per_day',
+      current: 100,
+      limit: 100,
+      remaining: 0,
+      reason: 'Daily API call limit reached',
+      upgradeRequired: true,
+    });
+
+    const res = await chatPost(req('http://localhost/api/chat', { tenantId: 4, body: { message: 'hello' } }));
+    const json = await res.json();
+
+    expect(res.status).toBe(429);
+    expect(json).toEqual(
+      expect.objectContaining({
+        error: expect.stringMatching(/limit/i),
+        limit: expect.objectContaining({
+          key: 'api_calls_per_day',
+          limit: 100,
+          current: 100,
+          remaining: 0,
+        }),
+      }),
+    );
+    expect(mockedCheckLimit).toHaveBeenCalledWith(
+      expect.any(Object),
+      'api_calls_per_day',
+      expect.any(Number),
+    );
+    expect(mockedDb.insert).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('POST /api/chat returns graceful error payload on upstream failure', async () => {

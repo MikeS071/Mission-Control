@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { resolveTenantId } from '@/lib/tenant';
 import { parseBody } from '@/lib/validate';
 import { aipipeProxyChat } from '@/lib/aipipe';
+import { getOrCreatePolicy, isFeatureEnabled, isModelAllowedForPolicy } from '@/lib/policy';
 
 const MessageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant'] as const),
@@ -23,6 +24,32 @@ export async function POST(req: NextRequest) {
 
   const parsed = parseBody(ChatRequestSchema, await req.json().catch(() => null));
   if (!parsed.ok) return parsed.response;
+
+  try {
+    const policy = await getOrCreatePolicy(tenantId);
+    if (!isFeatureEnabled(policy, 'models')) {
+      return NextResponse.json(
+        {
+          error: 'Model access is disabled for your current plan.',
+          upgradePrompt: 'Upgrade to Pro to unlock model access.',
+        },
+        { status: 403 },
+      );
+    }
+
+    const selectedModel = parsed.data.model?.trim();
+    if (selectedModel && !isModelAllowedForPolicy(policy, selectedModel)) {
+      return NextResponse.json(
+        {
+          error: `Model "${selectedModel}" is not available on the free tier.`,
+          upgradePrompt: 'Upgrade to Pro to use premium models.',
+        },
+        { status: 403 },
+      );
+    }
+  } catch {
+    return NextResponse.json({ error: 'Policy evaluation failed' }, { status: 500 });
+  }
 
   try {
     const upstream = await aipipeProxyChat(parsed.data, String(tenantId));

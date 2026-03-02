@@ -15,12 +15,13 @@
  *  6. Return { reply, messageId }
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { chatMessages } from '@/db/schema';
 import { resolveTenantId } from '@/lib/tenant';
 import { wsManager } from '@/lib/ws-manager';
 import { bumpThreadUpdatedAt, resolveThreadId } from '@/lib/chat-threads';
+import { checkLimit, getOrCreatePolicy } from '@/lib/policy';
 
 const SYSTEM_PROMPT =
   'You are an AI assistant integrated into ArchonHQ Mission Control. ' +
@@ -55,6 +56,44 @@ export async function POST(req: NextRequest) {
   }
 
   const userContent = message.trim();
+
+  // ── Policy gate: per-day API usage ───────────────────────────────────────
+  try {
+    const policy = await getOrCreatePolicy(tenantId);
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const countResult = await db.execute(sql`
+      SELECT COUNT(*)::int AS count
+      FROM chat_messages
+      WHERE tenant_id = ${tenantId}
+        AND role = 'user'
+        AND created_at >= ${startOfDay}
+    `);
+
+    const firstRow = countResult.rows[0] as { count?: unknown } | undefined;
+    const todayCount = Number(firstRow?.count ?? 0);
+    const gate = checkLimit(policy, 'api_calls_per_day', todayCount);
+
+    if (!gate.allowed) {
+      return NextResponse.json(
+        {
+          error: gate.reason ?? 'Daily API call limit reached',
+          limit: {
+            key: gate.key,
+            current: gate.current,
+            limit: gate.limit,
+            remaining: gate.remaining,
+            upgradeRequired: gate.upgradeRequired ?? false,
+          },
+        },
+        { status: 429 },
+      );
+    }
+  } catch (err) {
+    console.error('[chat] Failed to evaluate policy:', err);
+    return NextResponse.json({ error: 'Policy evaluation failed' }, { status: 500 });
+  }
 
   const effectiveThreadId = await resolveThreadId(tenantId, threadId);
 

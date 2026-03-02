@@ -16,6 +16,20 @@ jest.mock('@/lib/auth', () => ({
   auth: jest.fn(),
 }));
 
+jest.mock('@/lib/policy', () => ({
+  getOrCreatePolicy: jest.fn(),
+  isFeatureEnabled: jest.fn(),
+  isModelAllowedForPolicy: jest.fn(),
+  filterModelsForPolicy: jest.fn(),
+}));
+
+import {
+  filterModelsForPolicy,
+  getOrCreatePolicy,
+  isFeatureEnabled,
+  isModelAllowedForPolicy,
+} from '@/lib/policy';
+
 type MockDb = {
   select: jest.Mock;
   insert: jest.Mock;
@@ -33,6 +47,10 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 const mockedDb = db as unknown as MockDb;
 const mockedAuth = auth as unknown as jest.MockedFunction<() => Promise<unknown>>;
+const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof getOrCreatePolicy>;
+const mockedIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<typeof isFeatureEnabled>;
+const mockedIsModelAllowedForPolicy = isModelAllowedForPolicy as jest.MockedFunction<typeof isModelAllowedForPolicy>;
+const mockedFilterModelsForPolicy = filterModelsForPolicy as jest.MockedFunction<typeof filterModelsForPolicy>;
 
 let gatewayGet: (req: NextRequest) => Promise<Response>;
 let gatewayPost: (req: NextRequest) => Promise<Response>;
@@ -118,6 +136,18 @@ describe('gateway + aipipe API routes', () => {
     jest.clearAllMocks();
     global.fetch = jest.fn() as unknown as typeof fetch;
     mockedAuth.mockResolvedValue(null);
+    mockedGetOrCreatePolicy.mockResolvedValue({
+      tier: 'free',
+      limits: { api_calls_per_day: 100, agents: 1 },
+      features: { models: true },
+    });
+    mockedIsFeatureEnabled.mockReturnValue(true);
+    mockedIsModelAllowedForPolicy.mockImplementation((policy, model) => (
+      policy.tier === 'pro' ? true : model.toLowerCase() === 'gpt-4o-mini'
+    ));
+    mockedFilterModelsForPolicy.mockImplementation((policy, models) => (
+      policy.tier === 'pro' ? models : models.filter((m) => m.model === 'gpt-4o-mini')
+    ));
   });
 
   it('forwards chat proxy requests to AiPipe with tenant header', async () => {
@@ -207,6 +237,32 @@ describe('gateway + aipipe API routes', () => {
     await expect(res.json()).resolves.toEqual(
       expect.objectContaining({ error: expect.stringMatching(/messages/i) }),
     );
+    expect(mockedFetch).not.toHaveBeenCalled();
+  });
+
+  it('blocks premium model selection for free tier tenants', async () => {
+    const mockedFetch = global.fetch as unknown as jest.MockedFunction<typeof fetch>;
+    mockedGetOrCreatePolicy.mockResolvedValueOnce({
+      tier: 'free',
+      limits: { api_calls_per_day: 100, agents: 1 },
+      features: { models: true },
+    });
+
+    const req = createRequest({
+      headers: { 'x-tenant-id': '42' },
+      body: { model: 'claude-3-5-sonnet', messages: [{ role: 'user', content: 'hello' }] },
+    });
+
+    const res = await chatProxyPost(req);
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual(
+      expect.objectContaining({
+        error: expect.stringMatching(/model|tier|upgrade/i),
+        upgradePrompt: expect.any(String),
+      }),
+    );
+    expect(mockedIsFeatureEnabled).toHaveBeenCalledWith(expect.any(Object), 'models');
     expect(mockedFetch).not.toHaveBeenCalled();
   });
 
@@ -318,6 +374,94 @@ describe('gateway + aipipe API routes', () => {
         headers: { 'X-Admin-Secret': 'admin-secret' },
       }),
     );
+  });
+
+  it('filters premium models from AiPipe stats for free tier tenants', async () => {
+    mockedGetOrCreatePolicy.mockResolvedValueOnce({
+      tier: 'free',
+      limits: { api_calls_per_day: 100, agents: 1 },
+      features: { models: true },
+    });
+
+    const statsPayload = {
+      runtime: {
+        latency_p50_ms: 40,
+        latency_p95_ms: 80,
+        latency_p99_ms: 120,
+        ttft_p50_ms: 30,
+        ttft_p95_ms: 60,
+        ttft_p99_ms: 90,
+        providers: [],
+        models: [
+          {
+            provider: 'openai',
+            model: 'gpt-4o-mini',
+            requests: 100,
+            success: 99,
+            errors: 1,
+            input_tokens: 50_000,
+            output_tokens: 10_000,
+            total_cost_usd: 0.12,
+          },
+          {
+            provider: 'anthropic',
+            model: 'claude-3-5-sonnet',
+            requests: 20,
+            success: 20,
+            errors: 0,
+            input_tokens: 5_000,
+            output_tokens: 800,
+            total_cost_usd: 0.08,
+          },
+        ],
+      },
+      model_tracking: [
+        {
+          provider: 'openai',
+          model: 'gpt-4o-mini',
+          requests: 100,
+          success_rate: 0.99,
+          penalty: 0,
+          total_cost_usd: 0.12,
+          effective_success_rate: 0.99,
+        },
+        {
+          provider: 'anthropic',
+          model: 'claude-3-5-sonnet',
+          requests: 20,
+          success_rate: 1,
+          penalty: 0,
+          total_cost_usd: 0.08,
+          effective_success_rate: 1,
+        },
+      ],
+      queue_depth: 0,
+      queue_capacity: 100,
+    };
+
+    const mockedFetch = global.fetch as unknown as jest.MockedFunction<typeof fetch>;
+    mockedFetch
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(statsPayload), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ tenant_id: '9', requests: 1, in_tokens: 1, out_tokens: 1, cost_usd: 0, updated_at: '2026-03-01T00:00:00.000Z' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+    const req = createRequest({ headers: { 'x-tenant-id': '9' } });
+    const res = await aipipeStatsGet(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.runtime.models.map((m: { model: string }) => m.model)).toEqual(['gpt-4o-mini']);
+    expect(body.model_tracking.map((m: { model: string }) => m.model)).toEqual(['gpt-4o-mini']);
+    expect(mockedIsFeatureEnabled).toHaveBeenCalledWith(expect.any(Object), 'models');
   });
 
   it('lists gateway configs for a tenant', async () => {
