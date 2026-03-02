@@ -108,6 +108,18 @@ export const agentStats = pgTable('agent_stats', {
   recordedAt: timestamp('recorded_at').defaultNow(),
 });
 
+export const usageAlerts = pgTable('usage_alerts', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  alertType: text('alert_type').notNull(),
+  threshold: integer('threshold').notNull(), // 75, 90, 100
+  message: text('message').notNull(),
+  acknowledged: boolean('acknowledged').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const usageLedger = pgTable('usage_ledger', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id')

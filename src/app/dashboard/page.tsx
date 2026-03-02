@@ -14,7 +14,7 @@ import { auth } from '@/lib/auth';
 import { getTenantPlan, getTenantPlanLabel } from '@/lib/billing';
 import { db } from '@/lib/db';
 import { gatewayConnections, tenantSettings, tenants } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -41,6 +41,28 @@ export default async function DashboardPage() {
     xaiKey?: string;
     gateway?: { connected?: boolean };
   };
+  const usageAlertsResult = tenantId
+    ? await db.execute(sql`
+        SELECT
+          id,
+          alert_type,
+          threshold,
+          message,
+          created_at
+        FROM usage_alerts
+        WHERE tenant_id = ${tenantId}
+          AND acknowledged = false
+        ORDER BY created_at DESC
+        LIMIT 3
+      `)
+    : { rows: [] };
+  const usageAlerts = usageAlertsResult.rows as Array<{
+    id: number;
+    alert_type: string;
+    threshold: number;
+    message: string;
+    created_at: Date | string;
+  }>;
   const hasAnyApiKey = Boolean(settings.anthropicKey || settings.openaiKey || settings.xaiKey);
   const setupComplete = (gatewayCount > 0 || settings.gateway?.connected) && hasAnyApiKey;
 
@@ -101,6 +123,21 @@ export default async function DashboardPage() {
       </nav>
 
       {/* ── Setup banners (shown below nav, above content) ── */}
+      {usageAlerts.length > 0 && (
+        <div className="px-4 pt-3 space-y-2 flex-shrink-0">
+          <div className="rounded-md border border-red-700/60 bg-red-950/30 px-4 py-2.5 text-sm text-red-100">
+            <div className="font-semibold text-red-200">Usage alert</div>
+            <ul className="mt-1 space-y-1 text-red-100">
+              {usageAlerts.map((alert) => (
+                <li key={alert.id}>
+                  {alert.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {(!setupComplete || gatewayCount === 0) && (
         <div className="px-4 pt-3 space-y-2 flex-shrink-0">
           {!setupComplete && (
