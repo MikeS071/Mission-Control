@@ -21,4 +21,11 @@ export async function authorizeInbound(_input: AuthorizeInboundInput): Promise<A
   return { allow: true };
 }
 
-export type { PolicyOverrides, PolicyRule, PolicyRules, PolicyTier } from './schema';
+export type {
+  AdminPolicyUpdateInput,
+  Policy,
+  PolicyOverrides,
+  PolicyRule,
+  PolicyRules,
+  PolicyTier,
+} from './schema';

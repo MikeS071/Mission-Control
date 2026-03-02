@@ -1,12 +1,16 @@
-import { PolicyTierNameSchema, PolicyTierSchema, type PolicyTier } from '@/lib/policy/schema';
+import {
+  POLICY_FEATURE_KEYS,
+  PolicyTierNameSchema,
+  PolicyTierSchema,
+  type PolicyRule,
+  type PolicyRules,
+  type PolicyTemplate,
+  type PolicyTier,
+} from '@/lib/policy/schema';
 
-export const TIER_NAMES = ['free', 'pro', 'enterprise'] as const;
+export const TIER_NAMES = ['free', 'pro', 'team'] as const;
 
-type TierName = (typeof TIER_NAMES)[number];
-
-type Policy = PolicyTier;
-
-const DEFAULT_POLICY_TEMPLATES: Record<TierName, Policy> = {
+const DEFAULT_POLICY_TEMPLATES: Record<PolicyTier, PolicyTemplate> = {
   free: {
     name: 'free',
     rules: [
@@ -29,8 +33,8 @@ const DEFAULT_POLICY_TEMPLATES: Record<TierName, Policy> = {
       { featureKey: 'team_members', limitType: 'number', limitValue: 10, enabled: true },
     ],
   },
-  enterprise: {
-    name: 'enterprise',
+  team: {
+    name: 'team',
     rules: [
       { featureKey: 'agents', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'models', limitType: 'unlimited', limitValue: null, enabled: true },
@@ -42,17 +46,36 @@ const DEFAULT_POLICY_TEMPLATES: Record<TierName, Policy> = {
   },
 };
 
-export function getDefaultPolicy(tierName: string): Policy {
+export function getDefaultPolicy(tierName: string): PolicyTemplate {
   const parsedTier = PolicyTierNameSchema.safeParse(tierName);
   if (!parsedTier.success) {
     throw new Error(`Unknown policy tier: ${tierName}`);
   }
 
   const template = DEFAULT_POLICY_TEMPLATES[parsedTier.data];
-  const copy: Policy = {
+  return PolicyTierSchema.parse({
     name: template.name,
     rules: template.rules.map((rule) => ({ ...rule })),
-  };
-
-  return PolicyTierSchema.parse(copy);
+  });
 }
+
+export function coercePolicyTier(input: unknown): PolicyTier {
+  const parsed = PolicyTierNameSchema.safeParse(input);
+  return parsed.success ? parsed.data : 'free';
+}
+
+export function applyPolicyOverrides(baseRules: PolicyRules, overrides: PolicyRules): PolicyRules {
+  const merged = new Map<PolicyRule['featureKey'], PolicyRule>();
+  for (const base of baseRules) {
+    merged.set(base.featureKey, { ...base });
+  }
+  for (const override of overrides) {
+    merged.set(override.featureKey, { ...override });
+  }
+
+  return POLICY_FEATURE_KEYS.flatMap((featureKey) => {
+    const rule = merged.get(featureKey);
+    return rule ? [{ ...rule }] : [];
+  });
+}
+
