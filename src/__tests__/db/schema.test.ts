@@ -8,7 +8,7 @@ describe('DB Schema', () => {
     'users', 'tenants', 'memberships', 'tasks', 'events',
     'heartbeats', 'agentStats', 'gatewayConnections', 'waitlist',
     'featureRequests', 'subscriptions', 'tenantSettings', 'xpLedger',
-    'streaks', 'chatThreads', 'chatMessages', 'telegramLinks',
+    'streaks', 'usageLedger', 'usageSummary', 'chatThreads', 'chatMessages', 'telegramLinks',
     'activityEvents', 'passwordResetTokens', 'provisionedInstances',
   ];
 
