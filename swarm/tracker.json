@@ -36,18 +36,22 @@
       "desc": "Admin tenant detail page"
     },
     "mc-05": {
-      "status": "todo",
+      "status": "done",
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-05",
-      "desc": "Admin API \u2014 list users endpoint"
+      "desc": "Admin API — list users endpoint",
+      "sha": "2f47144",
+      "startedAt": "2026-03-02T06:45:52Z"
     },
     "mc-06": {
-      "status": "todo",
+      "status": "done",
       "phase": 1,
       "depends": [],
       "branch": "feat/mc-06",
-      "desc": "Admin API \u2014 list tenants endpoint"
+      "desc": "Admin API — list tenants endpoint",
+      "sha": "2682697",
+      "startedAt": "2026-03-02T06:45:52Z"
     },
     "mc-07": {
       "status": "todo",
