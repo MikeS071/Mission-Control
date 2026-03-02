@@ -8,7 +8,6 @@ ssl/
 # Test coverage
 coverage/
 tsconfig.tsbuildinfo
-.source
 .kamal/
 tsconfig.tsbuildinfo
 .decapod/data
