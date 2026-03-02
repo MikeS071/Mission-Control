@@ -7,6 +7,7 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testMatch: ['**/__tests__/**/*.test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/.-worktrees/'],
   collectCoverageFrom: [
     'src/lib/**/*.{ts,tsx}',
     'src/db/**/*.{ts,tsx}',
