@@ -157,7 +157,7 @@ export default async function DashboardPage() {
 
       {/* ── Tab content ── */}
       <div className="flex-1 flex flex-col px-4 pt-4 pb-4 min-h-0">
-        <TabsContent value="kanban"   className="mt-0 flex-1 min-h-0"><KanbanBoard /></TabsContent>
+        <TabsContent value="kanban"   className="mt-0 flex-1 min-h-0"><KanbanBoard tenantPlan={plan} /></TabsContent>
         <TabsContent value="files"    className="mt-0"><FileExplorer /></TabsContent>
         <TabsContent value="progress" className="mt-0"><ArenaPanel /></TabsContent>
         <TabsContent value="router"   className="mt-0"><AiPipeWidget /></TabsContent>
