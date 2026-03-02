@@ -23,12 +23,12 @@ describe('Usage Ledger DB Schema', () => {
     expect(usageLedger.tokensOut.notNull).toBe(true);
     expect(usageLedger.costUsd.notNull).toBe(true);
 
-    expect(usageLedger.hypotheticalCostUsd.notNull).toBe(false);
-    expect(usageLedger.savedUsd.notNull).toBe(false);
+    expect(usageLedger.hypotheticalCostUsd.notNull).toBe(true);
+    expect(usageLedger.savedUsd.notNull).toBe(true);
     expect(usageLedger.requestId.notNull).toBe(false);
 
     expect(usageLedger.cacheHit.hasDefault).toBe(true);
-    expect(usageLedger.createdAt.hasDefault).toBe(true);
+    expect(usageLedger.recordedAt.hasDefault).toBe(true);
   });
 
   test('usage_summary has rollup counters with safe defaults', () => {
@@ -37,12 +37,12 @@ describe('Usage Ledger DB Schema', () => {
     expect(usageSummary.tenantId.notNull).toBe(true);
     expect(usageSummary.period.notNull).toBe(true);
     expect(usageSummary.periodStart.notNull).toBe(true);
-    expect(usageSummary.totalTokensIn.hasDefault).toBe(true);
-    expect(usageSummary.totalTokensOut.hasDefault).toBe(true);
-    expect(usageSummary.totalCostUsd.hasDefault).toBe(true);
-    expect(usageSummary.totalSavedUsd.hasDefault).toBe(true);
-    expect(usageSummary.requestCount.hasDefault).toBe(true);
-    expect(usageSummary.cacheHits.hasDefault).toBe(true);
+    expect(usageSummary.requests.hasDefault).toBe(true);
+    expect(usageSummary.tokensIn.hasDefault).toBe(true);
+    expect(usageSummary.tokensOut.hasDefault).toBe(true);
+    expect(usageSummary.costUsd.hasDefault).toBe(true);
+    expect(usageSummary.tenantCostUsd.hasDefault).toBe(true);
+    expect(usageSummary.savedUsd.hasDefault).toBe(true);
     expect(usageSummary.updatedAt.hasDefault).toBe(true);
   });
 });
