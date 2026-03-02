@@ -161,6 +161,18 @@ export const tenantSettings = pgTable('tenant_settings', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+export const policyAuditLogs = pgTable('policy_audit_logs', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .notNull()
+    .references(() => tenants.id, { onDelete: 'cascade' }),
+  changedBy: text('changed_by').notNull(),
+  oldRules: jsonb('old_rules').notNull().default({}),
+  newRules: jsonb('new_rules').notNull().default({}),
+  reason: text('reason').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const xpLedger = pgTable('xp_ledger', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id')

@@ -4,6 +4,7 @@ const navItems = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/tenants', label: 'Tenants' },
+  { href: '/admin/audit-log', label: 'Audit Log' },
   { href: '/admin/system', label: 'System' },
 ];
 
