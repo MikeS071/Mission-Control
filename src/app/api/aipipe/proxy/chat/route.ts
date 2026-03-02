@@ -4,6 +4,7 @@ import { resolveTenantId } from '@/lib/tenant';
 import { parseBody } from '@/lib/validate';
 import { aipipeProxyChat } from '@/lib/aipipe';
 import { getOrCreatePolicy, isFeatureEnabled, isModelAllowedForPolicy } from '@/lib/policy';
+import { recordUsage } from '@/lib/usage/meter';
 
 const MessageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant'] as const),
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const upstream = await aipipeProxyChat(parsed.data, String(tenantId));
+    void recordUsage(tenantId, upstream.headers).catch((error) => {
+      console.warn('[usage] async metering failed:', error);
+    });
     const body = await upstream.arrayBuffer();
     return new NextResponse(body, {
       status: upstream.status,

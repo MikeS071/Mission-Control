@@ -23,12 +23,17 @@ jest.mock('@/lib/policy', () => ({
   filterModelsForPolicy: jest.fn(),
 }));
 
+jest.mock('@/lib/usage/meter', () => ({
+  recordUsage: jest.fn(),
+}));
+
 import {
   filterModelsForPolicy,
   getOrCreatePolicy,
   isFeatureEnabled,
   isModelAllowedForPolicy,
 } from '@/lib/policy';
+import { recordUsage } from '@/lib/usage/meter';
 
 type MockDb = {
   select: jest.Mock;
@@ -51,6 +56,7 @@ const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof 
 const mockedIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<typeof isFeatureEnabled>;
 const mockedIsModelAllowedForPolicy = isModelAllowedForPolicy as jest.MockedFunction<typeof isModelAllowedForPolicy>;
 const mockedFilterModelsForPolicy = filterModelsForPolicy as jest.MockedFunction<typeof filterModelsForPolicy>;
+const mockedRecordUsage = recordUsage as jest.MockedFunction<typeof recordUsage>;
 
 let gatewayGet: (req: NextRequest) => Promise<Response>;
 let gatewayPost: (req: NextRequest) => Promise<Response>;
@@ -148,12 +154,24 @@ describe('gateway + aipipe API routes', () => {
     mockedFilterModelsForPolicy.mockImplementation((policy, models) => (
       policy.tier === 'pro' ? models : models.filter((m) => m.model === 'gpt-4o-mini')
     ));
+    mockedRecordUsage.mockResolvedValue(undefined);
   });
 
   it('forwards chat proxy requests to AiPipe with tenant header', async () => {
     const upstream = new Response(JSON.stringify({ id: 'chat-1' }), {
       status: 202,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-AiPipe-Model': 'gpt-4o-mini',
+        'X-AiPipe-Provider': 'openai',
+        'X-AiPipe-Tokens-In': '10',
+        'X-AiPipe-Tokens-Out': '20',
+        'X-AiPipe-Cost-USD': '0.01',
+        'X-AiPipe-Hypothetical-Cost-USD': '0.02',
+        'X-AiPipe-Saved-USD': '0.01',
+        'X-AiPipe-Cache': 'miss',
+        'X-AiPipe-Request-Id': 'chat-1',
+      },
     });
     const mockedFetch = global.fetch as unknown as jest.MockedFunction<typeof fetch>;
     mockedFetch.mockResolvedValueOnce(upstream);
@@ -179,12 +197,25 @@ describe('gateway + aipipe API routes', () => {
         }),
       }),
     );
+    expect(mockedRecordUsage).toHaveBeenCalledWith(42, expect.any(Headers));
+    expect(mockedRecordUsage.mock.calls[0]?.[1].get('X-AiPipe-Request-Id')).toBe('chat-1');
   });
 
   it('forwards anthropic messages proxy requests to AiPipe', async () => {
     const upstream = new Response(JSON.stringify({ id: 'msg-1' }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-AiPipe-Model': 'claude-3-5-sonnet',
+        'X-AiPipe-Provider': 'anthropic',
+        'X-AiPipe-Tokens-In': '15',
+        'X-AiPipe-Tokens-Out': '40',
+        'X-AiPipe-Cost-USD': '0.03',
+        'X-AiPipe-Hypothetical-Cost-USD': '0.06',
+        'X-AiPipe-Saved-USD': '0.03',
+        'X-AiPipe-Cache': 'hit',
+        'X-AiPipe-Request-Id': 'msg-1',
+      },
     });
     const mockedFetch = global.fetch as unknown as jest.MockedFunction<typeof fetch>;
     mockedFetch.mockResolvedValueOnce(upstream);
@@ -210,6 +241,48 @@ describe('gateway + aipipe API routes', () => {
         }),
       }),
     );
+    expect(mockedRecordUsage).toHaveBeenCalledWith(7, expect.any(Headers));
+    expect(mockedRecordUsage.mock.calls[0]?.[1].get('X-AiPipe-Request-Id')).toBe('msg-1');
+  });
+
+  it('does not block chat proxy responses while metering is pending', async () => {
+    const upstream = new Response(JSON.stringify({ id: 'chat-pending-meter' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-AiPipe-Model': 'gpt-4o-mini',
+        'X-AiPipe-Provider': 'openai',
+        'X-AiPipe-Tokens-In': '10',
+        'X-AiPipe-Tokens-Out': '20',
+        'X-AiPipe-Cost-USD': '0.01',
+        'X-AiPipe-Hypothetical-Cost-USD': '0.02',
+        'X-AiPipe-Saved-USD': '0.01',
+        'X-AiPipe-Cache': 'miss',
+        'X-AiPipe-Request-Id': 'chat-pending-meter',
+      },
+    });
+    const mockedFetch = global.fetch as unknown as jest.MockedFunction<typeof fetch>;
+    mockedFetch.mockResolvedValueOnce(upstream);
+
+    mockedRecordUsage.mockReturnValueOnce(new Promise<void>(() => {}));
+
+    const req = createRequest({
+      headers: { 'x-tenant-id': '42' },
+      body: { model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'hello' }] },
+    });
+
+    const timeout = Symbol('timeout');
+    const result = await Promise.race([
+      chatProxyPost(req),
+      new Promise<symbol>((resolve) => {
+        setTimeout(() => resolve(timeout), 50);
+      }),
+    ]);
+
+    expect(result).not.toBe(timeout);
+    expect((result as Response).status).toBe(200);
+    await expect((result as Response).json()).resolves.toEqual({ id: 'chat-pending-meter' });
+    expect(mockedRecordUsage).toHaveBeenCalledTimes(1);
   });
 
   it('blocks unauthorized chat proxy requests', async () => {
