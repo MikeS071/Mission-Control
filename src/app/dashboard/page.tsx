@@ -72,6 +72,12 @@ export default async function DashboardPage() {
             <TabsTrigger value="admin" className="h-8 px-3 text-xs data-[state=active]:bg-gray-800 data-[state=active]:text-white text-gray-400">🔧 Admin</TabsTrigger>
           )}
         </TabsList>
+        <Link
+          href="/dashboard/usage"
+          className="ml-2 inline-flex h-8 items-center rounded-md border border-gray-700 px-3 text-xs text-gray-300 transition hover:border-gray-500 hover:text-white"
+        >
+          Usage
+        </Link>
 
         <div className="ml-auto px-3">
           <NavbarArenaProgress />
