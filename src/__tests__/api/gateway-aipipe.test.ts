@@ -23,12 +23,17 @@ jest.mock('@/lib/policy', () => ({
   filterModelsForPolicy: jest.fn(),
 }));
 
+jest.mock('@/lib/usage/meter', () => ({
+  recordUsage: jest.fn(),
+}));
+
 import {
   filterModelsForPolicy,
   getOrCreatePolicy,
   isFeatureEnabled,
   isModelAllowedForPolicy,
 } from '@/lib/policy';
+import { recordUsage } from '@/lib/usage/meter';
 
 type MockDb = {
   select: jest.Mock;
@@ -51,6 +56,7 @@ const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof 
 const mockedIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<typeof isFeatureEnabled>;
 const mockedIsModelAllowedForPolicy = isModelAllowedForPolicy as jest.MockedFunction<typeof isModelAllowedForPolicy>;
 const mockedFilterModelsForPolicy = filterModelsForPolicy as jest.MockedFunction<typeof filterModelsForPolicy>;
+const mockedRecordUsage = recordUsage as jest.MockedFunction<typeof recordUsage>;
 
 let gatewayGet: (req: NextRequest) => Promise<Response>;
 let gatewayPost: (req: NextRequest) => Promise<Response>;
@@ -148,6 +154,7 @@ describe('gateway + aipipe API routes', () => {
     mockedFilterModelsForPolicy.mockImplementation((policy, models) => (
       policy.tier === 'pro' ? models : models.filter((m) => m.model === 'gpt-4o-mini')
     ));
+    mockedRecordUsage.mockResolvedValue(undefined);
   });
 
   it('forwards chat proxy requests to AiPipe with tenant header', async () => {
@@ -179,6 +186,7 @@ describe('gateway + aipipe API routes', () => {
         }),
       }),
     );
+    expect(mockedRecordUsage).toHaveBeenCalledWith(42, upstream.headers);
   });
 
   it('forwards anthropic messages proxy requests to AiPipe', async () => {
@@ -210,6 +218,7 @@ describe('gateway + aipipe API routes', () => {
         }),
       }),
     );
+    expect(mockedRecordUsage).toHaveBeenCalledWith(7, upstream.headers);
   });
 
   it('blocks unauthorized chat proxy requests', async () => {
