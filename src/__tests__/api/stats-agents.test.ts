@@ -14,9 +14,15 @@ jest.mock('@/lib/tenant', () => ({
   resolveTenantId: jest.fn(),
 }));
 
+jest.mock('@/lib/policy', () => ({
+  getOrCreatePolicy: jest.fn(),
+  checkLimit: jest.fn(),
+}));
+
 import { GET as getStatsSummary } from '@/app/api/stats/summary/route';
 import { GET as getAgentStats, POST as postAgentStats } from '@/app/api/agent-stats/route';
 import { GET as getActiveAgents } from '@/app/api/agents/active/route';
+import { checkLimit, getOrCreatePolicy } from '@/lib/policy';
 
 type MockDb = {
   execute: jest.Mock;
@@ -26,6 +32,8 @@ type MockDb = {
 
 const mockedDb = db as unknown as MockDb;
 const mockedResolveTenantId = resolveTenantId as jest.MockedFunction<typeof resolveTenantId>;
+const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof getOrCreatePolicy>;
+const mockedCheckLimit = checkLimit as jest.MockedFunction<typeof checkLimit>;
 
 function makeRequest(
   method: 'GET' | 'POST',
@@ -62,6 +70,19 @@ describe('stats + agents API routes', () => {
     jest.clearAllMocks();
     jest.useRealTimers();
     mockedResolveTenantId.mockResolvedValue(7);
+    mockedDb.execute.mockResolvedValue({ rows: [] });
+    mockedGetOrCreatePolicy.mockResolvedValue({
+      tier: 'free',
+      limits: { api_calls_per_day: 100, agents: 1 },
+      features: { models: true },
+    });
+    mockedCheckLimit.mockReturnValue({
+      allowed: true,
+      key: 'agents',
+      current: 0,
+      limit: 1,
+      remaining: 1,
+    });
   });
 
   describe('GET /api/stats/summary', () => {
@@ -174,6 +195,36 @@ describe('stats + agents API routes', () => {
 
       expect(res.status).toBe(400);
       expect(typeof json.error).toBe('string');
+      expect(mockedDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('POST returns 403 with upgrade prompt when agent limit is reached', async () => {
+      mockedDb.execute.mockResolvedValueOnce({ rows: [{ count: 1 }] });
+      mockedCheckLimit.mockReturnValueOnce({
+        allowed: false,
+        key: 'agents',
+        current: 1,
+        limit: 1,
+        remaining: 0,
+        reason: 'Agent limit reached for current plan',
+        upgradeRequired: true,
+      });
+
+      const res = await postAgentStats(
+        makeRequest('POST', 'http://localhost/api/agent-stats', {
+          agentName: 'new-agent',
+        }),
+      );
+      const json = await res.json();
+
+      expect(res.status).toBe(403);
+      expect(json).toEqual(
+        expect.objectContaining({
+          error: expect.stringMatching(/agent limit/i),
+          upgradePrompt: expect.any(String),
+        }),
+      );
+      expect(mockedCheckLimit).toHaveBeenCalledWith(expect.any(Object), 'agents', expect.any(Number));
       expect(mockedDb.insert).not.toHaveBeenCalled();
     });
   });
