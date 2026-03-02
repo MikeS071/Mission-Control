@@ -1,5 +1,15 @@
 import type { NextConfig } from "next";
 import { createMDX } from "fumadocs-mdx/next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs";
+
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+const maybeWorktreesDir = path.dirname(configDir);
+const maybeRepoRoot = path.dirname(maybeWorktreesDir);
+const isDecapodWorktree = path.basename(maybeWorktreesDir) === ".-worktrees";
+const hasRootNextPackage = fs.existsSync(path.join(maybeRepoRoot, "node_modules", "next", "package.json"));
+const turbopackRoot = isDecapodWorktree && hasRootNextPackage ? maybeRepoRoot : configDir;
 
 const nextConfig: NextConfig = {
   // Fix Turbopack workspace-root inference (multiple lockfiles on host).
@@ -19,7 +29,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   turbopack: {
-    root: process.cwd(),
+    root: turbopackRoot,
   },
   async headers() {
     return [
