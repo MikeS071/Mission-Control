@@ -4,7 +4,7 @@
 
 jest.mock('next-auth', () => {
   return jest.fn(() => ({
-    auth: (handler: Function) => handler,
+    auth: (handler: (...args: unknown[]) => unknown) => handler,
   }));
 });
 
