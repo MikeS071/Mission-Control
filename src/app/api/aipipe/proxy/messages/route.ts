@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { resolveTenantId } from '@/lib/tenant';
 import { parseBody } from '@/lib/validate';
 import { aipipeProxyMessages } from '@/lib/aipipe';
+import { recordUsage } from '@/lib/usage/meter';
 
 const AnthropicMessageSchema = z.object({
   role: z.enum(['user', 'assistant'] as const),
@@ -27,6 +28,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const upstream = await aipipeProxyMessages(parsed.data, String(tenantId));
+    void recordUsage(tenantId, upstream.headers).catch((error) => {
+      console.warn('[usage] async metering failed:', error);
+    });
     const body = await upstream.arrayBuffer();
     return new NextResponse(body, {
       status: upstream.status,
