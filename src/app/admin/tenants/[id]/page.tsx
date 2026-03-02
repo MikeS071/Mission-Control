@@ -1,7 +1,5 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
 import { eq, sql } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { agentStats, events, memberships, tasks, tenants, users } from '@/db/schema';
 
@@ -28,35 +26,31 @@ type TenantUsageRecord = {
   totalCostUsd: string;
 } | null;
 
-export type AdminTenantDetailData = {
+type AdminTenantDetailData = {
   tenant: TenantRecord;
   users: TenantUserRecord[];
   usage: TenantUsageRecord;
 };
 
-function toPositiveInt(value: string): number | null {
-  const parsed = Number(value);
+const createdDateFormatter = new Intl.DateTimeFormat('en-US', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+  year: 'numeric',
+});
+
+function parseTenantId(value: string): number | null {
+  const parsed = Number(value.trim());
   if (!Number.isInteger(parsed) || parsed <= 0) return null;
   return parsed;
 }
 
 function formatDate(value: Date | null): string {
   if (!value) return 'Unknown';
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-  }).format(value);
+  return createdDateFormatter.format(value);
 }
 
-export async function getAdminTenantDetailData(tenantIdParam: string): Promise<AdminTenantDetailData> {
-  const session = await auth();
-  if (!session) throw new Error('UNAUTHORIZED');
-  if ((session as { tenantId?: number }).tenantId !== 1) throw new Error('FORBIDDEN');
-
-  const tenantId = toPositiveInt(tenantIdParam);
-  if (!tenantId) throw new Error('INVALID_TENANT_ID');
-
+async function loadAdminTenantDetailData(tenantId: number): Promise<AdminTenantDetailData | null> {
   const [tenant] = await db
     .select({
       id: tenants.id,
@@ -69,7 +63,7 @@ export async function getAdminTenantDetailData(tenantIdParam: string): Promise<A
     .where(eq(tenants.id, tenantId))
     .limit(1);
 
-  if (!tenant) throw new Error('TENANT_NOT_FOUND');
+  if (!tenant) return null;
 
   const tenantUsers = await db
     .select({
@@ -103,10 +97,14 @@ export async function getAdminTenantDetailData(tenantIdParam: string): Promise<A
       }
     | undefined;
 
-  const taskCount = Number(usageRow?.task_count ?? 0);
-  const eventCount = Number(usageRow?.event_count ?? 0);
-  const totalTokens = Number(usageRow?.total_tokens ?? 0);
-  const totalCostUsd = Number(usageRow?.total_cost_usd ?? 0);
+  const rawTaskCount = Number(usageRow?.task_count ?? 0);
+  const rawEventCount = Number(usageRow?.event_count ?? 0);
+  const rawTotalTokens = Number(usageRow?.total_tokens ?? 0);
+  const rawTotalCostUsd = Number(usageRow?.total_cost_usd ?? 0);
+  const taskCount = Number.isFinite(rawTaskCount) ? rawTaskCount : 0;
+  const eventCount = Number.isFinite(rawEventCount) ? rawEventCount : 0;
+  const totalTokens = Number.isFinite(rawTotalTokens) ? rawTotalTokens : 0;
+  const totalCostUsd = Number.isFinite(rawTotalCostUsd) ? rawTotalCostUsd : 0;
 
   const usage =
     usageRow && (taskCount > 0 || eventCount > 0 || totalTokens > 0 || totalCostUsd > 0)
@@ -125,19 +123,34 @@ export async function getAdminTenantDetailData(tenantIdParam: string): Promise<A
   };
 }
 
+function renderPanel(message: string) {
+  return (
+    <main className="min-h-screen bg-gray-950 px-6 py-10 text-gray-100">
+      <div className="mx-auto max-w-5xl rounded-xl border border-red-900/60 bg-red-950/30 px-5 py-4 text-sm text-red-200">
+        {message}
+      </div>
+    </main>
+  );
+}
+
 export default async function AdminTenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const tenantId = parseTenantId(id);
 
-  let detail: AdminTenantDetailData;
+  if (!tenantId) {
+    return renderPanel('Invalid tenant ID.');
+  }
+
+  let detail: AdminTenantDetailData | null;
   try {
-    detail = await getAdminTenantDetailData(id);
+    detail = await loadAdminTenantDetailData(tenantId);
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message === 'UNAUTHORIZED') redirect('/signin');
-      if (error.message === 'FORBIDDEN') redirect('/dashboard');
-      if (error.message === 'INVALID_TENANT_ID' || error.message === 'TENANT_NOT_FOUND') notFound();
-    }
-    throw error;
+    console.error('Admin tenant detail query failed:', error);
+    return renderPanel('Failed to load tenant details.');
+  }
+
+  if (!detail) {
+    return renderPanel('Tenant not found.');
   }
 
   return (
