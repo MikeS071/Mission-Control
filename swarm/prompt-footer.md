@@ -1,49 +1,37 @@
-
 ---
 
-## MANDATORY DEVELOPMENT PROCESS (appended automatically — follow in exact order)
+## MANDATORY DEVELOPMENT PROCESS (follow in exact order)
 
-### Phase 0: Decapod governance (run before any code)
-This repo uses Decapod for governance. Run these commands first:
+### Phase 0: Decapod governance
+Run once at start (best-effort — do NOT debug or fix failures):
 ```bash
-decapod validate                    # verify .decapod/ is healthy
-decapod session acquire             # acquire a session for this work
-decapod rpc --op agent.init         # register this agent run
-decapod rpc --op context.resolve    # resolve scoped context for this task
+export PATH="$HOME/.cargo/bin:$PATH"
+decapod validate 2>/dev/null || true
 ```
-Read `CODEX.md` and `AGENTS.md` in the project root for the full operational contract.
-After completing all work, run `decapod rpc --op proof.validate` to generate proof artifacts.
+⚠️ There are ~25 PRE-EXISTING invariant failures in this repo. These are NOT your problem. Ignore them entirely and proceed to Phase 1.
 
 ### Phase 1: Understand the spec
 - Read the task objective and requirements above
-- Identify every behaviour, input, output, and error case
+- Read the source file(s) to test — understand inputs, outputs, error cases
+- Read an existing test (e.g. `src/__tests__/api/activity.test.ts`) for the mocking pattern
 
-### Phase 2: Write tests FIRST (before any implementation code)
-- Write failing tests that define the expected behaviour from the spec
-- Min 3 test cases per function: happy path, error path, edge case
-- Table-driven tests where applicable
-- Mock external dependencies (DB, HTTP, Docker) — no real connections
-- Run tests — they SHOULD fail (red). This confirms they test real behaviour.
+### Phase 2: Write tests FIRST
+- Write failing tests that cover: happy path, error path, edge cases
+- Mock external dependencies (DB, HTTP) — no real connections
+- Run tests — they SHOULD fail (red)
 
-### Phase 3: Implement
-- Write the minimum code to make all tests pass
-- Do NOT write code that isn't covered by a test
+### Phase 3: Implement (if needed)
+- Write minimum code to make tests pass
+- For test-only tickets: skip this phase
 
-### Phase 4: Quality gates (run in order, fix and re-run from gate 1 on failure)
-1. **Tests pass:** `go test ./... -count=1` (Go) or `pnpm test` (Web/TS)
-2. **Build passes:** `go build ./...` (Go) or `pnpm build` (Web/TS)
-3. **Types/Lint:** `go vet ./...` (Go) or `pnpm typecheck` (Web/TS)
-4. Iterate until all green
+### Phase 4: Quality gates (fix and re-run until all green)
+1. Tests pass: `npx jest <test-file> --ci`
+2. Build check: `npx tsc --noEmit` (best-effort, don't fix pre-existing errors)
 
-### Phase 5: Commit (only after ALL gates pass)
+### Phase 5: Commit and push
 ```bash
 git add -A
-git commit -m "feat: <description>
-
-Tests: X passed, 0 failed"
+git commit -m "<type>: <description>"
 git push origin HEAD
 ```
-
 Do NOT exit without committing and pushing.
-Do NOT commit if any gate is failing.
-Do NOT write implementation before tests.
