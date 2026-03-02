@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { EventItem, EventTimeline } from '@/components/EventTimeline';
 import { ActivityPane } from '@/components/ActivityPane';
 import { MdxModal } from '@/components/MdxModal';
+import { StaleIndicator } from '@/components/kanban/StaleIndicator';
 
 type ChecklistItem = { id: string; text: string; checked: boolean };
 
@@ -18,6 +19,7 @@ type Task = {
   id: number;
   title: string;
   description: string;
+  updatedAt: Date;
   status: string;
   priority: string;
   goal: string;
@@ -29,7 +31,13 @@ type Task = {
   prdVersion: number;
 };
 
-type ApiTask = Omit<Task, 'assignedAgent'> & { assignedAgent?: string | null; assigned_agent?: string | null; prd_path?: string | null; prd_version?: number };
+type ApiTask = Omit<Task, 'assignedAgent' | 'updatedAt'> & {
+  updatedAt?: Date | string | null;
+  assignedAgent?: string | null;
+  assigned_agent?: string | null;
+  prd_path?: string | null;
+  prd_version?: number;
+};
 
 type TaskForm = {
   title: string;
@@ -89,8 +97,10 @@ function normalizeStatus(status: string) {
 }
 
 function mapTask(t: ApiTask): Task {
+  const updatedAt = t.updatedAt ? new Date(t.updatedAt) : new Date('invalid-date');
   return {
     ...t,
+    updatedAt,
     status: normalizeStatus(t.status),
     assignedAgent: t.assignedAgent ?? t.assigned_agent ?? null,
     prdPath: t.prdPath ?? t.prd_path ?? null,
@@ -847,6 +857,7 @@ const [rightWidth, setRightWidth] = useState(402);
                                         <div className="flex items-center gap-1 flex-wrap">
                                           {task.goalId && <Badge className="bg-indigo-600/80 text-white text-[9px] px-1 py-0">{task.goalId}</Badge>}
                                           <p className="text-xs font-medium text-white leading-tight">{task.title}</p>
+                                          <StaleIndicator updatedAt={task.updatedAt} />
                                         </div>
                                         {task.description && <p className="mt-0.5 line-clamp-2 text-[11px] text-gray-500 leading-snug">{task.description}</p>}
                                       </div>
