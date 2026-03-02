@@ -32,3 +32,4 @@ tsconfig.tsbuildinfo
 !.decapod/generated/specs/.manifest.json
 .codex-prompt.md
 validation_output.json
+.-worktrees/
