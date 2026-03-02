@@ -49,6 +49,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Generate fumadocs source
+        run: npx fumadocs-mdx
+
       - name: Build
         run: npm run build
 
