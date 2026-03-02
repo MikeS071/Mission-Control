@@ -5,6 +5,7 @@ import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea
 import { AlertTriangle, Bot, ChevronDown, ChevronRight, Clock3, History, Pencil, Plus, Settings2, UserX } from 'lucide-react';
 import { VersionHistoryPanel } from '@/components/VersionHistoryPanel';
 import { ChatPanel } from '@/components/ChatPanel';
+import { EmptyBoardSuggestions } from '@/components/EmptyBoardSuggestions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -424,7 +425,7 @@ function ResizableDivider({ onDrag }: { onDrag: (dx: number) => void }) {
 
 // ─── Main KanbanBoard ─────────────────────────────────────────────────────────
 
-export function KanbanBoard() {
+export function KanbanBoard({ tenantPlan = 'free' }: { tenantPlan?: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -783,148 +784,158 @@ const [rightWidth, setRightWidth] = useState(402);
 
           {/* Kanban columns — styled scrollbar to match card bg */}
           <div className="flex-1 overflow-auto p-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-700">
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex gap-2 pb-2">
-              {grouped.map(({ col, items }) => {
-                const isCollapsed = Boolean(collapsedColumns[col]);
-                const limit = wipLimits[col];
-                const isOverWip = typeof limit === 'number' && limit > 0 && items.length > limit;
-                const titleColor = isOverWip ? 'text-amber-300' : 'text-gray-500';
+            {tasks.length === 0 ? (
+              <EmptyBoardSuggestions
+                tenantPlan={tenantPlan}
+                onTemplateApplied={async () => {
+                  await load();
+                }}
+                onError={(message) => setErrorMessage(message)}
+              />
+            ) : (
+              <DragDropContext onDragEnd={onDragEnd}>
+                <div className="flex gap-2 pb-2">
+                  {grouped.map(({ col, items }) => {
+                    const isCollapsed = Boolean(collapsedColumns[col]);
+                    const limit = wipLimits[col];
+                    const isOverWip = typeof limit === 'number' && limit > 0 && items.length > limit;
+                    const titleColor = isOverWip ? 'text-amber-300' : 'text-gray-500';
 
-                return (
-                  <div key={col} className="w-64 flex-shrink-0">
-                    <div className={`mb-1.5 rounded border px-1.5 py-0.5 ${isOverWip ? 'border-amber-600 bg-amber-950/30' : 'border-transparent bg-transparent'}`}>
-                      <div className="flex items-center justify-between gap-1">
-                        <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide ${titleColor}`}>
-                          <button type="button" onClick={() => toggleColumnCollapsed(col)} className="rounded p-0.5 hover:bg-gray-800" aria-label={isCollapsed ? 'Expand column' : 'Collapse column'}>
-                            {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                          </button>
-                          {editingColumn === col ? <input autoFocus value={editingLabelValue} onChange={(e) => setEditingLabelValue(e.target.value)} onBlur={() => saveColumnLabel(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveColumnLabel(col); if (e.key === 'Escape') setEditingColumn(null); }} className="w-28 rounded border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] normal-case text-white" /> : <span className="normal-case">{columnLabels[col] || STATUS_LABELS[col]}</span>}
-                          <span className="text-gray-600">({items.length})</span>
-                          {typeof limit === 'number' && limit > 0 && <span className="text-gray-600">WIP {limit}</span>}
-                        </div>
-                        <div className="flex items-center gap-0.5">
-                          {(col === 'backlog' || col === 'in_progress') && (
-                            <button type="button" onClick={() => openAddForColumn(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300" aria-label={`Add ${STATUS_LABELS[col]} goal`}>
-                              <Plus className="mx-auto h-3 w-3" />
-                            </button>
-                          )}
-                          <button type="button" onClick={() => startEditingLabel(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300"><Pencil className="mx-auto h-2.5 w-2.5" /></button>
-                          <button type="button" onClick={() => startWipEdit(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300"><Settings2 className="mx-auto h-2.5 w-2.5" /></button>
-                        </div>
-                      </div>
-                      {editingWipColumn === col && <div className="mt-1 flex items-center gap-1.5"><input type="number" min={1} placeholder="No limit" value={editingWipValue} onChange={(e) => setEditingWipValue(e.target.value)} onBlur={() => saveWipLimit(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveWipLimit(col); if (e.key === 'Escape') setEditingWipColumn(null); }} className="w-20 rounded border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] text-white" /><span className="text-[10px] text-gray-500">0 to clear</span></div>}
-                    </div>
-
-                    {!isCollapsed && (
-                      <Droppable droppableId={col}>
-                        {(provided, snapshot) => (
-                          <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-32 rounded-lg p-1.5 space-y-1.5 transition-colors [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full ${snapshot.isDraggingOver ? 'bg-gray-800/60' : 'bg-gray-900/60'}`}>
-                            {items.map((task, i) => {
-                              const completeCount = task.checklist.filter((item) => item.checked).length;
-                              const totalCount = task.checklist.length;
-                              const isWorking = Boolean(workingByTask[task.id]);
-                              const blocked = isTaskBlocked(task.tags);
-                              const needsHuman = isTaskNeedsHuman(task.tags);
-
-                              return (
-                                <Draggable key={task.id} draggableId={String(task.id)} index={i}>
-                                  {(p, s) => (
-                                    <div ref={p.innerRef} {...p.draggableProps} className={`relative rounded border bg-gray-800 p-2.5 ${blocked ? 'border-red-700/70 shadow-[0_0_8px_rgba(239,68,68,0.15)]' : isWorking ? 'border-indigo-500/40' : 'border-gray-700/70'} ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
-                                      {isWorking && !blocked && <div className="absolute right-1.5 top-1.5"><Bot className="h-3 w-3 text-indigo-300 animate-spin" /></div>}
-
-                                      {/* Blocked / Needs Human label */}
-                                      {blocked && (
-                                        <div className="mb-1.5 flex items-center">
-                                          <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white ${needsHuman ? 'bg-red-600' : 'bg-red-700'}`}>
-                                            <AlertTriangle className="h-2 w-2" />
-                                            {needsHuman ? 'NEEDS YOU' : 'BLOCKED'}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
-                                        <div className="flex items-center gap-1 flex-wrap">
-                                          {task.goalId && <Badge className="bg-indigo-600/80 text-white text-[9px] px-1 py-0">{task.goalId}</Badge>}
-                                          <p className="text-xs font-medium text-white leading-tight">{task.title}</p>
-                                        </div>
-                                        {task.description && <p className="mt-0.5 line-clamp-2 text-[11px] text-gray-500 leading-snug">{task.description}</p>}
-                                      </div>
-
-                                      {task.checklist.length > 0 && (
-                                        <div className="mt-1 space-y-0.5">
-                                          {task.checklist.map((item) => (
-                                            <label key={item.id} className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                                              <input type="checkbox" checked={item.checked} readOnly className="h-2.5 w-2.5" />
-                                              <span className={item.checked ? 'line-through text-gray-600' : ''}>{item.text}</span>
-                                            </label>
-                                          ))}
-                                        </div>
-                                      )}
-
-                                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                                        <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-700/60 bg-gray-950 px-1.5 py-0.5 text-[10px]">{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
-                                        <Badge variant="outline" className="text-[9px] px-1 py-0">{task.goal}</Badge>
-                                        {task.checklist.length > 0 && <Badge variant="outline" className="text-[9px] px-1 py-0">{completeCount}/{totalCount}</Badge>}
-                                        {task.assignedAgent && <Badge className="text-[9px] px-1 py-0">{task.assignedAgent}</Badge>}
-                                        {task.tags && (() => {
-                                          const displayTags = task.tags.split(',').map(t => t.trim()).filter(t => t && !['blocked','needs-human','needs human'].includes(t.toLowerCase()));
-                                          return displayTags.length > 0 ? <Badge variant="outline" className="text-[9px] px-1 py-0">{displayTags.join(', ')}</Badge> : null;
-                                        })()}
-                                      </div>
-
-                                      {/* Quick action buttons */}
-                                      <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                                        <button
-                                          type="button"
-                                          onClick={(e) => void toggleBlocked(task, e)}
-                                          className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${blocked && !needsHuman ? 'border-red-700 bg-red-900/40 text-red-300' : 'border-gray-700/60 text-gray-500 hover:border-red-700 hover:text-red-300'}`}
-                                          title="Toggle blocked"
-                                        >
-                                          <AlertTriangle className="h-2 w-2" />Blocked
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => void toggleNeedsHuman(task, e)}
-                                          className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${needsHuman ? 'border-red-600 bg-red-900/40 text-red-300' : 'border-gray-700/60 text-gray-500 hover:border-red-600 hover:text-red-300'}`}
-                                          title="Toggle needs human"
-                                        >
-                                          <UserX className="h-2 w-2" />Needs you
-                                        </button>
-                                        <button type="button" onClick={() => void toggleHistory(task.id)} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Clock3 className="h-2 w-2" />History</button>
-                                        {task.prdPath && (
-                                          <button type="button" onClick={(e) => { e.stopPropagation(); void openPrdEditor(task); }} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Pencil className="h-2 w-2" />PRD</button>
-                                        )}
-                                        {task.prdVersion > 0 && (
-                                          <button
-                                            type="button"
-                                            onClick={() => setOpenVersionHistoryTaskId((prev) => prev === task.id ? null : task.id)}
-                                            className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${openVersionHistoryTaskId === task.id ? 'border-indigo-600 text-indigo-300' : 'border-gray-700/60 text-gray-500 hover:text-gray-300 hover:border-gray-600'}`}
-                                          >
-                                            <History className="h-2 w-2" />PRD Versions
-                                          </button>
-                                        )}
-                                      </div>
-
-                                      {openHistoryTaskId === task.id && <div className="mt-1.5 rounded border border-gray-700/60 bg-gray-900 p-1.5"><EventTimeline events={historyByTask[task.id] || []} /></div>}
-                                      {openVersionHistoryTaskId === task.id && (
-                                        <VersionHistoryPanel taskId={task.id} onRestored={() => void load()} />
-                                      )}
-                                    </div>
-                                  )}
-                                </Draggable>
-                              );
-                            })}
-                            {provided.placeholder}
+                    return (
+                      <div key={col} className="w-64 flex-shrink-0">
+                        <div className={`mb-1.5 rounded border px-1.5 py-0.5 ${isOverWip ? 'border-amber-600 bg-amber-950/30' : 'border-transparent bg-transparent'}`}>
+                          <div className="flex items-center justify-between gap-1">
+                            <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide ${titleColor}`}>
+                              <button type="button" onClick={() => toggleColumnCollapsed(col)} className="rounded p-0.5 hover:bg-gray-800" aria-label={isCollapsed ? 'Expand column' : 'Collapse column'}>
+                                {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                              </button>
+                              {editingColumn === col ? <input autoFocus value={editingLabelValue} onChange={(e) => setEditingLabelValue(e.target.value)} onBlur={() => saveColumnLabel(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveColumnLabel(col); if (e.key === 'Escape') setEditingColumn(null); }} className="w-28 rounded border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] normal-case text-white" /> : <span className="normal-case">{columnLabels[col] || STATUS_LABELS[col]}</span>}
+                              <span className="text-gray-600">({items.length})</span>
+                              {typeof limit === 'number' && limit > 0 && <span className="text-gray-600">WIP {limit}</span>}
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              {(col === 'backlog' || col === 'in_progress') && (
+                                <button type="button" onClick={() => openAddForColumn(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300" aria-label={`Add ${STATUS_LABELS[col]} goal`}>
+                                  <Plus className="mx-auto h-3 w-3" />
+                                </button>
+                              )}
+                              <button type="button" onClick={() => startEditingLabel(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300"><Pencil className="mx-auto h-2.5 w-2.5" /></button>
+                              <button type="button" onClick={() => startWipEdit(col)} className="h-5 w-5 rounded border border-gray-700/60 p-0 text-gray-500 hover:bg-gray-800 hover:text-gray-300"><Settings2 className="mx-auto h-2.5 w-2.5" /></button>
+                            </div>
                           </div>
+                          {editingWipColumn === col && <div className="mt-1 flex items-center gap-1.5"><input type="number" min={1} placeholder="No limit" value={editingWipValue} onChange={(e) => setEditingWipValue(e.target.value)} onBlur={() => saveWipLimit(col)} onKeyDown={(e) => { if (e.key === 'Enter') saveWipLimit(col); if (e.key === 'Escape') setEditingWipColumn(null); }} className="w-20 rounded border border-gray-700 bg-gray-950 px-1.5 py-0.5 text-[10px] text-white" /><span className="text-[10px] text-gray-500">0 to clear</span></div>}
+                        </div>
+
+                        {!isCollapsed && (
+                          <Droppable droppableId={col}>
+                            {(provided, snapshot) => (
+                              <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-32 rounded-lg p-1.5 space-y-1.5 transition-colors [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full ${snapshot.isDraggingOver ? 'bg-gray-800/60' : 'bg-gray-900/60'}`}>
+                                {items.map((task, i) => {
+                                  const completeCount = task.checklist.filter((item) => item.checked).length;
+                                  const totalCount = task.checklist.length;
+                                  const isWorking = Boolean(workingByTask[task.id]);
+                                  const blocked = isTaskBlocked(task.tags);
+                                  const needsHuman = isTaskNeedsHuman(task.tags);
+
+                                  return (
+                                    <Draggable key={task.id} draggableId={String(task.id)} index={i}>
+                                      {(p, s) => (
+                                        <div ref={p.innerRef} {...p.draggableProps} className={`relative rounded border bg-gray-800 p-2.5 ${blocked ? 'border-red-700/70 shadow-[0_0_8px_rgba(239,68,68,0.15)]' : isWorking ? 'border-indigo-500/40' : 'border-gray-700/70'} ${s.isDragging ? 'border-blue-500 shadow-lg' : ''}`}>
+                                          {isWorking && !blocked && <div className="absolute right-1.5 top-1.5"><Bot className="h-3 w-3 text-indigo-300 animate-spin" /></div>}
+
+                                          {/* Blocked / Needs Human label */}
+                                          {blocked && (
+                                            <div className="mb-1.5 flex items-center">
+                                              <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white ${needsHuman ? 'bg-red-600' : 'bg-red-700'}`}>
+                                                <AlertTriangle className="h-2 w-2" />
+                                                {needsHuman ? 'NEEDS YOU' : 'BLOCKED'}
+                                              </span>
+                                            </div>
+                                          )}
+
+                                          <div {...p.dragHandleProps} onClick={() => openEdit(task)} className="cursor-pointer">
+                                            <div className="flex items-center gap-1 flex-wrap">
+                                              {task.goalId && <Badge className="bg-indigo-600/80 text-white text-[9px] px-1 py-0">{task.goalId}</Badge>}
+                                              <p className="text-xs font-medium text-white leading-tight">{task.title}</p>
+                                            </div>
+                                            {task.description && <p className="mt-0.5 line-clamp-2 text-[11px] text-gray-500 leading-snug">{task.description}</p>}
+                                          </div>
+
+                                          {task.checklist.length > 0 && (
+                                            <div className="mt-1 space-y-0.5">
+                                              {task.checklist.map((item) => (
+                                                <label key={item.id} className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                                                  <input type="checkbox" checked={item.checked} readOnly className="h-2.5 w-2.5" />
+                                                  <span className={item.checked ? 'line-through text-gray-600' : ''}>{item.text}</span>
+                                                </label>
+                                              ))}
+                                            </div>
+                                          )}
+
+                                          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                                            <select value={task.priority} onClick={(e) => e.stopPropagation()} onChange={(e) => onInlinePriorityChange(task, e)} className="rounded border border-gray-700/60 bg-gray-950 px-1.5 py-0.5 text-[10px]">{PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select>
+                                            <Badge variant="outline" className="text-[9px] px-1 py-0">{task.goal}</Badge>
+                                            {task.checklist.length > 0 && <Badge variant="outline" className="text-[9px] px-1 py-0">{completeCount}/{totalCount}</Badge>}
+                                            {task.assignedAgent && <Badge className="text-[9px] px-1 py-0">{task.assignedAgent}</Badge>}
+                                            {task.tags && (() => {
+                                              const displayTags = task.tags.split(',').map(t => t.trim()).filter(t => t && !['blocked','needs-human','needs human'].includes(t.toLowerCase()));
+                                              return displayTags.length > 0 ? <Badge variant="outline" className="text-[9px] px-1 py-0">{displayTags.join(', ')}</Badge> : null;
+                                            })()}
+                                          </div>
+
+                                          {/* Quick action buttons */}
+                                          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => void toggleBlocked(task, e)}
+                                              className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${blocked && !needsHuman ? 'border-red-700 bg-red-900/40 text-red-300' : 'border-gray-700/60 text-gray-500 hover:border-red-700 hover:text-red-300'}`}
+                                              title="Toggle blocked"
+                                            >
+                                              <AlertTriangle className="h-2 w-2" />Blocked
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => void toggleNeedsHuman(task, e)}
+                                              className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${needsHuman ? 'border-red-600 bg-red-900/40 text-red-300' : 'border-gray-700/60 text-gray-500 hover:border-red-600 hover:text-red-300'}`}
+                                              title="Toggle needs human"
+                                            >
+                                              <UserX className="h-2 w-2" />Needs you
+                                            </button>
+                                            <button type="button" onClick={() => void toggleHistory(task.id)} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Clock3 className="h-2 w-2" />History</button>
+                                            {task.prdPath && (
+                                              <button type="button" onClick={(e) => { e.stopPropagation(); void openPrdEditor(task); }} className="inline-flex items-center gap-0.5 rounded border border-gray-700/60 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 hover:border-gray-600"><Pencil className="h-2 w-2" />PRD</button>
+                                            )}
+                                            {task.prdVersion > 0 && (
+                                              <button
+                                                type="button"
+                                                onClick={() => setOpenVersionHistoryTaskId((prev) => prev === task.id ? null : task.id)}
+                                                className={`inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] transition-colors ${openVersionHistoryTaskId === task.id ? 'border-indigo-600 text-indigo-300' : 'border-gray-700/60 text-gray-500 hover:text-gray-300 hover:border-gray-600'}`}
+                                              >
+                                                <History className="h-2 w-2" />PRD Versions
+                                              </button>
+                                            )}
+                                          </div>
+
+                                          {openHistoryTaskId === task.id && <div className="mt-1.5 rounded border border-gray-700/60 bg-gray-900 p-1.5"><EventTimeline events={historyByTask[task.id] || []} /></div>}
+                                          {openVersionHistoryTaskId === task.id && (
+                                            <VersionHistoryPanel taskId={task.id} onRestored={() => void load()} />
+                                          )}
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  );
+                                })}
+                                {provided.placeholder}
+                              </div>
+                            )}
+                          </Droppable>
                         )}
-                      </Droppable>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </DragDropContext>
+                      </div>
+                    );
+                  })}
+                </div>
+              </DragDropContext>
+            )}
           </div>{/* end overflow-auto */}
         </div>{/* end middle pane */}
 
