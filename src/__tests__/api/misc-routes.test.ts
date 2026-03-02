@@ -26,10 +26,17 @@ jest.mock('@/lib/aipipe', () => ({
   estimateSavingsPercent: jest.fn(),
 }));
 
+jest.mock('@/lib/policy', () => ({
+  filterModelsForPolicy: jest.fn(),
+  getOrCreatePolicy: jest.fn(),
+  isFeatureEnabled: jest.fn(),
+}));
+
 import { db } from '@/lib/db';
 import { resolveTenantId, getTenantId } from '@/lib/tenant';
 import { getTenantSubscription } from '@/lib/billing';
 import { aipipeStats, aipipeTenantStats, estimateSavingsPercent } from '@/lib/aipipe';
+import { filterModelsForPolicy, getOrCreatePolicy, isFeatureEnabled } from '@/lib/policy';
 
 import { GET as wsTokenGet } from '@/app/api/chat/ws-token/route';
 import { GET as billingStatusGet } from '@/app/api/billing/status/route';
@@ -48,6 +55,9 @@ const mockedGetTenantSubscription = getTenantSubscription as jest.MockedFunction
 const mockedAipipeStats = aipipeStats as jest.MockedFunction<typeof aipipeStats>;
 const mockedAipipeTenantStats = aipipeTenantStats as jest.MockedFunction<typeof aipipeTenantStats>;
 const mockedEstimateSavingsPercent = estimateSavingsPercent as jest.MockedFunction<typeof estimateSavingsPercent>;
+const mockedFilterModelsForPolicy = filterModelsForPolicy as jest.MockedFunction<typeof filterModelsForPolicy>;
+const mockedGetOrCreatePolicy = getOrCreatePolicy as jest.MockedFunction<typeof getOrCreatePolicy>;
+const mockedIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<typeof isFeatureEnabled>;
 
 function makeRequest(
   url: string,
@@ -81,6 +91,13 @@ function createSelectWhereLimitBuilder(rows: unknown[]) {
 describe('misc API routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetOrCreatePolicy.mockResolvedValue({
+      tier: 'pro',
+      limits: { api_calls_per_day: 10_000, agents: 25 },
+      features: { models: true },
+    });
+    mockedIsFeatureEnabled.mockReturnValue(true);
+    mockedFilterModelsForPolicy.mockImplementation((_policy, models) => models);
   });
 
   describe('chat/ws-token route', () => {

@@ -3,7 +3,7 @@ import { PolicyTierSchema } from '@/lib/policy/schema';
 
 describe('policy templates', () => {
   it('exports supported tier names', () => {
-    expect(TIER_NAMES).toEqual(['free', 'pro', 'enterprise']);
+    expect(TIER_NAMES).toEqual(['free', 'pro', 'team']);
   });
 
   it('returns expected default rules for free tier', () => {
@@ -38,11 +38,11 @@ describe('policy templates', () => {
     });
   });
 
-  it('returns expected default rules for enterprise tier', () => {
-    const enterprise = getDefaultPolicy('enterprise');
+  it('returns expected default rules for team tier', () => {
+    const team = getDefaultPolicy('team');
 
-    expect(enterprise).toEqual({
-      name: 'enterprise',
+    expect(team).toEqual({
+      name: 'team',
       rules: [
         { featureKey: 'agents', limitType: 'unlimited', limitValue: null, enabled: true },
         { featureKey: 'models', limitType: 'unlimited', limitValue: null, enabled: true },

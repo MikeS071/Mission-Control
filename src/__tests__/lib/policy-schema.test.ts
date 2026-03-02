@@ -91,6 +91,14 @@ describe('policy schema', () => {
       const result = validatePolicy({
         tenantId: 42,
         tier: 'pro',
+        rules: [
+          {
+            featureKey: 'agents',
+            limitType: 'number',
+            limitValue: 5,
+            enabled: true,
+          },
+        ],
         customOverrides: [
           {
             featureKey: 'team_members',
@@ -110,6 +118,7 @@ describe('policy schema', () => {
       const result = validatePolicy({
         tenantId: 42,
         tier: 'free',
+        rules: [],
         customOverrides: [],
         createdAt: 'not-a-date',
         updatedAt: '2026-03-02T00:00:00.000Z',
@@ -122,6 +131,7 @@ describe('policy schema', () => {
       const result = validatePolicy({
         tenantId: 0,
         tier: 'free',
+        rules: [],
         customOverrides: [],
         createdAt: '2026-03-02T00:00:00.000Z',
         updatedAt: '2026-03-02T00:00:00.000Z',
@@ -145,7 +155,8 @@ describe('policy schema', () => {
       expect(() =>
         PolicySchema.parse({
           tenantId: 7,
-          tier: 'enterprise',
+          tier: 'team',
+          rules: [],
           customOverrides: [],
           createdAt: '2026-03-02T00:00:00.000Z',
           updatedAt: '2026-03-02T00:00:00.000Z',

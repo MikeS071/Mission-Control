@@ -216,5 +216,4 @@ export type {
   PolicyOverrides,
   PolicyRule,
   PolicyRules,
-  PolicyTier,
 } from './schema';
