@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
@@ -46,7 +46,7 @@ const providers = [...(authConfig.providers ?? []), credentialsProvider];
  * Full auth config with DB access — Node.js runtime only.
  * Used in API routes and server components.
  */
-export const { auth, handlers } = NextAuth({
+export const authOptions: NextAuthConfig = {
   ...authConfig,
   providers,
   callbacks: {
@@ -113,4 +113,13 @@ export const { auth, handlers } = NextAuth({
       return token;
     },
   },
-});
+};
+
+export const { auth, handlers } = NextAuth(authOptions);
+
+/**
+ * Compatibility helper for server components that still use getServerSession-style access.
+ */
+export async function getServerSession(_options: NextAuthConfig = authOptions) {
+  return auth();
+}
