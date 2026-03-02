@@ -6,6 +6,7 @@ const navItems = [
   { href: '/admin/tenants', label: 'Tenants' },
   { href: '/admin/policies', label: 'Policies' },
   { href: '/admin/provisioning', label: 'Provisioning' },
+  { href: '/admin/audit-log', label: 'Audit Log' },
   { href: '/admin/system', label: 'System' },
 ];
 

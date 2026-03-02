@@ -42,12 +42,14 @@ describe('admin scaffold', () => {
       expect(html).toContain('href="/admin/tenants"');
       expect(html).toContain('href="/admin/policies"');
       expect(html).toContain('href="/admin/provisioning"');
+      expect(html).toContain('href="/admin/audit-log"');
       expect(html).toContain('href="/admin/system"');
       expect(html).toContain('Dashboard');
       expect(html).toContain('Users');
       expect(html).toContain('Tenants');
       expect(html).toContain('Policies');
       expect(html).toContain('Provisioning');
+      expect(html).toContain('Audit Log');
       expect(html).toContain('System');
     });
   });
