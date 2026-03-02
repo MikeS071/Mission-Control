@@ -64,6 +64,8 @@ export const PolicySchema = z.object({
 export type PolicyRule = z.infer<typeof PolicyRuleSchema>;
 export type PolicyTier = z.infer<typeof PolicyTierSchema>;
 export type Policy = z.infer<typeof PolicySchema>;
+export type PolicyRules = PolicyRule[];
+export type PolicyOverrides = Record<string, unknown>;
 
 export function validateRule(input: unknown) {
   return PolicyRuleSchema.safeParse(input);

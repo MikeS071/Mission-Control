@@ -1,4 +1,5 @@
 import { bigint, boolean, date, integer, jsonb, numeric, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import type { PolicyOverrides, PolicyRules, PolicyTier } from '@/lib/policy/schema';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -159,6 +160,28 @@ export const tenantSettings = pgTable('tenant_settings', {
     .references(() => tenants.id, { onDelete: 'cascade' }),
   settings: jsonb('settings').notNull().default({}),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const policies = pgTable('policies', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id')
+    .references(() => tenants.id)
+    .unique(),
+  tier: text('tier').$type<PolicyTier>().notNull().default('free'),
+  rules: jsonb('rules').$type<PolicyRules>().notNull(),
+  customOverrides: jsonb('custom_overrides').$type<PolicyOverrides>(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const policyAuditLog = pgTable('policy_audit_log', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').references(() => tenants.id),
+  changedBy: integer('changed_by').references(() => users.id),
+  oldRules: jsonb('old_rules').$type<PolicyRules>(),
+  newRules: jsonb('new_rules').$type<PolicyRules>(),
+  changeReason: text('change_reason'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
 export const xpLedger = pgTable('xp_ledger', {
