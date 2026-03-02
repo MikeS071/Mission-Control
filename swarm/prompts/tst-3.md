@@ -1,12 +1,46 @@
-# mc-p3-test: Phase 3 E2E test suite
+# tst-3: Phase 3 E2E Test
+Full verification: usage ledger records from AiPipe headers, budget enforcement returns 429 when exceeded, usage dashboard API returns correct aggregations, pricing markup applied correctly, alerts fire at thresholds. All tests pass.
 
-Run the full test and build verification after Phase 3 integration.
+---
 
-Steps:
-1. `npx tsc --noEmit` — zero type errors
-2. `npx jest --ci --coverage` — all tests pass, capture coverage
-3. `npm run build` — production build succeeds
-4. Review any new warnings or deprecations
-5. If anything fails, fix it
+## MANDATORY DEVELOPMENT PROCESS (follow in exact order)
 
-Commit any fixes. Include coverage summary in commit message.
+### Phase 0: Decapod governance
+Run once at start — capture validation state:
+```bash
+export PATH="$HOME/.cargo/bin:$PATH"
+decapod validate --format json > validation_output.json 2>&1
+```
+Review `validation_output.json`. If there are failures:
+- Distinguish PRE-EXISTING failures (present before your changes) from NEW failures (introduced by your work)
+- Do NOT attempt to fix pre-existing failures
+- If your changes introduce NEW validation failures, fix them before proceeding
+- Commit `validation_output.json` with your final commit so the orchestrator can review
+
+### Phase 1: Understand the spec
+- Read the task objective and requirements above
+- Read the source file(s) to test — understand inputs, outputs, error cases
+- Read an existing test (e.g. `src/__tests__/api/activity.test.ts`) for the mocking pattern
+
+### Phase 2: Write tests FIRST
+- Write failing tests that cover: happy path, error path, edge cases
+- Mock external dependencies (DB, HTTP) — no real connections
+- Run tests — they SHOULD fail (red)
+
+### Phase 3: Implement (if needed)
+- Write minimum code to make tests pass
+- For test-only tickets: skip this phase
+
+### Phase 4: Quality gates (fix and re-run until all green)
+1. Tests pass: `npx jest <test-file> --ci`
+2. Build check: `npx tsc --noEmit` (best-effort, don't fix pre-existing errors)
+3. Decapod re-validate: `decapod validate --format json > validation_output.json 2>&1`
+   - Confirm no NEW failures introduced by your changes
+
+### Phase 5: Commit and push
+```bash
+git add -A
+git commit -m "<type>: <description>"
+git push origin HEAD
+```
+Do NOT exit without committing and pushing.
