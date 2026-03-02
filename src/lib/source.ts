@@ -1,7 +1,7 @@
-import { docs } from '@/.source/server';
-import { loader, source as createSource } from 'fumadocs-core/source';
+import { docs } from '../../source.config';
+import { loader } from 'fumadocs-core/source';
 
 export const source = loader({
   baseUrl: '/docs',
-  source: createSource(docs),
+  source: docs as any,
 });
