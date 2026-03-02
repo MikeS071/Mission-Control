@@ -30,3 +30,4 @@ tsconfig.tsbuildinfo
 !.decapod/generated/specs/
 !.decapod/generated/specs/*.md
 !.decapod/generated/specs/.manifest.json
+.codex-prompt.md
