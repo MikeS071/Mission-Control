@@ -150,7 +150,7 @@ describe('telegram-ingress.ts', () => {
 });
 
 describe('source.ts', () => {
-  it.skip('keeps source loader contract pinned to /docs and docs.toFumadocsSource()', () => {
+  it('keeps source loader contract pinned to /docs and docs.toFumadocsSource()', () => {
     const content = fs.readFileSync(path.join(process.cwd(), 'src/lib/source.ts'), 'utf8');
     expect(content).toContain("baseUrl: '/docs'");
     expect(content).toContain('source: docs.toFumadocsSource()');
