@@ -2,6 +2,14 @@ import { eq } from 'drizzle-orm';
 import { memberships, tenants, users } from '@/db/schema';
 import { db } from '@/lib/db';
 
+type AdminUserRow = {
+  id: number;
+  email: string;
+  tenantName: string | null;
+  createdAt: Date | null;
+  lastLogin: Date | null;
+};
+
 function formatTimestamp(value: Date | null): string {
   if (!value) {
     return '—';
@@ -10,8 +18,8 @@ function formatTimestamp(value: Date | null): string {
   return value.toISOString().slice(0, 10);
 }
 
-export default async function AdminUsersPage() {
-  const rows = await db
+async function loadUsers(): Promise<AdminUserRow[]> {
+  return db
     .select({
       id: users.id,
       email: users.email,
@@ -23,6 +31,24 @@ export default async function AdminUsersPage() {
     .leftJoin(memberships, eq(memberships.userEmail, users.email))
     .leftJoin(tenants, eq(tenants.id, memberships.tenantId))
     .orderBy(users.id);
+}
+
+export default async function AdminUsersPage() {
+  let rows: AdminUserRow[] = [];
+
+  try {
+    rows = await loadUsers();
+  } catch (error) {
+    console.error('Admin users page query failed:', error);
+
+    return (
+      <section className="space-y-4 text-slate-100">
+        <div className="rounded-xl border border-red-900/60 bg-red-950/30 px-5 py-4 text-sm text-red-200">
+          Failed to load users.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4 text-slate-100">
