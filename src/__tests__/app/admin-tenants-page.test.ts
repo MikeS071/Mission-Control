@@ -54,9 +54,12 @@ describe('admin tenants list page', () => {
     const html = renderToStaticMarkup(node);
 
     expect(builder.orderBy).toHaveBeenCalled();
+    expect(html.startsWith('<section')).toBe(true);
+    expect(html).not.toContain('<main');
     expect(html).toContain('<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-300">ID</th>');
     expect(html).toContain('Alpha Corp');
     expect(html).toContain('href="/admin/tenants/11"');
+    expect(html).toContain('href="/admin/tenants/12"');
     expect(html).toContain('Jan 2, 2026');
     expect(html).toContain('4');
     expect(html).toContain('Not set');
@@ -69,6 +72,8 @@ describe('admin tenants list page', () => {
     const node = await AdminTenantsPage();
     const html = renderToStaticMarkup(node);
 
+    expect(html.startsWith('<section')).toBe(true);
+    expect(html).not.toContain('<main');
     expect(html).toContain('Failed to load tenants.');
   });
 
@@ -79,6 +84,8 @@ describe('admin tenants list page', () => {
     const node = await AdminTenantsPage();
     const html = renderToStaticMarkup(node);
 
+    expect(html.startsWith('<section')).toBe(true);
+    expect(html).not.toContain('<main');
     expect(html).toContain('No tenants found.');
   });
 });
