@@ -16,6 +16,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Admin check: tenant ID must be 1
+    if ((session as any).tenantId !== 1) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
     const { instanceId } = await params;
     const instanceIdNum = parseInt(instanceId, 10);
 
