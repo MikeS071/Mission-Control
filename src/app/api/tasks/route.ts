@@ -8,7 +8,7 @@ import { resolveTenantId } from '@/lib/tenant';
 import { awardXp, XP_RULES } from '@/lib/xp';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 import { parseBody, TaskCreateSchema, TaskPatchSchema } from '@/lib/validate';
-import { fireKanbanTrigger } from '@/lib/kanbanTrigger';
+import { emitTaskEvent, fireKanbanTrigger } from '@/lib/kanbanTrigger';
 
 const TaskPatchWithIdSchema = TaskPatchSchema.extend({
   id: z.number().int().positive('id must be a positive integer'),
@@ -31,6 +31,19 @@ const normalizePriority = (priority?: string) => {
   if (value === 'high') return 'High';
   if (value === 'critical') return 'Critical';
   return 'Medium';
+};
+
+const resolveRequestUserId = (req: NextRequest): number | null => {
+  const value = req.headers.get('x-user-id');
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const safeEmitTaskEvent = (...args: Parameters<typeof emitTaskEvent>) => {
+  if (typeof emitTaskEvent === 'function') {
+    void emitTaskEvent(...args);
+  }
 };
 
 type ChecklistInputValue = Array<{ id: string; text: string; checked: boolean }> | string | undefined;
@@ -81,6 +94,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = resolveRequestUserId(req);
 
   try {
     const parsed = parseBody(TaskCreateSchema, await req.json());
@@ -126,6 +140,11 @@ export async function POST(req: NextRequest) {
 
       void awardXp(tenantId, XP_RULES.TASK_CREATED, 'task_created', String(task.id));
       void sendTelegramMessage(`📋 Task created: ${task.title} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
+      safeEmitTaskEvent(String(task.id), 'created', {
+        tenantId,
+        userId,
+        status: task.status,
+      });
 
       // Fire kanban trigger if status is NOT done or backlog
       if (task.status !== 'done' && task.status !== 'backlog') {
@@ -143,6 +162,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const tenantId = await resolveTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = resolveRequestUserId(req);
 
   const parsedPatch = parseBody(TaskPatchWithIdSchema, await req.json());
   if (!parsedPatch.ok) return parsedPatch.response;
@@ -173,6 +193,13 @@ export async function PATCH(req: NextRequest) {
   if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   if (data.status !== undefined && task.status !== before.status) {
+    safeEmitTaskEvent(String(task.id), 'moved', {
+      tenantId,
+      userId,
+      fromStatus: before.status,
+      toStatus: task.status,
+    });
+
     await db.insert(events).values({
       tenantId,
       taskId: task.id,
@@ -185,7 +212,15 @@ export async function PATCH(req: NextRequest) {
         new_status: task.status,
       }),
     });
-    if (task.status === 'done') void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
+    if (task.status === 'done') {
+      safeEmitTaskEvent(String(task.id), 'completed', {
+        tenantId,
+        userId,
+        fromStatus: before.status,
+        toStatus: task.status,
+      });
+      void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
+    }
     void sendTelegramMessage(`🔄 ${task.title}: ${before.status} → ${task.status}`, TASK_NOTIFICATIONS_CHAT_ID);
   }
 

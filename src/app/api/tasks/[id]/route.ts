@@ -8,7 +8,7 @@ import { awardXp, XP_RULES } from '@/lib/xp';
 import { emitEvent } from '@/lib/activity';
 import { generateChecklistItems, parseChecklist, stringifyChecklist } from '@/lib/checklist-ai';
 import { parseBody, TaskPatchSchema } from '@/lib/validate';
-import { fireKanbanTrigger } from '@/lib/kanbanTrigger';
+import { emitTaskEvent, fireKanbanTrigger } from '@/lib/kanbanTrigger';
 
 const TASK_NOTIFICATIONS_CHAT_ID = '1556514337';
 
@@ -27,6 +27,19 @@ const normalizePriority = (priority?: string) => {
   if (value === 'high') return 'High';
   if (value === 'critical') return 'Critical';
   return 'Medium';
+};
+
+const resolveRequestUserId = (req: NextRequest): number | null => {
+  const value = req.headers.get('x-user-id');
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const safeEmitTaskEvent = (...args: Parameters<typeof emitTaskEvent>) => {
+  if (typeof emitTaskEvent === 'function') {
+    void emitTaskEvent(...args);
+  }
 };
 
 type ChecklistInputValue = Array<{ id: string; text: string; checked: boolean }> | string | undefined;
@@ -65,6 +78,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const tenantId = getTenantId(req);
   if (!tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = resolveRequestUserId(req);
 
   const { id } = await context.params;
   const taskId = Number(id);
@@ -97,6 +111,13 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
   if (body.status !== undefined && task.status !== before.status) {
+    safeEmitTaskEvent(String(task.id), 'moved', {
+      tenantId,
+      userId,
+      fromStatus: before.status,
+      toStatus: task.status,
+    });
+
     await db.insert(events).values({
       tenantId,
       taskId: task.id,
@@ -111,6 +132,12 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     });
 
     if (task.status === 'done') {
+      safeEmitTaskEvent(String(task.id), 'completed', {
+        tenantId,
+        userId,
+        fromStatus: before.status,
+        toStatus: task.status,
+      });
       void awardXp(tenantId, XP_RULES.TASK_COMPLETED, 'task_completed', String(task.id));
 
       // 6.5 tasks_burst — ≥10 tasks completed in the last 24h
