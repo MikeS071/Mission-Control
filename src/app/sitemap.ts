@@ -17,12 +17,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [docPages, insightEntries] = await Promise.all([
     Promise.resolve(
-      source.getPages().map((page) => ({
-        url: `${BASE_URL}/docs/${page.slugs.join('/')}`,
-        lastModified: nowIso,
-        changeFrequency: 'monthly' as const,
-        priority: 0.7,
-      })),
+      (() => {
+        try {
+          return source.getPages().map((page) => ({
+            url: `${BASE_URL}/docs/${page.slugs.join('/')}`,
+            lastModified: nowIso,
+            changeFrequency: 'monthly' as const,
+            priority: 0.7,
+          }));
+        } catch {
+          return [];
+        }
+      })(),
     ),
     db
       .select({ slug: insights.slug, publishedAt: insights.publishedAt })
