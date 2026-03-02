@@ -1,4 +1,4 @@
-import { bigint, boolean, date, integer, jsonb, numeric, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, date, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import type { PolicyOverrides, PolicyRules, PolicyTier } from '@/lib/policy/schema';
 
 export const users = pgTable('users', {
@@ -107,6 +107,47 @@ export const agentStats = pgTable('agent_stats', {
   costUsd: text('cost_usd').default('0.00'),
   recordedAt: timestamp('recorded_at').defaultNow(),
 });
+
+export const usageLedger = pgTable(
+  'usage_ledger',
+  {
+    id: serial('id').primaryKey(),
+    tenantId: integer('tenant_id').notNull().references(() => tenants.id),
+    model: text('model').notNull(),
+    provider: text('provider').notNull(),
+    tokensIn: integer('tokens_in').notNull(),
+    tokensOut: integer('tokens_out').notNull(),
+    costUsd: numeric('cost_usd', { precision: 12, scale: 6 }).notNull(),
+    hypotheticalCostUsd: numeric('hypothetical_cost_usd', { precision: 12, scale: 6 }),
+    savedUsd: numeric('saved_usd', { precision: 12, scale: 6 }),
+    cacheHit: boolean('cache_hit').notNull().default(false),
+    requestId: text('request_id'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantCreatedAtIdx: index('usage_ledger_tenant_created_at_idx').on(table.tenantId, table.createdAt),
+  }),
+);
+
+export const usageSummary = pgTable(
+  'usage_summary',
+  {
+    id: serial('id').primaryKey(),
+    tenantId: integer('tenant_id').notNull().references(() => tenants.id),
+    period: text('period').notNull(),
+    periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+    totalTokensIn: bigint('total_tokens_in', { mode: 'number' }).notNull().default(0),
+    totalTokensOut: bigint('total_tokens_out', { mode: 'number' }).notNull().default(0),
+    totalCostUsd: numeric('total_cost_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+    totalSavedUsd: numeric('total_saved_usd', { precision: 12, scale: 6 }).notNull().default('0'),
+    requestCount: integer('request_count').notNull().default(0),
+    cacheHits: integer('cache_hits').notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantPeriodStartIdx: index('usage_summary_tenant_period_start_idx').on(table.tenantId, table.period, table.periodStart),
+  }),
+);
 
 export const gatewayConnections = pgTable('gateway_connections', {
   id: serial('id').primaryKey(),
