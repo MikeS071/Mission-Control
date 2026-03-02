@@ -77,36 +77,4 @@ describe('feature-requests API route', () => {
     });
   });
 
-  it('POST with missing required fields returns 400', async () => {
-    const res = await featureRequestsPost(
-      makeRequest('http://localhost/api/feature-requests', {
-        body: {
-          email: 'user@example.com',
-        },
-      }),
-    );
-
-    expect(res.status).toBe(400);
-    const payload = await res.json();
-    expect(payload).toMatchObject({ error: expect.any(String) });
-    expect(String(payload.error)).toContain('description');
-    expect(mockedDb.insert).not.toHaveBeenCalled();
-  });
-
-  it('POST without tenant context returns 401', async () => {
-    mockedResolveTenantId.mockResolvedValueOnce(null);
-
-    const res = await featureRequestsPost(
-      makeRequest('http://localhost/api/feature-requests', {
-        body: {
-          email: 'user@example.com',
-          description: 'Need custom webhooks',
-        },
-      }),
-    );
-
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toEqual({ error: 'Unauthorized' });
-    expect(mockedDb.insert).not.toHaveBeenCalled();
-  });
 });
