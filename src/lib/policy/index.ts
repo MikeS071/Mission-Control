@@ -20,3 +20,5 @@ export interface AuthorizeInboundResult {
 export async function authorizeInbound(_input: AuthorizeInboundInput): Promise<AuthorizeInboundResult> {
   return { allow: true };
 }
+
+export type { PolicyOverrides, PolicyRule, PolicyRules, PolicyTier } from './schema';
