@@ -10,7 +10,7 @@ describe('policy schema', () => {
   describe('validateRule', () => {
     it('accepts valid number, boolean, and unlimited rule variants', () => {
       const numberRule = validateRule({
-        featureKey: 'storage_mb',
+        featureKey: 'budget_usd_per_month',
         limitType: 'number',
         limitValue: 1024,
         enabled: true,

@@ -18,6 +18,7 @@ const DEFAULT_POLICY_TEMPLATES: Record<PolicyTier, PolicyTemplate> = {
       { featureKey: 'models', limitType: 'number', limitValue: 3, enabled: true },
       { featureKey: 'storage_mb', limitType: 'number', limitValue: 100, enabled: true },
       { featureKey: 'api_calls_per_day', limitType: 'number', limitValue: 100, enabled: true },
+      { featureKey: 'budget_usd_per_month', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'custom_tools', limitType: 'boolean', limitValue: false, enabled: false },
       { featureKey: 'team_members', limitType: 'number', limitValue: 1, enabled: true },
     ],
@@ -29,6 +30,7 @@ const DEFAULT_POLICY_TEMPLATES: Record<PolicyTier, PolicyTemplate> = {
       { featureKey: 'models', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'storage_mb', limitType: 'number', limitValue: 5120, enabled: true },
       { featureKey: 'api_calls_per_day', limitType: 'number', limitValue: 10000, enabled: true },
+      { featureKey: 'budget_usd_per_month', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'custom_tools', limitType: 'boolean', limitValue: true, enabled: true },
       { featureKey: 'team_members', limitType: 'number', limitValue: 10, enabled: true },
     ],
@@ -40,6 +42,7 @@ const DEFAULT_POLICY_TEMPLATES: Record<PolicyTier, PolicyTemplate> = {
       { featureKey: 'models', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'storage_mb', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'api_calls_per_day', limitType: 'unlimited', limitValue: null, enabled: true },
+      { featureKey: 'budget_usd_per_month', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'custom_tools', limitType: 'unlimited', limitValue: null, enabled: true },
       { featureKey: 'team_members', limitType: 'unlimited', limitValue: null, enabled: true },
     ],
@@ -78,4 +81,3 @@ export function applyPolicyOverrides(baseRules: PolicyRules, overrides: PolicyRu
     return rule ? [{ ...rule }] : [];
   });
 }
-
