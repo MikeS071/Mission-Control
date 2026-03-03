@@ -323,6 +323,7 @@ export const contentItems = pgTable(
     summary: text('summary'),
     contentMd: text('content_md').notNull().default(''),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    heroImageUrl: text('hero_image_url'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
