@@ -5,6 +5,7 @@ const navItems = [
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/tenants', label: 'Tenants' },
   { href: '/admin/policies', label: 'Policies' },
+  { href: '/admin/content', label: 'Content' },
   { href: '/admin/provisioning', label: 'Provisioning' },
   { href: '/admin/audit-log', label: 'Audit Log' },
   { href: '/admin/system', label: 'System' },
