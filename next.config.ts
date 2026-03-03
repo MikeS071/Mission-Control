@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import { createMDX } from "fumadocs-mdx/next";
+import path from "node:path";
+
+const turbopackRoot = __dirname.includes(`${path.sep}.-worktrees${path.sep}`)
+  ? path.resolve(__dirname, "..", "..")
+  : __dirname;
 
 const nextConfig: NextConfig = {
   // Fix Turbopack workspace-root inference (multiple lockfiles on host).
@@ -19,7 +24,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   turbopack: {
-    root: process.cwd(),
+    root: turbopackRoot,
   },
   async headers() {
     return [
