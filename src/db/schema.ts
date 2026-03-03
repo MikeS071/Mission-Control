@@ -319,14 +319,15 @@ export const contentItems = pgTable(
       .references(() => tenants.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     slug: text('slug').notNull(),
-    status: text('status').notNull().default('draft'),
-    summary: text('summary').notNull().default(''),
+    status: text('status').notNull().default('draft'), // draft|qa|published|deleted
+    summary: text('summary'),
     contentMd: text('content_md').notNull().default(''),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    contentItemsTenantSlugUidx: uniqueIndex('content_items_tenant_slug_uidx').on(table.tenantId, table.slug),
+    tenantSlugUnique: uniqueIndex('content_items_tenant_slug_uniq').on(table.tenantId, table.slug),
   }),
 );
 

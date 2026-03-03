@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "content_items" (
   "status" text NOT NULL DEFAULT 'draft',
   "summary" text,
   "content_md" text NOT NULL DEFAULT '',
+  "published_at" timestamp with time zone,
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
   "updated_at" timestamp with time zone NOT NULL DEFAULT now()
 );
