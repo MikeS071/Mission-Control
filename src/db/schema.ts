@@ -310,6 +310,26 @@ export const insights = pgTable('insights', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const contentItems = pgTable(
+  'content_items',
+  {
+    id: serial('id').primaryKey(),
+    tenantId: integer('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    slug: text('slug').notNull(),
+    status: text('status').notNull().default('draft'),
+    summary: text('summary').notNull().default(''),
+    contentMd: text('content_md').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    contentItemsTenantSlugUidx: uniqueIndex('content_items_tenant_slug_uidx').on(table.tenantId, table.slug),
+  }),
+);
+
 export const arenaSeasons = pgTable('arena_seasons', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
