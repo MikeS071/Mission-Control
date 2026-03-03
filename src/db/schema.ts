@@ -331,6 +331,19 @@ export const contentItems = pgTable(
   }),
 );
 
+export const contentSocialPosts = pgTable('content_social_posts', {
+  id: serial('id').primaryKey(),
+  contentItemId: integer('content_item_id')
+    .notNull()
+    .references(() => insights.id, { onDelete: 'cascade' }),
+  platform: text('platform').notNull(),
+  text: text('text').notNull(),
+  scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
+  status: text('status').notNull(),
+  postedAt: timestamp('posted_at', { withTimezone: true }),
+  error: text('error'),
+});
+
 export const arenaSeasons = pgTable('arena_seasons', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
